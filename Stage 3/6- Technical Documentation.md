@@ -626,7 +626,17 @@ erDiagram
  
 ----
 
-# task 3
+# High-Level Sequence Diagrams
+
+**Identity & Authentication**
+This diagram illustrates the full authentication lifecycle, starting with user registration followed by email and phone number verification via OTP through Authentica. Once both identities are confirmed, the user is redirected to the login page. Upon successful login, a JWT pair is issued and the user is redirected to the home page. The diagram also covers token refresh, profile retrieval and update via the `/auth/me` endpoints, and account soft-deletion.
+
+**Contracts (NDA)**
+This diagram covers the NDA signing flow between both parties. It begins with the contract preview page, accessible via a unique token without requiring a JWT. The user submits a base64-encoded signature, which is uploaded to R2 Storage. A PDF is then generated and stored, and both the User and Idea Owner receive a copy via email equally. An alternative path handles the case where both parties have signed, triggering the meeting to become accessible. The diagram also includes retrieving the signed contract by its ID.
+
+
+**Meeting Requests**
+This diagram follows the flow from the user's perspective. It starts with fetching live availability from the owner's Cal.com calendar, followed by submitting a meeting request with a chosen time slot and message. The user can then view their list of sent and received requests, which is fetched directly from the database. The diagram branches into two alternative paths based on the owner's decision: if accepted, a Cal.com booking is created, a Daily video room is set up, an NDA contract is auto-generated returning a Contract ID, a chat channel is created, and confirmation emails are sent equally to both parties. If rejected, the user is notified via email.
 
 ----
 # API Specifications
