@@ -56,3 +56,11 @@
 
 ![Design Guide 1](https://github.com/haitham71/Beyn-project/blob/main/Stage%203/Design%20and%20Mockups/1.png?raw=true)
 ![Design Guide 2](https://github.com/haitham71/Beyn-project/blob/main/Stage%203/Design%20and%20Mockups/2.png?raw=true)
+
+## Mockups
+
+![Design Mockup 3](https://github.com/haitham71/Beyn-project/blob/main/Stage%203/Design%20and%20Mockups/3.png?raw=true)
+![Design Mockup 4](https://github.com/haitham71/Beyn-project/blob/main/Stage%203/Design%20and%20Mockups/4.png?raw=true)
+![Design Mockup 5](https://github.com/haitham71/Beyn-project/blob/main/Stage%203/Design%20and%20Mockups/5.png?raw=true)
+![Design Mockup 6](https://github.com/haitham71/Beyn-project/blob/main/Stage%203/Design%20and%20Mockups/6.png?raw=true)
+![Design Mockup 7](https://github.com/haitham71/Beyn-project/blob/main/Stage%203/Design%20and%20Mockups/7.png?raw=true)
