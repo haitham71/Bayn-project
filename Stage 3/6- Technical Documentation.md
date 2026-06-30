@@ -543,6 +543,8 @@ erDiagram
     datetime party_two_signed_at
     string party_two_signer_ip
     string generated_pdf_key
+    datetime party_one_token_expires_at
+    datetime party_two_token_expires_at
     datetime created_at
     datetime updated_at
   }
