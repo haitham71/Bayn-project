@@ -1,14 +1,5 @@
-/**
- * Design tokens — Colors
- * Source: Figma variables (Bayn design system)
- *
- * `primitives` = raw color scales (Mode 1)
- * `semantic`   = role-based tokens that reference primitives (Mode 2)
- */
+// Color tokens from Bayn design system
 
-// ─────────────────────────────────────────────
-// Primitives (Mode 1)
-// ─────────────────────────────────────────────
 export const primitives = {
   primary: {
     100: '#90E4C8',
@@ -103,63 +94,60 @@ export const primitives = {
   },
 };
 
-// ─────────────────────────────────────────────
-// Semantic tokens (Mode 2)
-// ─────────────────────────────────────────────
 export const semantic = {
   background: {
-    surfacePrimary: primitives.secondary[300],   // #EBE5DC
-    surfaceSecondary: primitives.secondary[500],  // #D7CBB9
-    surfaceThirdary: primitives.secondary[600],   // #C9BAA1
-    surfaceTertiary: primitives.primary[100],     // #90E4C8
-    borderPrimary: primitives.secondary[1100],    // #352F24
+    surfacePrimary: primitives.secondary[300],
+    surfaceSecondary: primitives.secondary[500],
+    surfaceThirdary: primitives.secondary[600],
+    surfaceTertiary: primitives.primary[100],
+    borderPrimary: primitives.secondary[1100],
   },
 
   buttons: {
-    primaryDefault: primitives.primary[500],       // #295E4D
-    primaryHover: primitives.primary[600],         // #0F3D2E
+    primaryDefault: primitives.primary[500],
+    primaryHover: primitives.primary[600],
     primaryClickEffect: 'rgba(235, 229, 220, 0.1)',
-    secondaryHover: primitives.secondary[800],     // #9A8A71
+    secondaryHover: primitives.secondary[800],
     secondaryClickEffect: 'rgba(120, 108, 87, 0.49)',
-    tertiaryHover: primitives.secondary[900],      // #786C57
-    text: primitives.secondary[300],               // #EBE5DC
+    tertiaryHover: primitives.secondary[900],
+    text: primitives.secondary[300],
   },
 
   text: {
-    title: primitives.primary[600],        // #0F3D2E
-    body: primitives.primary[500],         // #295E4D
-    body2: primitives.secondary[1050],     // #463E31
-    supporting: primitives.secondary[900], // #786C57
-    disabled: primitives.neutral[400],     // #787878
-    disabled2: primitives.neutral[500],    // #606060
+    title: primitives.primary[600],
+    body: primitives.primary[500],
+    body2: primitives.secondary[1050],
+    supporting: primitives.secondary[900],
+    disabled: primitives.neutral[400],
+    disabled2: primitives.neutral[500],
   },
 
   input: {
     defaultBackground: 'rgba(215, 203, 185, 0.7)',
-    hoverBackground: primitives.secondary[600], // #C9BAA1
-    hoverBorder: primitives.secondary[700],     // #BCA98A
-    focus: primitives.secondary[400],           // #E4DDD0
-    borderDefault: primitives.secondary[1050],  // #463E31
-    disabled: primitives.neutral[300],          // #AEAEAE
-    disabledBorder: primitives.neutral[600],    // #484848
-    error: primitives.error[800],               // #900000
+    hoverBackground: primitives.secondary[600],
+    hoverBorder: primitives.secondary[700],
+    focus: primitives.secondary[400],
+    borderDefault: primitives.secondary[1050],
+    disabled: primitives.neutral[300],
+    disabledBorder: primitives.neutral[600],
+    error: primitives.error[800],
   },
 
   dropdown: {
-    hover: primitives.secondary[500], // #D7CBB9
+    hover: primitives.secondary[500],
   },
 
   checkbox: {
-    borderDefault: primitives.secondary[1000], // #574D3E
-    clickEffect: primitives.secondary[700],     // #BCA98A
+    borderDefault: primitives.secondary[1000],
+    clickEffect: primitives.secondary[700],
     hoverEffect: 'rgba(70, 62, 49, 0.2)',
-    checkColor: primitives.primary[600],        // #0F3D2E
+    checkColor: primitives.primary[600],
   },
 
   sidebar: {
-    background: primitives.primary[700],    // #0C3125
-    textDefault: primitives.secondary[600], // #C9BAA1
-    hoverButton: primitives.primary[600],   // #0F3D2E
+    background: primitives.primary[700],
+    textDefault: primitives.secondary[600],
+    hoverButton: primitives.primary[600],
   },
 };
 

@@ -1,0 +1,18 @@
+@import './variables.css';
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: var(--bg-surface-primary, #ebe5dc);
+  color: var(--text-body, #295e4d);
+  -webkit-font-smoothing: antialiased;
+}

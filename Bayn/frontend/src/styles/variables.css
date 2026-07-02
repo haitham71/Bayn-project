@@ -1,11 +1,5 @@
-/**
- * Design tokens — CSS variables
- * Source: Figma variables (Bayn design system)
- * Mirrors src/shared/theme/colors.js
- */
-
 :root {
-  /* ── Primitives · Primary ────────────────── */
+  /* Primary */
   --color-primary-100: #90E4C8;
   --color-primary-150: #83D3B9;
   --color-primary-200: #76C3A9;
@@ -21,7 +15,7 @@
   --color-primary-1000: #030C09;
   --color-primary-1100: #020605;
 
-  /* ── Primitives · Neutral ────────────────── */
+  /* Neutral */
   --color-neutral-100: #FFFFFF;
   --color-neutral-200: #C9C9C9;
   --color-neutral-300: #AEAEAE;
@@ -30,7 +24,7 @@
   --color-neutral-600: #484848;
   --color-neutral-700: #000000;
 
-  /* ── Primitives · Secondary ──────────────── */
+  /* Secondary */
   --color-secondary-100: #F8F6F3;
   --color-secondary-200: #F2EEE8;
   --color-secondary-300: #EBE5DC;
@@ -46,7 +40,7 @@
   --color-secondary-1150: #241F18;
   --color-secondary-1200: #13100B;
 
-  /* ── Primitives · Error ──────────────────── */
+  /* Error */
   --color-error-100: #FEE6E6;
   --color-error-200: #FCCCCC;
   --color-error-300: #F99999;
@@ -57,7 +51,7 @@
   --color-error-800: #900000;
   --color-error-900: #300000;
 
-  /* ── Primitives · Warning ────────────────── */
+  /* Warning */
   --color-warning-100: #FFF8E6;
   --color-warning-200: #FFF1CC;
   --color-warning-300: #FFE499;
@@ -68,7 +62,7 @@
   --color-warning-800: #997000;
   --color-warning-900: #332500;
 
-  /* ── Primitives · Success ────────────────── */
+  /* Success */
   --color-success-100: #EDFBE6;
   --color-success-200: #DBF7CC;
   --color-success-300: #B7EF99;
@@ -79,7 +73,7 @@
   --color-success-800: #2D8000;
   --color-success-900: #0F2B00;
 
-  /* ── Primitives · Dark Mood ──────────────── */
+  /* Dark mood */
   --color-dark-100: #85928B;
   --color-dark-200: #76837D;
   --color-dark-300: #4C5550;
@@ -90,14 +84,14 @@
   --color-dark-800: #0A0D0C;
   --color-dark-900: #07090A;
 
-  /* ── Semantic · Background ────────────────── */
+  /* Background */
   --bg-surface-primary: var(--color-secondary-300);
   --bg-surface-secondary: var(--color-secondary-500);
   --bg-surface-thirdary: var(--color-secondary-600);
   --bg-surface-tertiary: var(--color-primary-100);
   --bg-border-primary: var(--color-secondary-1100);
 
-  /* ── Semantic · Buttons ──────────────────── */
+  /* Buttons */
   --btn-primary-default: var(--color-primary-500);
   --btn-primary-hover: var(--color-primary-600);
   --btn-primary-click-effect: rgba(235, 229, 220, 0.1);
@@ -106,7 +100,7 @@
   --btn-tertiary-hover: var(--color-secondary-900);
   --btn-text: var(--color-secondary-300);
 
-  /* ── Semantic · Text ─────────────────────── */
+  /* Text */
   --text-title: var(--color-primary-600);
   --text-body: var(--color-primary-500);
   --text-body-2: var(--color-secondary-1050);
@@ -114,7 +108,7 @@
   --text-disabled: var(--color-neutral-400);
   --text-disabled-2: var(--color-neutral-500);
 
-  /* ── Semantic · Input ────────────────────── */
+  /* Input */
   --input-bg-default: rgba(215, 203, 185, 0.7);
   --input-bg-hover: var(--color-secondary-600);
   --input-border-hover: var(--color-secondary-700);
@@ -124,16 +118,16 @@
   --input-disabled-border: var(--color-neutral-600);
   --input-error: var(--color-error-800);
 
-  /* ── Semantic · Dropdown ─────────────────── */
+  /* Dropdown */
   --dropdown-hover: var(--color-secondary-500);
 
-  /* ── Semantic · Checkbox ─────────────────── */
+  /* Checkbox */
   --checkbox-border-default: var(--color-secondary-1000);
   --checkbox-click-effect: var(--color-secondary-700);
   --checkbox-hover-effect: rgba(70, 62, 49, 0.2);
   --checkbox-check-color: var(--color-primary-600);
 
-  /* ── Semantic · Sidebar ──────────────────── */
+  /* Sidebar */
   --sidebar-bg: var(--color-primary-700);
   --sidebar-text-default: var(--color-secondary-600);
   --sidebar-hover-button: var(--color-primary-600);
