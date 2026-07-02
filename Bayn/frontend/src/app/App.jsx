@@ -1,3 +1,4 @@
+// Temporary page for testing components while we build them
 import Input from '@/shared/components/Input';
 
 const cellStyle = {
@@ -21,7 +22,6 @@ export default function App() {
       <h1 style={{ color: 'var(--text-title, #0f3d2e)', marginBottom: 32 }}>
         Input / TextField
       </h1>
-
       <div
         style={{
           display: 'grid',
