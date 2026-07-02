@@ -3,7 +3,7 @@
   flex-direction: column;
   width: 245px;
   max-width: 100%;
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: var(--font-sans);
 }
 
 .bayn-input__field {
