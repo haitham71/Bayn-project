@@ -16,9 +16,53 @@ const labelStyle = {
   marginBottom: 4,
 };
 
+const typeScale = [
+  { name: 'Header 1', size: '--type-h1-size', weight: '--type-h1-weight', tracking: '--type-h1-tracking' },
+  { name: 'Header 2', size: '--type-h2-size', weight: '--type-h2-weight', tracking: '--type-h2-tracking' },
+  { name: 'Header 3', size: '--type-h3-size', weight: '--type-h3-weight', tracking: '--type-h3-tracking' },
+  { name: 'Subtitle', size: '--type-subtitle-size', weight: '--type-subtitle-weight' },
+  { name: 'Body', size: '--type-body-size', weight: '--type-body-weight' },
+  { name: 'Button Text', size: '--type-button-size', weight: '--type-button-weight' },
+  { name: 'small', size: '--type-small-size', weight: '--type-small-weight' },
+  { name: 'Supporting', size: '--type-supporting-size', weight: '--type-supporting-weight' },
+];
+
 export default function App() {
   return (
     <div style={{ padding: 40, maxWidth: 1100, margin: '0 auto' }}>
+      <h1 style={{ color: 'var(--text-title, #0f3d2e)', marginBottom: 32 }}>
+        Typography
+      </h1>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 24, marginBottom: 72 }}>
+        {typeScale.map((t) => (
+          <div key={t.name}>
+            <span style={labelStyle}>{t.name}</span>
+            <div
+              style={{
+                fontSize: `var(${t.size})`,
+                fontWeight: `var(${t.weight})`,
+                letterSpacing: t.tracking ? `var(${t.tracking})` : undefined,
+                color: 'var(--text-body-2, #463e31)',
+              }}
+            >
+              The quick brown fox jumps over the lazy dog
+            </div>
+            <div
+              dir="rtl"
+              lang="ar"
+              style={{
+                fontSize: `var(${t.size})`,
+                fontWeight: `var(${t.weight})`,
+                letterSpacing: t.tracking ? `var(${t.tracking})` : undefined,
+                color: 'var(--text-body-2, #463e31)',
+              }}
+            >
+              نص تجريبي بخط تجوّل العربي
+            </div>
+          </div>
+        ))}
+      </div>
+
       <h1 style={{ color: 'var(--text-title, #0f3d2e)', marginBottom: 32 }}>
         Input / TextField
       </h1>

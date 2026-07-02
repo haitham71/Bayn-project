@@ -131,4 +131,29 @@
   --sidebar-bg: var(--color-primary-700);
   --sidebar-text-default: var(--color-secondary-600);
   --sidebar-hover-button: var(--color-primary-600);
+
+  /* Fonts */
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-ar: 'Tajawal', system-ui, sans-serif;
+
+  /* Typography (line-height left auto) */
+  --type-h1-size: 64px;
+  --type-h1-weight: 700;
+  --type-h1-tracking: -0.02em;
+  --type-h2-size: 48px;
+  --type-h2-weight: 600;
+  --type-h2-tracking: -0.02em;
+  --type-h3-size: 36px;
+  --type-h3-weight: 550;
+  --type-h3-tracking: -0.02em;
+  --type-subtitle-size: 24px;
+  --type-subtitle-weight: 500;
+  --type-body-size: 20px;
+  --type-body-weight: 400;
+  --type-button-size: 20px;
+  --type-button-weight: 550;
+  --type-small-size: 16px;
+  --type-small-weight: 400;
+  --type-supporting-size: 12px;
+  --type-supporting-weight: 400;
 }
