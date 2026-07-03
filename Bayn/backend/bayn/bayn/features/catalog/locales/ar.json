@@ -1,0 +1,18 @@
+{
+  "skill": {
+    "not_found": "المهارة غير موجودة",
+    "already_added": "المهارة مضافة مسبقاً لملفك",
+    "not_in_profile": "المهارة غير موجودة في ملفك"
+  },
+  "specialization": {
+    "not_found": "التخصص غير موجود",
+    "already_added": "التخصص مضاف مسبقاً لملفك",
+    "not_in_profile": "التخصص غير موجود في ملفك"
+  },
+  "industry": {
+    "not_found": "الصناعة غير موجودة"
+  },
+  "country": {
+    "not_found": "الدولة غير موجودة"
+  }
+}
