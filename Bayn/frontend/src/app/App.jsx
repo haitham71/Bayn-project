@@ -1,5 +1,6 @@
 // Temporary page for testing components while we build them
 import Input from '@/shared/components/Input';
+import Button from '@/shared/components/Button';
 
 const cellStyle = {
   display: 'flex',
@@ -61,6 +62,26 @@ export default function App() {
             </div>
           </div>
         ))}
+      </div>
+
+      <h1 style={{ color: 'var(--text-title, #0f3d2e)', marginBottom: 32 }}>
+        Buttons
+      </h1>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 20, marginBottom: 72 }}>
+        {['primary', 'secondary', 'tertiary'].map((variant) => (
+          <div key={variant} style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+            <Button variant={variant}>{variant} Button</Button>
+            <Button variant={variant} leadingIcon>{variant} Button</Button>
+            <Button variant={variant} trailingIcon>{variant} Button</Button>
+            <Button variant={variant} disabled>{variant} Button</Button>
+            {variant !== 'tertiary' && <Button variant={variant} iconOnly aria-label="next" />}
+          </div>
+        ))}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+          <Button size="sm">Small</Button>
+          <Button size="md">Medium</Button>
+          <Button size="lg">Large</Button>
+        </div>
       </div>
 
       <h1 style={{ color: 'var(--text-title, #0f3d2e)', marginBottom: 32 }}>

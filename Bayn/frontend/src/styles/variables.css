@@ -93,9 +93,9 @@
 
   /* Buttons */
   --btn-primary-default: var(--color-primary-500);
-  --btn-primary-hover: var(--color-primary-600);
+  --btn-primary-hover: var(--color-primary-600); 
   --btn-primary-click-effect: rgba(235, 229, 220, 0.1);
-  --btn-secondary-hover: var(--color-secondary-800);
+  --btn-secondary-hover: var(--color-secondary-500); /* need to change */
   --btn-secondary-click-effect: rgba(120, 108, 87, 0.49);
   --btn-tertiary-hover: var(--color-secondary-900);
   --btn-text: var(--color-secondary-300);
