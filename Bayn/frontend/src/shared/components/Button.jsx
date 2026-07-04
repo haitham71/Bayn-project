@@ -1,21 +1,8 @@
 import { forwardRef, useRef, useState } from 'react';
+import ChevronLeft from '@/assets/icons/chevron-left.svg?react';
+import ChevronRight from '@/assets/icons/chevron-right.svg?react';
 import './Button.css';
 
-function ChevronLeft() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="m14 6-6 6 6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function ChevronRight() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="m10 6 6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
 
 const Button = forwardRef(function Button(
   {
@@ -60,8 +47,8 @@ const Button = forwardRef(function Button(
     setRipples((prev) => prev.filter((r) => r.id !== id));
   }
 
-  const leadingNode = leadingIcon === true ? <ChevronLeft /> : leadingIcon;
-  const trailingNode = trailingIcon === true ? <ChevronRight /> : trailingIcon;
+  const leadingNode = leadingIcon === true ? <ChevronLeft aria-hidden="true" /> : leadingIcon;
+  const trailingNode = trailingIcon === true ? <ChevronRight aria-hidden="true" /> : trailingIcon;
 
   const classes = [
     'bayn-btn',
@@ -82,7 +69,7 @@ const Button = forwardRef(function Button(
       {...rest}
     >
       {iconOnly ? (
-        children || <ChevronRight />
+        children || <ChevronRight aria-hidden="true" />
       ) : (
         <>
           {leadingNode && <span className="bayn-btn__icon">{leadingNode}</span>}

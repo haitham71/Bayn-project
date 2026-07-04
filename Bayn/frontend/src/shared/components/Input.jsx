@@ -1,33 +1,8 @@
 import { forwardRef, useId } from 'react';
+import SearchIcon from '@/assets/icons/search.svg?react';
+import ClearIcon from '@/assets/icons/x.svg?react';
+import ErrorIcon from '@/assets/icons/alert-circle.svg?react';
 import './Input.css';
-
-function SearchIcon() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
-      <path d="m20 20-3.5-3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function ClearIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <circle cx="12" cy="12" r="10" fill="currentColor" opacity="0.15" />
-      <path d="m9 9 6 6M15 9l-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function ErrorIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
-      <path d="M12 7v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <circle cx="12" cy="16.5" r="1" fill="currentColor" />
-    </svg>
-  );
-}
 
 const Input = forwardRef(function Input(
   {
@@ -49,9 +24,14 @@ const Input = forwardRef(function Input(
   const autoId = useId();
   const inputId = id || autoId;
 
-  const leadingNode = leadingIcon === true ? <SearchIcon /> : leadingIcon;
+  const leadingNode =
+    leadingIcon === true ? <SearchIcon width={24} height={24} aria-hidden="true" /> : leadingIcon;
   const trailingNode =
-    trailingIcon === true ? (error ? <ErrorIcon /> : <ClearIcon />) : trailingIcon;
+    trailingIcon === true
+      ? error
+        ? <ErrorIcon width={20} height={20} aria-hidden="true" />
+        : <ClearIcon width={20} height={20} aria-hidden="true" />
+      : trailingIcon;
 
   const helper = error && errorText ? errorText : supportingText;
 
