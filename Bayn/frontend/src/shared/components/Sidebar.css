@@ -24,10 +24,59 @@
   transition: width 0.28s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* Float open on hover, or when a child is focused (keyboard users) */
-.bayn-sidebar:hover,
-.bayn-sidebar:focus-within {
+/* Float open only while hovered — collapses again as soon as the mouse leaves */
+.bayn-sidebar:hover {
   width: var(--sidebar-expanded);
+}
+
+/* Pinned: stay open regardless of hover */
+.bayn-sidebar--pinned {
+  width: var(--sidebar-expanded);
+}
+
+/* Header row holding the pin toggle */
+.bayn-sidebar__head {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  height: 32px;
+  margin-bottom: 4px;
+}
+
+.bayn-sidebar__pin {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sidebar-text-default);
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.18s ease, background-color 0.15s ease, color 0.15s ease;
+}
+
+/* The toggle only reveals itself while hovering, or when already pinned */
+.bayn-sidebar:hover .bayn-sidebar__pin,
+.bayn-sidebar--pinned .bayn-sidebar__pin {
+  opacity: 1;
+}
+
+.bayn-sidebar__pin:hover {
+  background: var(--sidebar-hover-button);
+  color: var(--color-secondary-400);
+}
+
+.bayn-sidebar__pin-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
 }
 
 /* Nav layout */
@@ -87,10 +136,18 @@
   flex: 0 0 auto;
   display: grid;
   place-items: center;
-  /* Fills the rail's inner width (collapsed width minus the 14px side padding)
-     so every icon sits centred on the exact same vertical line. */
+  /* Fills the rail's inner width (collapsed width minus the side padding)
+     so the tile below sits centred on the exact same vertical line. */
   width: calc(var(--sidebar-collapsed) - 20px);
   height: 48px;
+}
+
+/* Identical square behind every icon → uniform box size & height */
+.bayn-sidebar__icon-tile {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
 }
 
 /* Label fades in as the rail expands; clipped by the aside while collapsed */
@@ -101,7 +158,7 @@
 }
 
 .bayn-sidebar:hover .bayn-sidebar__label,
-.bayn-sidebar:focus-within .bayn-sidebar__label {
+.bayn-sidebar--pinned .bayn-sidebar__label {
   opacity: 1;
   transform: none;
 }

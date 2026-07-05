@@ -7,6 +7,8 @@ import UserPlus from '@/assets/icons/user-plus.svg?react';
 import UserRound from '@/assets/icons/user-round.svg?react';
 import Settings from '@/assets/icons/settings.svg?react';
 import LogOut from '@/assets/icons/log-out.svg?react';
+import Pin from '@/assets/icons/pin.svg?react';
+import PinOff from '@/assets/icons/pin-off.svg?react';
 import './Sidebar.css';
 
 const defaultItems = [
@@ -32,6 +34,7 @@ export default function Sidebar({
 }) {
   const [internalActive, setInternalActive] = useState(defaultActiveKey);
   const active = activeKey ?? internalActive;
+  const [pinned, setPinned] = useState(false);
 
   function handleNavigate(key) {
     if (activeKey === undefined) setInternalActive(key);
@@ -50,7 +53,9 @@ export default function Sidebar({
           onClick={() => handleNavigate(item.key)}
         >
           <span className="bayn-sidebar__icon">
-            <Icon width={30} height={30} aria-hidden="true" />
+            <span className="bayn-sidebar__icon-tile">
+              <Icon width={26} height={26} aria-hidden="true" />
+            </span>
           </span>
           <span className="bayn-sidebar__label">{item.label}</span>
         </button>
@@ -59,7 +64,29 @@ export default function Sidebar({
   }
 
   return (
-    <aside className="bayn-sidebar" aria-label="Primary navigation">
+    <aside
+      className={`bayn-sidebar${pinned ? ' bayn-sidebar--pinned' : ''}`}
+      aria-label="Primary navigation"
+    >
+      <div className="bayn-sidebar__head">
+        <button
+          type="button"
+          className="bayn-sidebar__pin"
+          onClick={() => setPinned((p) => !p)}
+          aria-pressed={pinned}
+          title={pinned ? 'Unpin sidebar' : 'Pin sidebar'}
+        >
+          <span className="bayn-sidebar__pin-icon">
+            {pinned ? (
+              <PinOff width={18} height={18} aria-hidden="true" />
+            ) : (
+              <Pin width={18} height={18} aria-hidden="true" />
+            )}
+          </span>
+          <span className="bayn-sidebar__pin-label">{pinned ? 'Unpin' : 'Pin'}</span>
+        </button>
+      </div>
+
       <nav className="bayn-sidebar__nav">
         <ul className="bayn-sidebar__list">{items.map(renderItem)}</ul>
       </nav>
