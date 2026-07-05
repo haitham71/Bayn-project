@@ -14,6 +14,7 @@ import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy import select
 
 from bayn.common.exceptions import NotFoundError
 from bayn.core.database import Base, get_db
@@ -68,6 +69,12 @@ async def client(db: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
 
 @pytest_asyncio.fixture
 async def test_country(db: AsyncSession) -> Country:
+    # Reuse the row if a previous test in this session already inserted it,
+    # instead of failing on the iso2 unique constraint.
+    existing = await db.scalar(select(Country).where(Country.iso2 == "SA"))
+    if existing:
+        return existing
+
     country = Country(
         name_en="Saudi Arabia",
         name_ar="المملكة العربية السعودية",
