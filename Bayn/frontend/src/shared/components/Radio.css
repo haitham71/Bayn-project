@@ -1,0 +1,128 @@
+.bayn-radio {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: var(--type-small-size);
+  font-weight: var(--type-small-weight);
+  color: var(--text-body-2);
+  user-select: none;
+}
+
+.bayn-radio--disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* 40px hit area that also hosts the hover / press halos */
+.bayn-radio__control {
+  position: relative;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+}
+
+/* hover halo — fades in */
+.bayn-radio__control::before {
+  content: '';
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: transparent;
+  transition: background-color 0.15s ease;
+  pointer-events: none;
+}
+
+.bayn-radio:hover .bayn-radio__control::before {
+  background: var(--checkbox-hover-effect);
+}
+
+/* press ripple — green (check-color @ 45%), grows out from the centre */
+.bayn-radio__control::after {
+  content: '';
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(15, 61, 46, 0.45);
+  transform: scale(0);
+  transition: transform 0.18s ease-out;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.bayn-radio:active .bayn-radio__control::after {
+  transform: scale(1);
+}
+
+.bayn-radio--disabled .bayn-radio__control::before,
+.bayn-radio--disabled .bayn-radio__control::after {
+  display: none;
+}
+
+/* Already-selected option is a no-op (a radio can't be unchecked by clicking
+   it again), so drop the hover / press feedback and the pointer cue. */
+.bayn-radio:has(.bayn-radio__input:checked) {
+  cursor: default;
+}
+
+.bayn-radio__control:has(.bayn-radio__input:checked)::before,
+.bayn-radio__control:has(.bayn-radio__input:checked)::after {
+  display: none;
+}
+
+/* visually-hidden native input — still covers the hit area for clicks & focus */
+.bayn-radio__input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: inherit;
+}
+
+/* the 18px ring */
+.bayn-radio__box {
+  position: relative;
+  z-index: 1;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--checkbox-border-default);
+  border-radius: 50%;
+  background: transparent;
+  transition: border-color 0.15s ease, border-width 0.15s ease;
+  pointer-events: none;
+}
+
+/* inner dot — absolutely centred on the ring, pops in when selected */
+.bayn-radio__dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--checkbox-check-color);
+  transform: translate(-50%, -50%) scale(0);
+  transition: transform 0.15s ease;
+}
+
+/* when selected, the border thickens inward until it meets the inner dot */
+.bayn-radio__input:checked ~ .bayn-radio__box {
+  border-width: 3px;
+}
+
+.bayn-radio__input:checked ~ .bayn-radio__box .bayn-radio__dot {
+  transform: translate(-50%, -50%) scale(1);
+}
+
+/* keyboard focus ring */
+.bayn-radio__input:focus-visible ~ .bayn-radio__box {
+  outline: 2px solid var(--checkbox-check-color);
+  outline-offset: 2px;
+}

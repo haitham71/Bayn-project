@@ -3,6 +3,8 @@ import Input from '@/shared/components/Input';
 import Button from '@/shared/components/Button';
 import Sidebar from '@/shared/components/Sidebar';
 import Logo from '@/shared/components/Logo';
+import Checkbox from '@/shared/components/Checkbox';
+import Radio from '@/shared/components/Radio';
 
 const cellStyle = {
   display: 'flex',
@@ -143,6 +145,26 @@ export default function App() {
           <span style={labelStyle}>Multiline (flixable)</span>
           <Input label="Description" multiline supportingText="Supporting text" />
         </div>
+      </div>
+
+      <h1 style={{ color: 'var(--text-title, #0f3d2e)', margin: '72px 0 32px' }}>
+        Checkbox
+      </h1>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'flex-start' }}>
+        <Checkbox label="Unchecked" />
+        <Checkbox label="Checked" defaultChecked />
+        <Checkbox label="Disabled" disabled />
+        <Checkbox label="Disabled checked" disabled defaultChecked />
+      </div>
+
+      <h1 style={{ color: 'var(--text-title, #0f3d2e)', margin: '72px 0 32px' }}>
+        Radio button
+      </h1>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'flex-start' }}>
+        <Radio name="demo" label="Option one" defaultChecked />
+        <Radio name="demo" label="Option two" />
+        <Radio name="demo" label="Option three" />
+        <Radio name="demo2" label="Disabled" disabled />
       </div>
     </div>
   );
