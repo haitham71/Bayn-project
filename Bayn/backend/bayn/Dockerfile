@@ -18,6 +18,10 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
+# Skip .pyc generation — irrelevant for a short-lived container, and
+# avoids write-permission issues on read-only or mounted volumes
+ENV PYTHONDONTWRITEBYTECODE=1
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 \
     && rm -rf /var/lib/apt/lists/*
