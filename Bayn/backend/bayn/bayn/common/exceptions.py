@@ -5,6 +5,8 @@ Services raise these instead of HTTPException so they stay HTTP-agnostic;
 the handler in main.py maps each to its status_code.
 """
 
+from bayn.core.i18n import DEFAULT_LOCALE, t
+
 
 class AppException(Exception):
     def __init__(self, message: str, status_code: int):
@@ -14,42 +16,42 @@ class AppException(Exception):
 
 
 class NotFoundError(AppException):
-    def __init__(self, message: str = "Resource not found"):
-        super().__init__(message, status_code=404)
+    def __init__(self, message: str | None = None, locale: str = DEFAULT_LOCALE):
+        super().__init__(message or t("common", "not_found", locale), status_code=404)
 
 
 class ConflictError(AppException):
-    def __init__(self, message: str = "Resource already exists"):
-        super().__init__(message, status_code=409)
+    def __init__(self, message: str | None = None, locale: str = DEFAULT_LOCALE):
+        super().__init__(message or t("common", "already_exists", locale), status_code=409)
 
 
 class ValidationError(AppException):
-    def __init__(self, message: str = "Invalid request data"):
-        super().__init__(message, status_code=400)
+    def __init__(self, message: str | None = None, locale: str = DEFAULT_LOCALE):
+        super().__init__(message or t("common", "invalid_data", locale), status_code=400)
 
 
 class UnauthorizedError(AppException):
-    def __init__(self, message: str = "Authentication required"):
-        super().__init__(message, status_code=401)
+    def __init__(self, message: str | None = None, locale: str = DEFAULT_LOCALE):
+        super().__init__(message or t("common", "authentication_required", locale), status_code=401)
 
 
 class ForbiddenError(AppException):
-    def __init__(self, message: str = "You do not have permission"):
-        super().__init__(message, status_code=403)
+    def __init__(self, message: str | None = None, locale: str = DEFAULT_LOCALE):
+        super().__init__(message or t("common", "no_permission", locale), status_code=403)
 
 
 # ── Identity-specific ─────────────────────────────────────────────────────────
 
 class UserAlreadyExistsError(ConflictError):
-    def __init__(self, message: str = "Email or username already in use"):
-        super().__init__(message)
+    def __init__(self, message: str | None = None, locale: str = DEFAULT_LOCALE):
+        super().__init__(message or t("identity", "user_already_exists", locale), locale=locale)
 
 
 class InvalidCredentialsError(UnauthorizedError):
-    def __init__(self, message: str = "Invalid email or password"):
-        super().__init__(message)
+    def __init__(self, message: str | None = None, locale: str = DEFAULT_LOCALE):
+        super().__init__(message or t("identity", "invalid_credentials", locale), locale=locale)
 
 
 class InvalidTokenError(UnauthorizedError):
-    def __init__(self, message: str = "Invalid or expired token"):
-        super().__init__(message)
+    def __init__(self, message: str | None = None, locale: str = DEFAULT_LOCALE):
+        super().__init__(message or t("identity", "invalid_token", locale), locale=locale)
