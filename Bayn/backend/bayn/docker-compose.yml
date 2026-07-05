@@ -1,0 +1,63 @@
+# ─────────────────────────────────────────────
+# docker-compose.yml
+# ─────────────────────────────────────────────
+#
+# Values come from the environment, not a checked-in .env file:
+#   local:  export POSTGRES_USER=... POSTGRES_PASSWORD=... POSTGRES_DB=... first
+#   CI:     GitHub Actions injects these from repo Secrets automatically
+#
+#   docker compose up -d
+#   docker compose up -d --build
+#   docker compose down
+#   docker compose logs -f api
+#
+# ─────────────────────────────────────────────
+
+services:
+
+  postgres:
+    image: postgres:15
+    container_name: bayn_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: .
+    container_name: bayn_api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      SECRET_KEY: ${SECRET_KEY}
+      AUTHENTICA_API_KEY: ${AUTHENTICA_API_KEY}
+      CLOUDFLARE_R2_ACCESS_KEY: ${CLOUDFLARE_R2_ACCESS_KEY}
+      CLOUDFLARE_R2_SECRET_KEY: ${CLOUDFLARE_R2_SECRET_KEY}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./bayn:/app/bayn
+      - ./tests:/app/tests
+      - ./pytest.ini:/app/pytest.ini
+    command: >
+      uvicorn bayn.main:app
+      --host 0.0.0.0
+      --port 8000
+      --reload
+
+volumes:
+  postgres_data:
+    name: bayn_postgres_data
