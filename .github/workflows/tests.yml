@@ -1,48 +1,41 @@
-name: Run Tests
+- name: Build Docker images
+  env:
+    DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+    POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+    POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+    POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+  run: docker compose build
 
-on:
-  push:
-    branches: [main, develop, dev-backend]
-  pull_request:
-    branches: [main, develop, dev-backend]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Run tests via Docker
-        env:
-          ACCESS_TOKEN_EXPIRE_MINUTES: ${{ secrets.ACCESS_TOKEN_EXPIRE_MINUTES }}
-          API_URL: ${{ secrets.API_URL }}
-          APP_NAME: ${{ secrets.APP_NAME }}
-          APP_URL: ${{ secrets.APP_URL }}
-          AUTHENTICA_API_KEY: ${{ secrets.AUTHENTICA_API_KEY }}
-          AUTHENTICA_BASE_URL: ${{ secrets.AUTHENTICA_BASE_URL }}
-          DAILY_API_KEY: ${{ secrets.DAILY_API_KEY }}
-          DAILY_API_URL: ${{ secrets.DAILY_API_URL }}
-          DAILY_DOMAIN: ${{ secrets.DAILY_DOMAIN }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
-          EMAIL_FROM_NAME: ${{ secrets.EMAIL_FROM_NAME }}
-          JWT_ALGORITHM: ${{ secrets.JWT_ALGORITHM }}
-          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
-          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
-          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
-          R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
-          R2_PUBLIC_URL: ${{ secrets.R2_PUBLIC_URL }}
-          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-          REFRESH_TOKEN_EXPIRE_DAYS: ${{ secrets.REFRESH_TOKEN_EXPIRE_DAYS }}
-          SMTP_HOST: ${{ secrets.SMTP_HOST }}
-          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
-          SMTP_PORT: ${{ secrets.SMTP_PORT }}
-          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
-        run: |
-          docker compose up -d postgres
-          docker compose run --rm api pytest -v
+- name: Run tests
+  env:
+    ACCESS_TOKEN_EXPIRE_MINUTES: ${{ secrets.ACCESS_TOKEN_EXPIRE_MINUTES }}
+    API_URL: ${{ secrets.API_URL }}
+    APP_NAME: ${{ secrets.APP_NAME }}
+    APP_URL: ${{ secrets.APP_URL }}
+    AUTHENTICA_API_KEY: ${{ secrets.AUTHENTICA_API_KEY }}
+    AUTHENTICA_BASE_URL: ${{ secrets.AUTHENTICA_BASE_URL }}
+    DAILY_API_KEY: ${{ secrets.DAILY_API_KEY }}
+    DAILY_API_URL: ${{ secrets.DAILY_API_URL }}
+    DAILY_DOMAIN: ${{ secrets.DAILY_DOMAIN }}
+    DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+    EMAIL_FROM_NAME: ${{ secrets.EMAIL_FROM_NAME }}
+    JWT_ALGORITHM: ${{ secrets.JWT_ALGORITHM }}
+    JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+    POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+    POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+    POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+    R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+    R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+    R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
+    R2_PUBLIC_URL: ${{ secrets.R2_PUBLIC_URL }}
+    R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+    REFRESH_TOKEN_EXPIRE_DAYS: ${{ secrets.REFRESH_TOKEN_EXPIRE_DAYS }}
+    SMTP_HOST: ${{ secrets.SMTP_HOST }}
+    SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+    SMTP_PORT: ${{ secrets.SMTP_PORT }}
+    SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+  run: |
+    docker compose up -d postgres
+    docker compose run --rm api pytest -v
