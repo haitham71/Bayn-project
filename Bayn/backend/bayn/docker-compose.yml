@@ -12,9 +12,7 @@
 #   docker compose logs -f api
 #
 # ─────────────────────────────────────────────
-
 services:
-
   postgres:
     image: postgres:15
     container_name: bayn_postgres
@@ -32,7 +30,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
   api:
     build: .
     container_name: bayn_api
@@ -41,10 +38,17 @@ services:
       - "8000:8000"
     environment:
       DATABASE_URL: ${DATABASE_URL}
-      SECRET_KEY: ${SECRET_KEY}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JWT_ALGORITHM: ${JWT_ALGORITHM}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES}
+      REFRESH_TOKEN_EXPIRE_DAYS: ${REFRESH_TOKEN_EXPIRE_DAYS}
       AUTHENTICA_API_KEY: ${AUTHENTICA_API_KEY}
-      CLOUDFLARE_R2_ACCESS_KEY: ${CLOUDFLARE_R2_ACCESS_KEY}
-      CLOUDFLARE_R2_SECRET_KEY: ${CLOUDFLARE_R2_SECRET_KEY}
+      AUTHENTICA_BASE_URL: ${AUTHENTICA_BASE_URL}
+      R2_ACCOUNT_ID: ${R2_ACCOUNT_ID}
+      R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID}
+      R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY}
+      R2_BUCKET_NAME: ${R2_BUCKET_NAME}
+      R2_PUBLIC_URL: ${R2_PUBLIC_URL}
     depends_on:
       postgres:
         condition: service_healthy
@@ -57,7 +61,6 @@ services:
       --host 0.0.0.0
       --port 8000
       --reload
-
 volumes:
   postgres_data:
     name: bayn_postgres_data

@@ -10,12 +10,12 @@ class Settings(BaseSettings):
     APP_NAME: str = "Bayn"
     DEBUG: bool = False
 
-    DATABASE_URL: str
+    DATABASE_URL: str | None = None
 
-    JWT_SECRET_KEY: str
-    JWT_ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
-    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    JWT_SECRET_KEY: str | None = None
+    JWT_ALGORITHM: str | None = None
+    ACCESS_TOKEN_EXPIRE_MINUTES: int | None = None
+    REFRESH_TOKEN_EXPIRE_DAYS: int | None = None
 
 
     AUTHENTICA_BASE_URL: str | None = None
@@ -31,13 +31,12 @@ class Settings(BaseSettings):
     CALCOM_CLIENT_ID: str | None = None
     CALCOM_CLIENT_SECRET: str | None = None
 
-    SMTP_HOST: str | None = None
+    SMTP_HOST: str | None = None 
     SMTP_PORT: int = 587
     SMTP_USERNAME: str | None = None
     SMTP_PASSWORD: str | None = None
-    EMAIL_FROM_ADDRESS: str | None = None
-
-    REDIS_URL: str = "redis://localhost:6379/0"
+    EMAIL_FROM: str | None = None
+    EMAIL_FROM_NAME: str | None = None
 
     model_config = SettingsConfigDict(
         env_file=".env",
