@@ -20,6 +20,8 @@ jobs:
           POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
           POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          
+        working-directory: Bayn/backend/bayn
         run: docker compose build
 
       - name: Run tests
@@ -51,6 +53,8 @@ jobs:
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           SMTP_PORT: ${{ secrets.SMTP_PORT }}
           SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+
+        working-directory: Bayn/backend/bayn
         run: |
           docker compose up -d postgres
           docker compose run --rm api pytest -v
