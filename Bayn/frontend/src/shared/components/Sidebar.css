@@ -12,7 +12,7 @@
   display: flex;
   flex-direction: column;
   width: var(--sidebar-collapsed);
-  padding: 16px 14px;
+  padding: 12px 10px;
   box-sizing: border-box;
   overflow: hidden;
 
@@ -87,8 +87,10 @@
   flex: 0 0 auto;
   display: grid;
   place-items: center;
-  width: 45px;
-  height: 45px;
+  /* Fills the rail's inner width (collapsed width minus the 14px side padding)
+     so every icon sits centred on the exact same vertical line. */
+  width: calc(var(--sidebar-collapsed) - 20px);
+  height: 48px;
 }
 
 /* Label fades in as the rail expands; clipped by the aside while collapsed */
