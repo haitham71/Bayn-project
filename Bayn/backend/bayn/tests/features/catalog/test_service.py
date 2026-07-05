@@ -27,9 +27,9 @@ from bayn.features.catalog import service
 pytestmark = pytest.mark.asyncio
 
 
-# ---------------------------------------------------------------------------
+
 # Helpers
-# ---------------------------------------------------------------------------
+
 
 def make_execute_result(scalars_all=None, scalar_one=None):
     """Builds a fake `Result` object mimicking db.execute(...) return value."""
@@ -56,9 +56,9 @@ def mock_t():
         yield
 
 
-# ---------------------------------------------------------------------------
+
 # get_all_countries / get_all_industries
-# ---------------------------------------------------------------------------
+
 
 async def test_get_all_countries_returns_list(db):
     expected = [MagicMock(spec=Country), MagicMock(spec=Country)]
@@ -80,9 +80,9 @@ async def test_get_all_industries_returns_list(db):
     db.execute.assert_awaited_once()
 
 
-# ---------------------------------------------------------------------------
+
 # search_skills
-# ---------------------------------------------------------------------------
+
 
 async def test_search_skills_returns_matching_skills(db):
     expected = [MagicMock(spec=Skill), MagicMock(spec=Skill)]
@@ -103,9 +103,9 @@ async def test_search_skills_empty_query_still_calls_db(db):
     db.execute.assert_awaited_once()
 
 
-# ---------------------------------------------------------------------------
+
 # add_skill_to_user
-# ---------------------------------------------------------------------------
+
 
 async def test_add_skill_to_user_success(db):
     user_id = uuid.uuid4()
@@ -153,9 +153,9 @@ async def test_add_skill_to_user_already_added(db):
     db.commit.assert_not_awaited()
 
 
-# ---------------------------------------------------------------------------
+
 # remove_skill_from_user
-# ---------------------------------------------------------------------------
+
 
 async def test_remove_skill_from_user_success(db):
     user_id = uuid.uuid4()
@@ -190,9 +190,9 @@ async def test_remove_skill_from_user_cannot_delete_other_users_link(db):
         await service.remove_skill_from_user(db, uuid.uuid4(), uuid.uuid4())
 
 
-# ---------------------------------------------------------------------------
+
 # add_specialization_to_user
-# ---------------------------------------------------------------------------
+
 
 async def test_add_specialization_to_user_success(db):
     user_id = uuid.uuid4()

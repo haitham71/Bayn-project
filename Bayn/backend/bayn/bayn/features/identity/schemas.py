@@ -10,8 +10,10 @@ import uuid
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, ValidationInfo, field_validator
+
 from bayn.core.i18n import DEFAULT_LOCALE, t
+
 
 def _locale_from(info: ValidationInfo) -> str:
     """Pull locale from validation context; falls back if none was passed."""
@@ -40,7 +42,7 @@ class UserSignup(BaseModel):
 
     @field_validator("username")
     @classmethod
-    def validate_username(cls, value: str) -> str:
+    def validate_username(cls, value: str, info: ValidationInfo) -> str:
         if not re.match(r"^[a-zA-Z0-9_]{3,30}$", value):
             locale = _locale_from(info)
             raise ValueError(t("validation", "username_format", locale))
@@ -48,10 +50,10 @@ class UserSignup(BaseModel):
 
     @field_validator("password")
     @classmethod
-    def validate_password(cls, value: str) -> str:
+    def validate_password(cls, value: str, info: ValidationInfo) -> str:
         locale = _locale_from(info)
         if len(value) < 8:
-            raise ValueError(t("validation", "password_length", locale))
+            raise ValueError(t("validation", "password_min_length", locale))
         if not re.search(r"[A-Z]", value):
             raise ValueError(t("validation", "password_uppercase", locale))
         if not re.search(r"[a-z]", value):
@@ -59,6 +61,7 @@ class UserSignup(BaseModel):
         if not re.search(r"\d", value):
             raise ValueError(t("validation", "password_number", locale))
         return value
+
 
 class UserLogin(BaseModel):
     email: EmailStr
@@ -80,7 +83,7 @@ class UpdateProfileRequest(BaseModel):
 
     @field_validator("phone_number")
     @classmethod
-    def validate_saudi_phone(cls, value: int | None) -> int | None:
+    def validate_saudi_phone(cls, value: int | None, info: ValidationInfo) -> int | None:
         if value is None:
             return None
 
@@ -89,16 +92,12 @@ class UpdateProfileRequest(BaseModel):
 
         if phone.startswith('+966'):
             raise ValueError(t("validation", "phone_prefix_plus966", locale))
-
         if phone.startswith('966'):
             raise ValueError(t("validation", "phone_prefix_966", locale))
-
         if phone.startswith('0'):
             raise ValueError(t("validation", "phone_leading_zero", locale))
-
         if not phone.isdigit():
             raise ValueError(t("validation", "phone_digits_only", locale))
-
         if not re.match(r"^5\d{8}$", phone):
             raise ValueError(t("validation", "phone_format", locale))
 
@@ -106,7 +105,10 @@ class UpdateProfileRequest(BaseModel):
 
 
 class OTPVerifyRequest(BaseModel):
+    # No reference_id: Authentica v2 doesn't return one. The target
+    # email/phone comes from the authenticated user, not this body.
     otp_code: str
+
 
 
 # Response Schemas
@@ -148,7 +150,6 @@ class UserResponse(BaseModel):
     industry_id: Optional[uuid.UUID]
     git_profile: Optional[str]
 
-    # Derived from avatar_key in the service layer, not a raw DB column
     avatar_url: Optional[str] = None
 
     role: str
@@ -163,19 +164,12 @@ class TokenResponse(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
-
     user: UserResponse
 
 
 class OTPSendResponse(BaseModel):
-"""
-    Response for sending OTP.
-"""
     message: str
 
 
 class MessageResponse(BaseModel):
-"""
-    Generic message response.
-"""
     message: str

@@ -6,27 +6,33 @@ Run tests:
 """
 
 import asyncio
-import uuid
 from collections.abc import AsyncGenerator
 from unittest.mock import AsyncMock, patch
 
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import event
+from sqlalchemy import event
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy import select
+from sqlalchemy.pool import StaticPool
 
 from bayn.common.exceptions import NotFoundError
 from bayn.core.database import Base, get_db
 from bayn.core.security import create_access_token, hash_password
-from bayn.features.identity.models import Country, User, UserRole
+from bayn.features.identity.models import Country, User
 from bayn.main import app
 
 
 # in-memory SQLite avoids needing a running Postgres for tests
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
-test_engine = create_async_engine(TEST_DATABASE_URL, echo=False)
+test_engine = create_async_engine(
+    TEST_DATABASE_URL,
+    echo=False,
+    poolclass=StaticPool,
+    connect_args={"check_same_thread": False},
+)
 TestSessionLocal = async_sessionmaker(test_engine, class_=AsyncSession, expire_on_commit=False)
 
 
@@ -48,10 +54,27 @@ async def setup_database():
 
 @pytest_asyncio.fixture
 async def db() -> AsyncGenerator[AsyncSession, None]:
-    # rollback after each test so tests don't leak state into each other
-    async with TestSessionLocal() as session:
-        yield session
-        await session.rollback()
+    async with test_engine.connect() as conn:
+        # Outer transaction is never committed, so the final rollback undoes
+        # everything below it — including any commit() the app code itself
+        # calls inside signup/update/delete endpoints via the client fixture.
+        outer_trans = await conn.begin()
+
+        async with AsyncSession(bind=conn, expire_on_commit=False) as session:
+            nested = await conn.begin_nested()
+
+            # Every commit() (ours or the app's) closes the current SAVEPOINT.
+            # This listener reopens one immediately, so there's always an
+            # active savepoint for the session to write into.
+            @event.listens_for(session.sync_session, "after_transaction_end")
+            def restart_savepoint(sess, transaction):
+                nonlocal nested
+                if not nested.is_active:
+                    nested = conn.sync_connection.begin_nested()
+
+            yield session
+
+        await outer_trans.rollback()
 
 
 @pytest_asyncio.fixture
@@ -69,12 +92,6 @@ async def client(db: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
 
 @pytest_asyncio.fixture
 async def test_country(db: AsyncSession) -> Country:
-    # Reuse the row if a previous test in this session already inserted it,
-    # instead of failing on the iso2 unique constraint.
-    existing = await db.scalar(select(Country).where(Country.iso2 == "SA"))
-    if existing:
-        return existing
-
     country = Country(
         name_en="Saudi Arabia",
         name_ar="المملكة العربية السعودية",
@@ -85,7 +102,6 @@ async def test_country(db: AsyncSession) -> Country:
     await db.flush()
     await db.refresh(country)
     return country
-
 
 @pytest_asyncio.fixture
 async def test_user(db: AsyncSession, test_country: Country) -> User:
@@ -115,7 +131,7 @@ async def auth_headers(test_user: User) -> dict:
 @pytest_asyncio.fixture
 def mock_authentica():
     # patch the singleton so tests never hit the real Authentica API
-    with patch("bayn.integrations.authentica.authentica_client") as mock:
+    with patch("bayn.features.identity.service.authentica_client") as mock:
         mock.send_email_otp = AsyncMock(return_value=None)
         mock.send_sms_otp = AsyncMock(return_value=None)
         mock.verify_email_otp = AsyncMock(return_value=True)
