@@ -39,6 +39,11 @@
     "password_min_length": "Password must be at least 8 characters",
     "password_uppercase": "Password must contain at least one uppercase letter",
     "password_lowercase": "Password must contain at least one lowercase letter",
-    "password_number": "Password must contain at least one number"
+    "password_number": "Password must contain at least one number",
+    "phone_prefix_plus966": "Phone number must be in format 5XXXXXXXX (e.g., 501234567), not +966",
+    "phone_prefix_966": "Phone number must be in format 5XXXXXXXX (e.g., 501234567), not 966",
+    "phone_leading_zero": "Phone number must be in format 5XXXXXXXX (e.g., 501234567), not 05XXXXXXX",
+    "phone_digits_only": "Phone number must contain digits only",
+    "phone_format": "Phone number must start with 5 and be exactly 9 digits long (e.g., 501234567)"
   }
 }
