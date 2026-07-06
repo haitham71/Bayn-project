@@ -23,5 +23,30 @@
     "pinTitle": "Pin sidebar",
     "unpinTitle": "Unpin sidebar",
     "primaryNav": "Primary navigation"
+  },
+  "auth": {
+    "createAccount": "Create your account",
+    "langName": "English",
+    "home": "Home",
+    "support": "Support",
+    "heroTitle": "We document every step, so you can build the future.",
+    "heroSubtitle": "Transform ideas into successful projects through seamless collaboration, smart meeting management, and secure partnerships between entrepreneurs and developers."
+  },
+  "steps": {
+    "account": "Account information",
+    "verification": "Verification",
+    "profile": "Profile setup"
+  },
+  "verification": {
+    "title": "Enter verification code",
+    "sentTo": "We've sent a 4-digit verification code to:",
+    "didntReceive": "Didn't receive the code?",
+    "resend": "Resend code",
+    "emailOption": "Email Verification",
+    "emailOptionDesc": "We'll send the verification code to your email",
+    "phoneOption": "Phone Number Verification",
+    "phoneOptionDesc": "We'll send the verification code to your phone number",
+    "bothRequired": "You must complete both email and phone verification before proceeding to the next step.",
+    "nextStep": "Next Step"
   }
 }

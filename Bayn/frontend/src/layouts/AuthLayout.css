@@ -1,0 +1,129 @@
+.auth-layout {
+  display: flex;
+  min-height: 100vh;
+  background: var(--bg-surface-primary, #ebe5dc);
+}
+
+/* Form column */
+.auth-layout__form {
+  flex: 1 1 50%;
+  display: flex;
+  flex-direction: column;
+  padding: 40px 56px;
+  min-width: 0;
+}
+
+.auth-layout__brand {
+  margin-bottom: 24px;
+}
+
+.auth-layout__content {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-width: 520px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* Hero column */
+.auth-layout__hero {
+  flex: 1 1 35%;
+  position: relative;
+  background-size: cover;
+  background-position: center;
+  border-start-start-radius: 48px;
+  border-end-start-radius: 48px;
+  color: #fff;
+  overflow: visible;
+}
+
+.auth-layout__hero-overlay {
+  position: absolute;
+  inset: 0;
+  border-start-start-radius: 48px;
+  border-end-start-radius: 48px;
+  background: linear-gradient(
+    180deg,
+    rgba(12, 49, 37, 0.82) 0%,
+    rgba(12, 49, 37, 0.45) 40%,
+    rgba(12, 49, 37, 0.15) 100%
+  );
+}
+
+.auth-layout__quick-actions {
+  position: absolute;
+  top: 750px;
+  inset-inline-start: -70px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Size/shape/colour come from Button (iconOnly, primary); we only add the lift */
+.auth-layout__circle {
+  box-shadow: 0 8px 20px -8px rgba(4, 18, 14, 0.5);
+}
+
+.auth-layout__lang {
+  position: absolute;
+  top: 28px;
+  inset-inline-end: 28px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 10px;
+  background: var(--color-primary-700, #0c3125);
+  color: #fff;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.auth-layout__lang:hover {
+  background: var(--color-primary-600, #0f3d2e);
+}
+
+.auth-layout__hero-text {
+  position: absolute;
+  inset-inline: 56px;
+  top: 96px;
+  z-index: 1;
+  max-width: 520px;
+}
+
+.auth-layout__hero-title {
+  font-family: var(--font-sans);
+  font-size: 40px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  margin: 0 0 16px;
+}
+
+.auth-layout__hero-subtitle {
+  font-family: var(--font-sans);
+  font-size: 18px;
+  line-height: 1.5;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Stack on narrow screens: hide the hero, keep the form usable */
+@media (max-width: 860px) {
+  .auth-layout__hero {
+    display: none;
+  }
+  .auth-layout__form {
+    flex-basis: 100%;
+    padding: 32px 24px;
+  }
+}
