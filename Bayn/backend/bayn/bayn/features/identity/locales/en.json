@@ -34,6 +34,7 @@
   },
   "validation": {
     "invalid_data": "Invalid request data",
+    "username_format": "Username must be between 3 and 20 characters and contain only letters, numbers, and underscores",
     "resource_not_found": "Resource not found",
     "resource_already_exists": "Resource already exists",
     "password_min_length": "Password must be at least 8 characters",

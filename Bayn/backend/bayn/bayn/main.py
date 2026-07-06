@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse
 
 from bayn.common.exceptions import AppException
 from bayn.features.identity.router import router as identity_router
+
 # imported so their tables register on Base.metadata for migrations
 from bayn.features.catalog.models import Industry, Skill, Specialization, UserSkill, UserSpecialization  # noqa: F401
 from bayn.features.catalog.router import catalog_router, profile_router
@@ -26,6 +27,7 @@ async def app_exception_handler(request: Request, exc: AppException) -> JSONResp
 app.include_router(identity_router)
 app.include_router(catalog_router)
 app.include_router(profile_router)
+
 
 
 @app.get("/health", tags=["System"])
