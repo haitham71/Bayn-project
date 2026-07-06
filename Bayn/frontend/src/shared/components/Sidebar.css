@@ -6,7 +6,7 @@
   top: 50%;
   left: 16px;
   transform: translateY(-50%);
-  height: 60vh;
+  height: 98vh;
   z-index: 100;
 
   display: flex;
@@ -34,13 +34,31 @@
   width: var(--sidebar-expanded);
 }
 
+/* Brand logo, centred on the same vertical line as the icons */
+.bayn-sidebar__brand {
+  display: grid;
+  place-items: center;
+  height: 48px;
+  margin-bottom: 4px;
+}
+
+.bayn-sidebar__logo {
+  width: 44px;
+  height: 33px;
+  background-color: var(--bg-surface-thirdary);
+  -webkit-mask: var(--logo-src) center / contain no-repeat;
+  mask: var(--logo-src) center / contain no-repeat;
+}
+
 /* Header row holding the pin toggle */
 .bayn-sidebar__head {
   display: flex;
   justify-content: flex-end;
   align-items: center;
   height: 32px;
-  margin-bottom: 4px;
+  margin-bottom: 8px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(201, 186, 161, 0.14);
 }
 
 .bayn-sidebar__pin {

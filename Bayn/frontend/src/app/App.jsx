@@ -2,7 +2,6 @@
 import Input from '@/shared/components/Input';
 import Button from '@/shared/components/Button';
 import Sidebar from '@/shared/components/Sidebar';
-import Logo from '@/shared/components/Logo';
 import Checkbox from '@/shared/components/Checkbox';
 import Radio from '@/shared/components/Radio';
 
@@ -35,7 +34,6 @@ const typeScale = [
 export default function App() {
   return (
     <div style={{ padding: 40, paddingLeft: 132, maxWidth: 1200, margin: '0 auto' }}>
-      <Logo />
       <Sidebar />
       <h1 style={{ color: 'var(--text-title, #0f3d2e)', marginBottom: 32 }}>
         Typography
