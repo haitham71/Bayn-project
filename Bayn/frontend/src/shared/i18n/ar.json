@@ -1,0 +1,12 @@
+{
+  "app": {
+    "switchLanguage": "English"
+  },
+  "input": {
+    "label": "التسمية",
+    "supportingText": "نص مساعد",
+    "errorText": "هذا الحقل فيه خطأ",
+    "search": "بحث",
+    "description": "الوصف"
+  }
+}

@@ -12,7 +12,8 @@
   align-items: center;
   gap: 8px;
   min-height: 56px;
-  padding: 4px 8px 4px 12px;
+  padding-block: 4px;
+  padding-inline: 12px 8px;
   border-radius: 6px 6px 0 0;
   background: var(--input-bg-default, rgba(215, 203, 185, 0.7));
   border-bottom: 4px solid var(--input-border-default, #463e31);
@@ -81,9 +82,24 @@
   );
 }
 
+[dir='rtl'] .bayn-input--multiline .bayn-input__native::-webkit-resizer {
+  background-position: bottom left;
+  background-image: linear-gradient(
+    225deg,
+    transparent 42%,
+    var(--text-supporting, #786c57) 42%,
+    var(--text-supporting, #786c57) 55%,
+    transparent 55%,
+    transparent 66%,
+    var(--text-supporting, #786c57) 66%,
+    var(--text-supporting, #786c57) 79%,
+    transparent 79%
+  );
+}
+
 .bayn-input__label {
   position: absolute;
-  left: 0;
+  inset-inline-start: 0;
   top: 50%;
   transform: translateY(-50%);
   pointer-events: none;

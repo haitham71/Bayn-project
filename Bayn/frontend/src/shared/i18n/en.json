@@ -1,0 +1,12 @@
+{
+  "app": {
+    "switchLanguage": "العربية"
+  },
+  "input": {
+    "label": "Label",
+    "supportingText": "Supporting text",
+    "errorText": "This field has an error",
+    "search": "Search",
+    "description": "Description"
+  }
+}

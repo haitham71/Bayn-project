@@ -1,4 +1,5 @@
 // Temporary page for testing components while we build them
+import { useTranslation } from 'react-i18next';
 import Input from '@/shared/components/Input';
 import Button from '@/shared/components/Button';
 import Sidebar from '@/shared/components/Sidebar';
@@ -32,8 +33,34 @@ const typeScale = [
 ];
 
 export default function App() {
+  const { t, i18n } = useTranslation();
+
+  const toggleLanguage = () => {
+    i18n.changeLanguage(i18n.language === 'ar' ? 'en' : 'ar');
+  };
+
   return (
-    <div style={{ padding: 40, paddingLeft: 132, maxWidth: 1200, margin: '0 auto' }}>
+    <div style={{ padding: 40, paddingInlineStart: 132, maxWidth: 1200, margin: '0 auto' }}>
+      <button
+        type="button"
+        onClick={toggleLanguage}
+        style={{
+          position: 'fixed',
+          top: 16,
+          insetInlineEnd: 16,
+          zIndex: 100,
+          padding: '8px 16px',
+          borderRadius: 8,
+          border: '1px solid var(--btn-primary-default, #295e4d)',
+          background: 'var(--btn-primary-default, #295e4d)',
+          color: 'var(--btn-text, #ebe5dc)',
+          fontFamily: 'var(--font-sans)',
+          fontWeight: 550,
+          cursor: 'pointer',
+        }}
+      >
+        {t('app.switchLanguage')}
+      </button>
       <Sidebar />
       <h1 style={{ color: 'var(--text-title, #0f3d2e)', marginBottom: 32 }}>
         Typography
@@ -101,47 +128,47 @@ export default function App() {
       >
         <div style={cellStyle}>
           <span style={labelStyle}>Default</span>
-          <Input label="Label" supportingText="Supporting text" />
+          <Input label={t('input.label')} supportingText={t('input.supportingText')} />
         </div>
 
         <div style={cellStyle}>
           <span style={labelStyle}>Filled</span>
-          <Input label="Label" defaultValue="Input" supportingText="Supporting text" />
+          <Input label={t('input.label')} defaultValue="Input" supportingText={t('input.supportingText')} />
         </div>
 
         <div style={cellStyle}>
           <span style={labelStyle}>Leading icon</span>
-          <Input label="Search" leadingIcon supportingText="Supporting text" />
+          <Input label={t('input.search')} leadingIcon supportingText={t('input.supportingText')} />
         </div>
 
         <div style={cellStyle}>
           <span style={labelStyle}>Trailing icon</span>
-          <Input label="Label" trailingIcon supportingText="Supporting text" />
+          <Input label={t('input.label')} trailingIcon supportingText={t('input.supportingText')} />
         </div>
 
         <div style={cellStyle}>
           <span style={labelStyle}>Leading + Trailing</span>
-          <Input label="Search" leadingIcon trailingIcon defaultValue="Input" />
+          <Input label={t('input.search')} leadingIcon trailingIcon defaultValue="Input" />
         </div>
 
         <div style={cellStyle}>
           <span style={labelStyle}>Error</span>
-          <Input label="Label" defaultValue="Input" trailingIcon error errorText="This field has an error" />
+          <Input label={t('input.label')} defaultValue="Input" trailingIcon error errorText={t('input.errorText')} />
         </div>
 
         <div style={cellStyle}>
           <span style={labelStyle}>Disabled</span>
-          <Input label="Label" disabled supportingText="Supporting text" />
+          <Input label={t('input.label')} disabled supportingText={t('input.supportingText')} />
         </div>
 
         <div style={cellStyle}>
           <span style={labelStyle}>Disabled (filled)</span>
-          <Input label="Label" defaultValue="Input" trailingIcon disabled supportingText="Supporting text" />
+          <Input label={t('input.label')} defaultValue="Input" trailingIcon disabled supportingText={t('input.supportingText')} />
         </div>
 
         <div style={cellStyle}>
           <span style={labelStyle}>Multiline (flixable)</span>
-          <Input label="Description" multiline supportingText="Supporting text" />
+          <Input label={t('input.description')} multiline supportingText={t('input.supportingText')} />
         </div>
       </div>
 

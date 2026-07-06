@@ -4,7 +4,7 @@
 
   position: fixed;
   top: 50%;
-  left: 16px;
+  inset-inline-start: 16px;
   transform: translateY(-50%);
   height: 98vh;
   z-index: 100;
@@ -134,7 +134,7 @@
   font-family: var(--font-sans);
   font-weight: 500;
   font-size: 20px;
-  text-align: left;
+  text-align: start;
   cursor: pointer;
   white-space: nowrap;
   transition: background-color 0.15s ease, color 0.15s ease;
@@ -173,6 +173,10 @@
   opacity: 0;
   transform: translateX(-4px);
   transition: opacity 0.18s ease, transform 0.22s ease;
+}
+
+[dir='rtl'] .bayn-sidebar__label {
+  transform: translateX(4px);
 }
 
 .bayn-sidebar:hover .bayn-sidebar__label,
