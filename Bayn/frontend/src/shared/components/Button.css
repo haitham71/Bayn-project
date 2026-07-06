@@ -116,6 +116,11 @@
   justify-content: center;
 }
 
+/* Leading/trailing icons are directional chevrons — mirror them in RTL */
+[dir='rtl'] .bayn-btn__icon svg {
+  transform: scaleX(-1);
+}
+
 /* Ripple */
 .bayn-btn__ripple {
   position: absolute;
