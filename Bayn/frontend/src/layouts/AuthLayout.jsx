@@ -53,7 +53,7 @@ export default function AuthLayout({ children }) {
         </div>
 
         <button type="button" className="auth-layout__lang" onClick={toggleLanguage}>
-          <Languages width={18} height={18} aria-hidden="true" />
+          <Languages width={22} height={22} aria-hidden="true" />
           {t('auth.langName')}
         </button>
 

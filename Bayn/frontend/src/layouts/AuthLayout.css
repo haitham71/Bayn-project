@@ -45,9 +45,9 @@
   border-end-start-radius: 48px;
   background: linear-gradient(
     180deg,
-    rgba(12, 49, 37, 0.82) 0%,
-    rgba(12, 49, 37, 0.45) 40%,
-    rgba(12, 49, 37, 0.15) 100%
+    rgba(12, 49, 37, 0.4) 0%,
+    rgba(12, 49, 37, 0.5) 45%,
+    rgba(12, 49, 37, 0.2) 100%
   );
 }
 
@@ -73,22 +73,26 @@
   z-index: 2;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  height: 40px;
-  padding: 0 16px;
+  gap: 4px;
+  padding-block: 10px;
+  padding-inline: 16px 24px;
   border: none;
   border-radius: 10px;
-  background: var(--color-primary-700, #0c3125);
-  color: #fff;
+  background: rgba(15, 61, 46, 0.18); /* mostly transparent — for glass efc */
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  backdrop-filter: blur(20px) saturate(160%);
+  color: var(--btn-text, #ebe5dc);
   font-family: var(--font-sans);
-  font-size: 15px;
-  font-weight: 500;
+  font-size: 20px;
+  font-weight: 550;
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  box-shadow: 0 6px 22px -8px rgba(4, 18, 14, 0.45),
+    inset 0 1px 0 rgba(235, 229, 220, 0.14);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
 .auth-layout__lang:hover {
-  background: var(--color-primary-600, #0f3d2e);
+  background: rgba(15, 61, 46, 0.32);
 }
 
 .auth-layout__hero-text {
