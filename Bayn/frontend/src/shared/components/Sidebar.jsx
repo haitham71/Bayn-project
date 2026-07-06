@@ -9,6 +9,7 @@ import Settings from '@/assets/icons/settings.svg?react';
 import LogOut from '@/assets/icons/log-out.svg?react';
 import Pin from '@/assets/icons/pin.svg?react';
 import PinOff from '@/assets/icons/pin-off.svg?react';
+import logoUrl from '@/assets/logo/Bayn-svg.svg?url';
 import './Sidebar.css';
 
 const defaultItems = [
@@ -68,6 +69,14 @@ export default function Sidebar({
       className={`bayn-sidebar${pinned ? ' bayn-sidebar--pinned' : ''}`}
       aria-label="Primary navigation"
     >
+      <div className="bayn-sidebar__brand">
+        <span
+          className="bayn-sidebar__logo"
+          style={{ '--logo-src': `url(${logoUrl})` }}
+          aria-hidden="true"
+        />
+      </div>
+
       <div className="bayn-sidebar__head">
         <button
           type="button"
