@@ -14,6 +14,7 @@ const CHANNELS = ['email', 'phone'];
 export default function VerificationPage({
   email = 'user@email.com',
   phone = '+966 5X XXX XXXX',
+  onEditInfo,
 }) {
   const { t } = useTranslation();
   const [code, setCode] = useState('');
@@ -117,6 +118,13 @@ export default function VerificationPage({
         >
           {t('verification.nextStep')}
         </Button>
+
+        <p className="verify__edit">
+          <span>{t('verification.wrongInfo')}</span>
+          <Button variant="tertiary" size="sm" onClick={onEditInfo}>
+            {t('verification.editInfo')}
+          </Button>
+        </p>
       </div>
     </AuthLayout>
   );

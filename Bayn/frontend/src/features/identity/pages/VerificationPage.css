@@ -245,3 +245,23 @@
   margin-top: 6px;
   justify-content: center;
 }
+
+/* Secondary action: fix your info — same inline caption size as Resend */
+.verify__edit {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--text-supporting, #786c57);
+}
+
+.verify__edit .bayn-btn {
+  height: auto;
+  padding: 0;
+  border-radius: 0;
+  font-size: 12px;
+  line-height: 1.3;
+}

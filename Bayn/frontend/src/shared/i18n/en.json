@@ -47,6 +47,8 @@
     "phoneOption": "Phone Number Verification",
     "phoneOptionDesc": "We'll send the verification code to your phone number",
     "bothRequired": "You must complete both email and phone verification before proceeding to the next step.",
-    "nextStep": "Next Step"
+    "nextStep": "Next Step",
+    "wrongInfo": "Entered the wrong information?",
+    "editInfo": "Edit information"
   }
 }
