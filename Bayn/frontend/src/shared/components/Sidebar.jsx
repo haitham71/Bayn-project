@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import House from '@/assets/icons/house.svg?react';
 import Lightbulb from '@/assets/icons/lightbulb.svg?react';
 import Presentation from '@/assets/icons/presentation.svg?react';
@@ -13,17 +14,17 @@ import logoUrl from '@/assets/logo/Bayn-svg.svg?url';
 import './Sidebar.css';
 
 const defaultItems = [
-  { key: 'home', label: 'Home', icon: House },
-  { key: 'ideas', label: 'Ideas', icon: Lightbulb },
-  { key: 'projects', label: 'My projects', icon: Presentation },
-  { key: 'meetings', label: 'Meetings', icon: Video },
-  { key: 'profiles', label: 'Profiles', icon: UserPlus },
-  { key: 'profile', label: 'My profile', icon: UserRound },
+  { key: 'home', labelKey: 'sidebar.home', icon: House },
+  { key: 'ideas', labelKey: 'sidebar.ideas', icon: Lightbulb },
+  { key: 'projects', labelKey: 'sidebar.projects', icon: Presentation },
+  { key: 'meetings', labelKey: 'sidebar.meetings', icon: Video },
+  { key: 'profiles', labelKey: 'sidebar.profiles', icon: UserPlus },
+  { key: 'profile', labelKey: 'sidebar.profile', icon: UserRound },
 ];
 
 const defaultFooter = [
-    { key: 'settings', label: 'Settings', icon: Settings },
-	{ key: 'logout', label: 'Log out', icon: LogOut },
+    { key: 'settings', labelKey: 'sidebar.settings', icon: Settings },
+	{ key: 'logout', labelKey: 'sidebar.logout', icon: LogOut },
 ];
 
 export default function Sidebar({
@@ -33,6 +34,7 @@ export default function Sidebar({
   defaultActiveKey = 'projects',
   onNavigate,
 }) {
+  const { t } = useTranslation();
   const [internalActive, setInternalActive] = useState(defaultActiveKey);
   const active = activeKey ?? internalActive;
   const [pinned, setPinned] = useState(false);
@@ -45,6 +47,7 @@ export default function Sidebar({
   function renderItem(item) {
     const Icon = item.icon;
     const isActive = item.key === active;
+    const label = item.labelKey ? t(item.labelKey) : item.label;
     return (
       <li key={item.key}>
         <button
@@ -58,7 +61,7 @@ export default function Sidebar({
               <Icon width={26} height={26} aria-hidden="true" />
             </span>
           </span>
-          <span className="bayn-sidebar__label">{item.label}</span>
+          <span className="bayn-sidebar__label">{label}</span>
         </button>
       </li>
     );
@@ -67,7 +70,7 @@ export default function Sidebar({
   return (
     <aside
       className={`bayn-sidebar${pinned ? ' bayn-sidebar--pinned' : ''}`}
-      aria-label="Primary navigation"
+      aria-label={t('sidebar.primaryNav')}
     >
       <div className="bayn-sidebar__brand">
         <span
@@ -83,7 +86,7 @@ export default function Sidebar({
           className="bayn-sidebar__pin"
           onClick={() => setPinned((p) => !p)}
           aria-pressed={pinned}
-          title={pinned ? 'Unpin sidebar' : 'Pin sidebar'}
+          title={pinned ? t('sidebar.unpinTitle') : t('sidebar.pinTitle')}
         >
           <span className="bayn-sidebar__pin-icon">
             {pinned ? (
@@ -92,7 +95,7 @@ export default function Sidebar({
               <Pin width={18} height={18} aria-hidden="true" />
             )}
           </span>
-          <span className="bayn-sidebar__pin-label">{pinned ? 'Unpin' : 'Pin'}</span>
+          <span className="bayn-sidebar__pin-label">{pinned ? t('sidebar.unpin') : t('sidebar.pin')}</span>
         </button>
       </div>
 

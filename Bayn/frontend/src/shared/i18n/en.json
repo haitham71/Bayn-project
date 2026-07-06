@@ -8,5 +8,20 @@
     "errorText": "This field has an error",
     "search": "Search",
     "description": "Description"
+  },
+  "sidebar": {
+    "home": "Home",
+    "ideas": "Ideas",
+    "projects": "My projects",
+    "meetings": "Meetings",
+    "profiles": "Profiles",
+    "profile": "My profile",
+    "settings": "Settings",
+    "logout": "Log out",
+    "pin": "Pin",
+    "unpin": "Unpin",
+    "pinTitle": "Pin sidebar",
+    "unpinTitle": "Unpin sidebar",
+    "primaryNav": "Primary navigation"
   }
 }
