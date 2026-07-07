@@ -1,0 +1,295 @@
+.su *, .su *::before, .su *::after {
+  box-sizing: border-box;
+}
+
+.su {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 100vh;
+  background: #EBE5DC;
+  font-family: var(--font-sans, 'Inter', sans-serif);
+}
+
+.su--rtl {
+  font-family: var(--font-arabic, 'Tajawal', sans-serif);
+  grid-template-columns: 1fr 1fr;
+}
+
+/* ── Form panel ───────────────────────── */
+
+.su__main {
+  display: flex;
+  flex-direction: column;
+  padding: 28px 40px 36px;
+  overflow-y: auto;
+  background: #EBE5DC;
+}
+
+.su__logo {
+  width: 88px;
+  height: auto;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+
+.su__title {
+  font-size: clamp(24px, 2.8vw, 40px);
+  font-weight: 700;
+  color: #0F3D2E;
+  margin: 0 0 20px;
+  letter-spacing: -0.5px;
+}
+
+
+/* ── Form grid ────────────────────────── */
+
+.su__form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1;
+}
+
+.su__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 20px;
+}
+
+.su__col {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.su__input.bayn-input {
+  width: 100%;
+}
+
+.su__error {
+  margin: 0;
+  font-size: 13px;
+  color: #900000;
+}
+
+/* ── Password strength ────────────────── */
+
+.pw-str {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pw-str__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pw-str__title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0F3D2E;
+  white-space: nowrap;
+}
+
+.pw-str__bars {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+}
+
+.pw-str__bar {
+  flex: 1;
+  height: 3px;
+  border-radius: 4px;
+  background: #C9BAA1;
+  transition: background 0.2s;
+}
+
+.pw-str__bar--on {
+  background: #0F3D2E;
+}
+
+.pw-str__list {
+  list-style: disc;
+  margin: 0;
+  padding: 0 0 0 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pw-str__rule {
+  font-size: 12px;
+  color: #786C57;
+}
+
+.pw-str__rule--ok {
+  color: #0F3D2E;
+  font-weight: 500;
+}
+
+/* ── Footer ───────────────────────────── */
+
+.su__footer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.su__terms-row {
+  display: flex;
+  align-items: flex-start;
+}
+
+.su__terms-text {
+  font-size: 12px;
+  color: #463E31;
+  line-height: 1.5;
+}
+
+.su__terms-link {
+  color: #295E4D;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.su__terms-link:hover {
+  text-decoration: underline;
+}
+
+.su__action-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.su__submit.bayn-btn {
+  min-width: 160px;
+  flex-shrink: 0;
+}
+
+.su__login-text {
+  margin: 0;
+  font-size: 14px;
+  color: #463E31;
+}
+
+.su__login-link {
+  color: #295E4D;
+  font-weight: 700;
+  text-decoration: underline;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+  display: inline;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.su__login-link:hover {
+  opacity: 0.75;
+}
+
+/* ── Hero panel ───────────────────────── */
+
+.su__hero {
+  position: relative;
+  background-size: cover;
+  background-position: center;
+  border-radius: 80px 0 0 80px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  padding: 28px 32px;
+  min-height: 100vh;
+  box-shadow: -9px 0 8px rgba(0, 0, 0, 0.25);
+}
+
+.su--rtl .su__hero {
+  border-radius: 0 80px 80px 0;
+  align-items: flex-start;
+  box-shadow: 9px 0 8px rgba(0, 0, 0, 0.25);
+}
+
+.su__hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(15, 61, 46, 0.55) 0%,
+    rgba(15, 61, 46, 0.20) 35%,
+    rgba(15, 61, 46, 0.55) 100%
+  );
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.su__lang-btn {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 20px;
+  border: none;
+  border-radius: 10px;
+  background: rgba(15, 61, 46, 0.70);
+  color: #fff;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.su__lang-btn:hover {
+  background: rgba(15, 61, 46, 0.90);
+}
+
+/* ── FABs ─────────────────────────────── */
+
+.su__fabs {
+  position: fixed;
+  bottom: 32px;
+  right: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 50;
+}
+
+.su--rtl .su__fabs {
+  right: auto;
+  left: 24px;
+}
+
+/* ── Responsive ───────────────────────── */
+
+@media (max-width: 900px) {
+  .su,
+  .su--rtl {
+    grid-template-columns: 1fr;
+  }
+
+  .su__hero {
+    display: none;
+  }
+
+  .su__main {
+    padding: 28px 24px;
+  }
+
+  .su__grid {
+    grid-template-columns: 1fr;
+  }
+}

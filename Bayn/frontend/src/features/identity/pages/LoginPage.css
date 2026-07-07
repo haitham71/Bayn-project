@@ -1,0 +1,259 @@
+.lp *, .lp *::before, .lp *::after {
+  box-sizing: border-box;
+}
+
+.lp {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 100vh;
+  background: #EBE5DC;
+  font-family: var(--font-sans, 'Inter', sans-serif);
+}
+
+.lp--rtl {
+  font-family: var(--font-arabic, 'Tajawal', sans-serif);
+  grid-template-columns: 1fr 1fr;
+}
+
+/* ── Hero ─────────────────────────────── */
+
+.lp__hero {
+  position: relative;
+  background-size: cover;
+  background-position: center;
+  border-radius: 0 80px 80px 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 28px 40px 52px;
+  color: #ebe5dca6;
+  min-height: 100vh;
+  box-shadow: 9px 0 8px rgba(0, 0, 0, 0.173);
+}
+
+.lp--rtl .lp__hero {
+  border-radius: 80px 0 0 80px;
+  box-shadow: -9px 0 8px rgba(0, 0, 0, 0.25);
+}
+
+.lp__hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0) 45%,
+    rgba(15, 61, 46, 0.65) 100%
+  );
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.lp__hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+.lp__lang-btn {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 20px;
+  border: none;
+  border-radius: 10px;
+  background: rgba(15, 61, 46, 0.485);
+  color: #fff;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.lp__lang-btn:hover {
+  background: rgba(15, 61, 46, 0.90);
+}
+
+.lp__hero-body {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+}
+
+.lp__hero-content {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.lp__hero-title {
+  font-size: clamp(26px, 3.3vw, 48px);
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: pre-line;
+  margin: 0;
+}
+
+.lp__hero-desc {
+  font-size: clamp(12px, 0.97vw, 14px);
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0;
+}
+
+/* ── Form panel ───────────────────────── */
+
+.lp__panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 60px 64px;
+  background: #EBE5DC;
+}
+
+.lp__logo {
+  position: absolute;
+  top: 28px;
+  right: 32px;
+  width: 100px;
+  height: auto;
+}
+
+.lp--rtl .lp__logo {
+  right: auto;
+  left: 32px;
+}
+
+.lp__form {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+}
+
+.lp__title {
+  font-size: clamp(26px, 2.8vw, 40px);
+  font-weight: 700;
+  color: #0F3D2E;
+  margin: 0 0 52px;
+  letter-spacing: -0.5px;
+}
+
+.lp__fields {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  margin-bottom: 28px;
+}
+
+.lp__input.bayn-input {
+  width: 100%;
+}
+
+.lp__error {
+  margin: -14px 0 14px;
+  font-size: 13px;
+  color: #900000;
+}
+
+.lp__submit.bayn-btn {
+  width: 100%;
+}
+
+.lp__links {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.lp__link {
+  color: #163128;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  font-family: inherit;
+  display: inline;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.lp__link:hover {
+  text-decoration: underline;
+}
+
+.lp__link--bold {
+  color: #0f3d2e;
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.lp__sub {
+  margin: 0;
+  font-size: 14px;
+  color: #504636;
+}
+
+/* ── FABs ─────────────────────────────── */
+
+.lp__fabs {
+  position: fixed;
+  bottom: 32px;
+  right: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 50;
+}
+
+.lp--rtl .lp__fabs {
+  right: auto;
+  left: 24px;
+}
+
+/* ── Responsive ───────────────────────── */
+
+@media (max-width: 768px) {
+  .lp,
+  .lp--rtl {
+    grid-template-columns: 1fr;
+    grid-template-rows: 240px 1fr;
+  }
+
+  .lp__hero {
+    min-height: unset;
+    border-radius: 0 0 40px 40px;
+    padding: 20px 24px;
+    box-shadow: none;
+  }
+
+  .lp--rtl .lp__hero {
+    border-radius: 0 0 40px 40px;
+    box-shadow: none;
+  }
+
+  .lp__panel {
+    padding: 40px 28px;
+  }
+
+  .lp__logo {
+    top: 20px;
+    right: 20px;
+    width: 72px;
+  }
+
+  .lp__title {
+    margin-bottom: 32px;
+  }
+}
