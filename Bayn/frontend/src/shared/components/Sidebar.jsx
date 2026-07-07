@@ -7,6 +7,7 @@ import Video from '@/assets/icons/video.svg?react';
 import UserPlus from '@/assets/icons/user-plus.svg?react';
 import UserRound from '@/assets/icons/user-round.svg?react';
 import Settings from '@/assets/icons/settings.svg?react';
+import Languages from '@/assets/icons/languages.svg?react';
 import LogOut from '@/assets/icons/log-out.svg?react';
 import Pin from '@/assets/icons/pin.svg?react';
 import PinOff from '@/assets/icons/pin-off.svg?react';
@@ -24,6 +25,7 @@ const defaultItems = [
 
 const defaultFooter = [
     { key: 'settings', labelKey: 'sidebar.settings', icon: Settings },
+	{ key: 'language', labelKey: 'app.switchLanguage', icon: Languages, action: 'toggleLanguage' },
 	{ key: 'logout', labelKey: 'sidebar.logout', icon: LogOut },
 ];
 
@@ -34,7 +36,7 @@ export default function Sidebar({
   defaultActiveKey = 'projects',
   onNavigate,
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [internalActive, setInternalActive] = useState(defaultActiveKey);
   const active = activeKey ?? internalActive;
   const [pinned, setPinned] = useState(false);
@@ -44,9 +46,14 @@ export default function Sidebar({
     onNavigate?.(key);
   }
 
+  function toggleLanguage() {
+    i18n.changeLanguage(i18n.language === 'ar' ? 'en' : 'ar');
+  }
+
   function renderItem(item) {
     const Icon = item.icon;
-    const isActive = item.key === active;
+    const isAction = Boolean(item.action);
+    const isActive = !isAction && item.key === active;
     const label = item.labelKey ? t(item.labelKey) : item.label;
     return (
       <li key={item.key}>
@@ -54,7 +61,7 @@ export default function Sidebar({
           type="button"
           className={`bayn-sidebar__item${isActive ? ' bayn-sidebar__item--active' : ''}`}
           aria-current={isActive ? 'page' : undefined}
-          onClick={() => handleNavigate(item.key)}
+          onClick={item.action === 'toggleLanguage' ? toggleLanguage : () => handleNavigate(item.key)}
         >
           <span className="bayn-sidebar__icon">
             <span className="bayn-sidebar__icon-tile">
