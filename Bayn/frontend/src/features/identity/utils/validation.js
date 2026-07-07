@@ -6,9 +6,11 @@
 // ASCII local part, a real domain, and a letters-only TLD (2+). This rejects
 // numeric-only domains like "11@11.11", stray symbols, and non-Latin scripts.
 const EMAIL_RE = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}$/;
-// Real names: Arabic or English letters only, single spaces between words.
-// The Arabic range is limited to letters (excludes Arabic-Indic digits).
+// Real names: single spaces between words, letters only. Separate ranges so a
+// field can require a specific script (Arabic-only vs English-only).
 const NAME_RE = /^[A-Za-zء-ي]+(?: [A-Za-zء-ي]+)*$/;
+const NAME_EN_RE = /^[A-Za-z]+(?: [A-Za-z]+)*$/;
+const NAME_AR_RE = /^[ء-ي]+(?: [ء-ي]+)*$/;
 // Usernames may only hold letters, digits, dot and underscore.
 const USERNAME_ALLOWED_RE = /^[a-zA-Z0-9._]+$/;
 
@@ -18,9 +20,11 @@ export function validateEmail(value) {
   return EMAIL_RE.test(v) ? null : 'errEmail';
 }
 
-export function validateName(value, { required = true } = {}) {
+export function validateName(value, { required = true, lang = 'any' } = {}) {
   const v = value.trim();
   if (!v) return required ? 'errRequired' : null;
+  if (lang === 'en') return NAME_EN_RE.test(v) ? null : 'errNameEn';
+  if (lang === 'ar') return NAME_AR_RE.test(v) ? null : 'errNameAr';
   return NAME_RE.test(v) ? null : 'errName';
 }
 
