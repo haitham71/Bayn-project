@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import AuthLayout from '@/layouts/AuthLayout';
+import IdentityLayout from '@/layouts/IdentityLayout';
 import Stepper from '../components/Stepper';
 import OtpInput from '../components/OtpInput';
 import Radio from '@/shared/components/Radio';
@@ -51,7 +51,7 @@ export default function VerificationPage({
   }
 
   return (
-    <AuthLayout>
+    <IdentityLayout>
       <div className="verify">
         <h1 className="verify__title">{t('auth.createAccount')}</h1>
 
@@ -126,6 +126,6 @@ export default function VerificationPage({
           </Button>
         </p>
       </div>
-    </AuthLayout>
+    </IdentityLayout>
   );
 }

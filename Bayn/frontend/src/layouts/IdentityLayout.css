@@ -1,11 +1,11 @@
-.auth-layout {
+.identity-layout {
   display: flex;
   min-height: 100vh;
   background: var(--bg-surface-primary, #ebe5dc);
 }
 
 /* Form column */
-.auth-layout__form {
+.identity-layout__form {
   flex: 1 1 50%;
   display: flex;
   flex-direction: column;
@@ -13,11 +13,11 @@
   min-width: 0;
 }
 
-.auth-layout__brand {
+.identity-layout__brand {
   margin-bottom: 24px;
 }
 
-.auth-layout__content {
+.identity-layout__content {
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
@@ -28,7 +28,7 @@
 }
 
 /* Hero column */
-.auth-layout__hero {
+.identity-layout__hero {
   flex: 1 1 35%;
   position: relative;
   background-size: cover;
@@ -38,7 +38,7 @@
   color: #fff;
   overflow: visible;
 }
-.auth-layout__hero-overlay {
+.identity-layout__hero-overlay {
   position: absolute;
   inset: 0;
   border-start-start-radius: 48px;
@@ -51,7 +51,7 @@
   );
 }
 
-.auth-layout__quick-actions {
+.identity-layout__quick-actions {
   position: absolute;
   top: 750px;
   inset-inline-start: -70px;
@@ -62,11 +62,11 @@
 }
 
 /* Size/shape/colour come from Button (iconOnly, primary); we only add the lift */
-.auth-layout__circle {
+.identity-layout__circle {
   box-shadow: 0 8px 20px -8px rgba(4, 18, 14, 0.5);
 }
 
-.auth-layout__lang {
+.identity-layout__lang {
   position: absolute;
   top: 28px;
   inset-inline-end: 28px;
@@ -91,11 +91,11 @@
   transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
-.auth-layout__lang:hover {
+.identity-layout__lang:hover {
   background: rgba(15, 61, 46, 0.32);
 }
 
-.auth-layout__hero-text {
+.identity-layout__hero-text {
   position: absolute;
   inset-inline: 56px;
   top: 96px;
@@ -103,7 +103,7 @@
   max-width: 520px;
 }
 
-.auth-layout__hero-title {
+.identity-layout__hero-title {
   font-family: var(--font-sans);
   font-size: 40px;
   font-weight: 600;
@@ -112,7 +112,7 @@
   margin: 0 0 16px;
 }
 
-.auth-layout__hero-subtitle {
+.identity-layout__hero-subtitle {
   font-family: var(--font-sans);
   font-size: 18px;
   line-height: 1.5;
@@ -122,10 +122,10 @@
 
 /* Stack on narrow screens: hide the hero, keep the form usable */
 @media (max-width: 860px) {
-  .auth-layout__hero {
+  .identity-layout__hero {
     display: none;
   }
-  .auth-layout__form {
+  .identity-layout__form {
     flex-basis: 100%;
     padding: 32px 24px;
   }

@@ -1,45 +1,26 @@
-.su *, .su *::before, .su *::after {
-  box-sizing: border-box;
-}
-
-.su {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  min-height: 100vh;
-  background: #EBE5DC;
-  font-family: var(--font-sans, 'Inter', sans-serif);
-}
-
-.su--rtl {
-  font-family: var(--font-arabic, 'Tajawal', sans-serif);
-  grid-template-columns: 1fr 1fr;
-}
-
-/* ── Form panel ───────────────────────── */
-
-.su__main {
-  display: flex;
-  flex-direction: column;
-  padding: 28px 40px 36px;
-  overflow-y: auto;
-  background: #EBE5DC;
-}
-
-.su__logo {
-  width: 88px;
-  height: auto;
-  margin-bottom: 12px;
-  flex-shrink: 0;
+/* Sign-up form — rendered inside the shared IdentityLayout shell.
+   The two-column form is wider than the default auth content column, and it is
+   tall enough that it should sit at the top rather than being vertically
+   centred like the short verification content. */
+.identity-layout__content.su__content {
+  max-width: 720px;
+  justify-content: flex-start;
+  padding-block: 24px;
 }
 
 .su__title {
-  font-size: clamp(24px, 2.8vw, 40px);
-  font-weight: 700;
-  color: #0F3D2E;
   margin: 0 0 20px;
-  letter-spacing: -0.5px;
+  font-family: var(--font-sans);
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-title, #0f3d2e);
+  text-align: center;
 }
 
+.su__stepper {
+  margin: 0 0 28px;
+}
 
 /* ── Form grid ────────────────────────── */
 
@@ -47,7 +28,6 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  flex: 1;
 }
 
 .su__grid {
@@ -163,20 +143,23 @@
 
 .su__action-row {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 20px;
-  flex-wrap: wrap;
+  gap: 12px;
 }
 
+/* Match the verification page's primary button: full width, centred content */
 .su__submit.bayn-btn {
-  min-width: 160px;
-  flex-shrink: 0;
+  width: 80%;
+  margin-top: 6px;
+  justify-content: center;
 }
 
 .su__login-text {
   margin: 0;
   font-size: 14px;
   color: #463E31;
+  text-align: center;
 }
 
 .su__login-link {
@@ -199,96 +182,9 @@
   opacity: 0.75;
 }
 
-/* ── Hero panel ───────────────────────── */
-
-.su__hero {
-  position: relative;
-  background-size: cover;
-  background-position: center;
-  border-radius: 80px 0 0 80px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  padding: 28px 32px;
-  min-height: 100vh;
-  box-shadow: -9px 0 8px rgba(0, 0, 0, 0.25);
-}
-
-.su--rtl .su__hero {
-  border-radius: 0 80px 80px 0;
-  align-items: flex-start;
-  box-shadow: 9px 0 8px rgba(0, 0, 0, 0.25);
-}
-
-.su__hero-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    to bottom,
-    rgba(15, 61, 46, 0.55) 0%,
-    rgba(15, 61, 46, 0.20) 35%,
-    rgba(15, 61, 46, 0.55) 100%
-  );
-  border-radius: inherit;
-  pointer-events: none;
-}
-
-.su__lang-btn {
-  position: relative;
-  z-index: 1;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 20px;
-  border: none;
-  border-radius: 10px;
-  background: rgba(15, 61, 46, 0.70);
-  color: #fff;
-  font-family: inherit;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.su__lang-btn:hover {
-  background: rgba(15, 61, 46, 0.90);
-}
-
-/* ── FABs ─────────────────────────────── */
-
-.su__fabs {
-  position: fixed;
-  bottom: 32px;
-  right: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  z-index: 50;
-}
-
-.su--rtl .su__fabs {
-  right: auto;
-  left: 24px;
-}
-
 /* ── Responsive ───────────────────────── */
 
 @media (max-width: 900px) {
-  .su,
-  .su--rtl {
-    grid-template-columns: 1fr;
-  }
-
-  .su__hero {
-    display: none;
-  }
-
-  .su__main {
-    padding: 28px 24px;
-  }
-
   .su__grid {
     grid-template-columns: 1fr;
   }

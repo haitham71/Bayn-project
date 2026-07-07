@@ -50,5 +50,47 @@
     "nextStep": "Next Step",
     "wrongInfo": "Entered the wrong information?",
     "editInfo": "Edit information"
+  },
+  "login": {
+    "welcome": "Welcome Back!",
+    "email": "Email",
+    "password": "Password",
+    "signIn": "Sign In",
+    "forgot": "Forgot your password?",
+    "noAccount": "Don't have an account?",
+    "signUp": "Sign Up",
+    "loading": "Loading...",
+    "error": "Please fill in all fields."
+  },
+  "signup": {
+    "title": "Create your account",
+    "email": "Email",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "username": "Username",
+    "middleName": "Middle Name",
+    "dob": "Date of Birth",
+    "phone": "Phone Number",
+    "strengthLabel": "Password Strength",
+    "rules": [
+      "At least 8 characters",
+      "One uppercase letter",
+      "One number",
+      "One Digit #,$,@ at least"
+    ],
+    "termsPrefix": "By clicking here you agree to Bayn's ",
+    "termsAgreement": "User Agreement",
+    "termsComma": ", ",
+    "termsPrivacy": "Privacy Policy",
+    "termsAnd": " and ",
+    "termsCookies": "Cookies Policy",
+    "nextStep": "Next Step",
+    "haveAccount": "Already have an account?",
+    "logIn": "Log in",
+    "errorEmpty": "Please fill in all required fields.",
+    "errorPassword": "Passwords do not match.",
+    "errorTerms": "Please agree to the terms."
   }
 }
