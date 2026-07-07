@@ -5,14 +5,16 @@
 .identity-layout__content.su__content {
   max-width: 720px;
   justify-content: flex-start;
-  padding-block: 16px;
+  padding-block: 0;
   min-height: 0;
+  /* pull the whole block up under the logo (signup only) */
+  margin-top: -30px;
 }
 
 .su__title {
-  margin: 0 0 16px;
+  margin: 0 0 15px;
   font-family: var(--font-sans);
-  font-size: 36px;
+  font-size: 30px;
   font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--text-title, #0f3d2e);
@@ -20,29 +22,70 @@
 }
 
 .su__stepper {
-  margin: 0 0 20px;
+  margin: 0 0 8px;
 }
 
-/* ── Form grid ────────────────────────── */
+/* ── Form ──────────────────────────────── */
 
+/* The form fills the column and spreads its rows to fit the viewport exactly
+   (no scrollbar). Rows are full-width, so distributing them vertically keeps
+   every field aligned. */
 .su__form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 18px;
+  flex: 1;
+  min-height: 0;
+  justify-content: space-between;
 }
 
-.su__grid {
+/* Each row holds two fields side by side. */
+.su__row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 14px 20px;
+  column-gap: 20px;
 }
 
-/* Fixed, equal gap in both columns so the rows line up left-to-right
-   (space-between would drift because the right column is taller). */
-.su__col {
+/* Names section: language toggle + the three name fields for that language. */
+.su__names {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 18px;
+}
+
+.su__lang-toggle {
+  align-self: center;
+  display: inline-flex;
+  padding: 4px;
+  border-radius: 10px;
+  background: var(--input-bg-default, rgba(215, 203, 185, 0.45));
+  border: 1px solid var(--color-secondary-700, #bca98a);
+}
+
+.su__lang-opt {
+  min-width: 96px;
+  padding: 7px 18px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-supporting, #786c57);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.su__lang-opt--active {
+  background: var(--btn-primary-default, #295e4d);
+  color: var(--btn-text, #ebe5dc);
+}
+
+.su__names-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 20px;
+  row-gap: 20px;
 }
 
 .su__input.bayn-input {
@@ -199,7 +242,8 @@
 /* ── Responsive ───────────────────────── */
 
 @media (max-width: 900px) {
-  .su__grid {
+  .su__row,
+  .su__names-grid {
     grid-template-columns: 1fr;
   }
 }

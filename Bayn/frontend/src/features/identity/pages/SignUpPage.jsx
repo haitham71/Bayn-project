@@ -84,12 +84,19 @@ export default function SignUpPage({ onNavigate, initialData = {}, onDataChange 
   ];
 
   const [email, setEmail] = useState(initialData.email || '');
-  const [firstName, setFirstName] = useState(initialData.firstName || '');
-  const [lastName, setLastName] = useState(initialData.lastName || '');
+  const [username, setUsername] = useState(initialData.username || '');
+  // Names are captured in both languages; a toggle switches which set is shown.
+  const [nameLang, setNameLang] = useState(initialData.nameLang || 'en');
+  const [firstNameEn, setFirstNameEn] = useState(initialData.firstNameEn || '');
+  const [secondNameEn, setSecondNameEn] = useState(initialData.secondNameEn || '');
+  const [thirdNameEn, setThirdNameEn] = useState(initialData.thirdNameEn || '');
+  const [lastNameEn, setLastNameEn] = useState(initialData.lastNameEn || '');
+  const [firstNameAr, setFirstNameAr] = useState(initialData.firstNameAr || '');
+  const [secondNameAr, setSecondNameAr] = useState(initialData.secondNameAr || '');
+  const [thirdNameAr, setThirdNameAr] = useState(initialData.thirdNameAr || '');
+  const [lastNameAr, setLastNameAr] = useState(initialData.lastNameAr || '');
   const [password, setPassword] = useState(initialData.password || '');
   const [confirmPassword, setConfirmPassword] = useState(initialData.confirmPassword || '');
-  const [username, setUsername] = useState(initialData.username || '');
-  const [middleName, setMiddleName] = useState(initialData.middleName || '');
   const [dob, setDob] = useState(initialData.dob || '');
   const [phone, setPhone] = useState(initialData.phone || '+966');
   const [showPassword, setShowPassword] = useState(false);
@@ -102,24 +109,47 @@ export default function SignUpPage({ onNavigate, initialData = {}, onDataChange 
   // back (the page itself unmounts, but App keeps the data).
   useEffect(() => {
     onDataChange?.({
-      email, firstName, lastName, password, confirmPassword,
-      username, middleName, dob, phone, agreed,
+      email, username, nameLang,
+      firstNameEn, secondNameEn, thirdNameEn, lastNameEn,
+      firstNameAr, secondNameAr, thirdNameAr, lastNameAr,
+      password, confirmPassword, dob, phone, agreed,
     });
-  }, [email, firstName, lastName, password, confirmPassword, username, middleName, dob, phone, agreed]);
+  }, [email, username, nameLang, firstNameEn, secondNameEn, thirdNameEn, lastNameEn, firstNameAr, secondNameAr, thirdNameAr, lastNameAr, password, confirmPassword, dob, phone, agreed]);
+
+  // The name fields for the language the toggle is currently showing.
+  // The third name maps to third_name on the backend.
+  const nameSet = nameLang === 'en'
+    ? [
+        { key: 'firstNameEn', label: 'firstName', value: firstNameEn, set: setFirstNameEn },
+        { key: 'secondNameEn', label: 'secondName', value: secondNameEn, set: setSecondNameEn },
+        { key: 'thirdNameEn', label: 'thirdName', value: thirdNameEn, set: setThirdNameEn },
+        { key: 'lastNameEn', label: 'lastName', value: lastNameEn, set: setLastNameEn },
+      ]
+    : [
+        { key: 'firstNameAr', label: 'firstName', value: firstNameAr, set: setFirstNameAr },
+        { key: 'secondNameAr', label: 'secondName', value: secondNameAr, set: setSecondNameAr },
+        { key: 'thirdNameAr', label: 'thirdName', value: thirdNameAr, set: setThirdNameAr },
+        { key: 'lastNameAr', label: 'lastName', value: lastNameAr, set: setLastNameAr },
+      ];
 
   // Turns the validators' error codes into a field -> localized message map.
   function collectErrors() {
     const next = {};
     const email_ = validateEmail(email);
     if (email_) next.email = email_;
-    const first = validateName(firstName);
-    if (first) next.firstName = first;
-    const last = validateName(lastName);
-    if (last) next.lastName = last;
-    const middle = validateName(middleName);
-    if (middle) next.middleName = middle;
     const user = validateUsername(username);
     if (user) next.username = user;
+
+    [
+      ['firstNameEn', 'en', firstNameEn, true], ['secondNameEn', 'en', secondNameEn, true],
+      ['thirdNameEn', 'en', thirdNameEn, true], ['lastNameEn', 'en', lastNameEn, true],
+      ['firstNameAr', 'ar', firstNameAr, true], ['secondNameAr', 'ar', secondNameAr, true],
+      ['thirdNameAr', 'ar', thirdNameAr, true], ['lastNameAr', 'ar', lastNameAr, true],
+    ].forEach(([key, lang, value, required]) => {
+      const err = validateName(value, { lang, required });
+      if (err) next[key] = err;
+    });
+
     const birth = validateDob(dob);
     if (birth) next.dob = birth;
     const tel = validatePhone(phone);
@@ -140,6 +170,13 @@ export default function SignUpPage({ onNavigate, initialData = {}, onDataChange 
     setError('');
     const found = collectErrors();
     setErrors(found);
+
+    // Surface hidden-language name errors by switching the toggle to them.
+    const enNameErr = found.firstNameEn || found.secondNameEn || found.thirdNameEn || found.lastNameEn;
+    const arNameErr = found.firstNameAr || found.secondNameAr || found.thirdNameAr || found.lastNameAr;
+    if (nameLang === 'en' && !enNameErr && arNameErr) setNameLang('ar');
+    else if (nameLang === 'ar' && !arNameErr && enNameErr) setNameLang('en');
+
     if (Object.values(found).some(Boolean)) return;
     if (!agreed) {
       setError(t('signup.errorTerms'));
@@ -161,88 +198,101 @@ export default function SignUpPage({ onNavigate, initialData = {}, onDataChange 
       </div>
 
       <form className="su__form" onSubmit={handleSubmit} noValidate>
-        <div className="su__grid">
-          <div className="su__col">
-            <Input
-              label={t('signup.email')}
-              type="email"
-              value={email}
-              onChange={e => { setEmail(e.target.value); clearError('email'); }}
-              className="su__input"
-              {...fieldError('email')}
-            />
-            <Input
-              label={t('signup.firstName')}
-              value={firstName}
-              onChange={e => { setFirstName(e.target.value); clearError('firstName'); }}
-              className="su__input"
-              {...fieldError('firstName')}
-            />
-            <Input
-              label={t('signup.lastName')}
-              value={lastName}
-              onChange={e => { setLastName(e.target.value); clearError('lastName'); }}
-              className="su__input"
-              {...fieldError('lastName')}
-            />
-            <Input
-              label={t('signup.password')}
-              type={showPassword ? 'text' : 'password'}
-              value={password}
-              onChange={e => { setPassword(e.target.value); clearError('password'); }}
-              trailingIcon={showPassword ? <EyeOpen /> : <EyeOff />}
-              onTrailingClick={() => setShowPassword(p => !p)}
-              className="su__input"
-              {...fieldError('password')}
-            />
-            <Input
-              label={t('signup.confirmPassword')}
-              type={showConfirm ? 'text' : 'password'}
-              value={confirmPassword}
-              onChange={e => { setConfirmPassword(e.target.value); clearError('confirmPassword'); }}
-              trailingIcon={showConfirm ? <EyeOpen /> : <EyeOff />}
-              onTrailingClick={() => setShowConfirm(p => !p)}
-              className="su__input"
-              {...fieldError('confirmPassword')}
-            />
+        <div className="su__row">
+          <Input
+            label={t('signup.email')}
+            type="email"
+            value={email}
+            onChange={e => { setEmail(e.target.value); clearError('email'); }}
+            className="su__input"
+            {...fieldError('email')}
+          />
+          <Input
+            label={t('signup.username')}
+            value={username}
+            onChange={e => { setUsername(e.target.value); clearError('username'); }}
+            className="su__input"
+            {...fieldError('username')}
+          />
+        </div>
+
+        <div className="su__names">
+          <div className="su__lang-toggle" role="group" aria-label="Name language">
+            <button
+              type="button"
+              className={`su__lang-opt${nameLang === 'en' ? ' su__lang-opt--active' : ''}`}
+              onClick={() => setNameLang('en')}
+            >
+              English
+            </button>
+            <button
+              type="button"
+              className={`su__lang-opt${nameLang === 'ar' ? ' su__lang-opt--active' : ''}`}
+              onClick={() => setNameLang('ar')}
+            >
+              العربية
+            </button>
           </div>
 
-          <div className="su__col">
-            <Input
-              label={t('signup.username')}
-              value={username}
-              onChange={e => { setUsername(e.target.value); clearError('username'); }}
-              className="su__input"
-              {...fieldError('username')}
-            />
-            <Input
-              label={t('signup.middleName')}
-              value={middleName}
-              onChange={e => { setMiddleName(e.target.value); clearError('middleName'); }}
-              className="su__input"
-              {...fieldError('middleName')}
-            />
-            <Input
-              label={t('signup.dob')}
-              inputMode="numeric"
-              value={dob}
-              onChange={e => { setDob(formatDob(e.target.value)); clearError('dob'); }}
-              supportingText="DD/MM/YYYY"
-              className="su__input"
-              {...fieldError('dob')}
-            />
-            <Input
-              label={t('signup.phone')}
-              type="tel"
-              inputMode="numeric"
-              value={phone}
-              onChange={e => { setPhone(formatPhone(e.target.value)); clearError('phone'); }}
-              className="su__input"
-              {...fieldError('phone')}
-            />
-            <PasswordStrength password={password} t={t} />
+          <div className="su__names-grid">
+            {nameSet.map(f => (
+              <Input
+                key={f.key}
+                label={t(`signup.${f.label}`, { lng: nameLang })}
+                value={f.value}
+                onChange={e => { f.set(e.target.value); clearError(f.key); }}
+                className="su__input"
+                {...fieldError(f.key)}
+              />
+            ))}
           </div>
         </div>
+
+        <div className="su__row">
+          <Input
+            label={t('signup.dob')}
+            inputMode="numeric"
+            value={dob}
+            onChange={e => { setDob(formatDob(e.target.value)); clearError('dob'); }}
+            supportingText="DD/MM/YYYY"
+            className="su__input"
+            {...fieldError('dob')}
+          />
+          <Input
+            label={t('signup.phone')}
+            type="tel"
+            inputMode="numeric"
+            value={phone}
+            onChange={e => { setPhone(formatPhone(e.target.value)); clearError('phone'); }}
+            className="su__input"
+            {...fieldError('phone')}
+          />
+        </div>
+
+        <div className="su__row">
+          <Input
+            label={t('signup.password')}
+            type={showPassword ? 'text' : 'password'}
+            value={password}
+            onChange={e => { setPassword(e.target.value); clearError('password'); }}
+            trailingIcon={showPassword ? <EyeOpen /> : <EyeOff />}
+            onTrailingClick={() => setShowPassword(p => !p)}
+            className="su__input"
+            {...fieldError('password')}
+          />
+          <Input
+            label={t('signup.confirmPassword')}
+            type={showConfirm ? 'text' : 'password'}
+            value={confirmPassword}
+            onChange={e => { setConfirmPassword(e.target.value); clearError('confirmPassword'); }}
+            trailingIcon={showConfirm ? <EyeOpen /> : <EyeOff />}
+            onTrailingClick={() => setShowConfirm(p => !p)}
+            className="su__input"
+            {...fieldError('confirmPassword')}
+          />
+        </div>
+
+        <PasswordStrength password={password} t={t} />
 
         {error && <p className="su__error">{error}</p>}
 
