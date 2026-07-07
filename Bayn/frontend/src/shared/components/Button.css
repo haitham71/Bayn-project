@@ -1,0 +1,139 @@
+.bayn-btn {
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: none;
+  border-radius: 10px;
+  font-family: var(--font-sans);
+  font-weight: var(--type-button-weight);
+  font-size: var(--type-button-size);
+  line-height: 1;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+}
+
+.bayn-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Sizes */
+.bayn-btn--sm {
+  height: 40px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: var(--type-small-size);
+}
+
+.bayn-btn--md {
+  height: 52px;
+  padding: 10px 24px;
+}
+
+.bayn-btn--lg {
+  height: 60px;
+  padding: 14px 32px;
+  border-radius: 12px;
+}
+
+.bayn-btn--icon-only {
+  padding: 0;
+  aspect-ratio: 1;
+  border-radius: 50%;
+}
+
+.bayn-btn--icon-only.bayn-btn--sm {
+  width: 40px;
+}
+
+.bayn-btn--icon-only.bayn-btn--md {
+  width: 52px;
+}
+
+.bayn-btn--icon-only.bayn-btn--lg {
+  width: 60px;
+}
+
+/* Primary */
+.bayn-btn--primary {
+  background: var(--btn-primary-default);
+  color: var(--btn-text);
+  --btn-ripple-color: var(--btn-primary-click-effect);
+}
+
+.bayn-btn--primary:hover {
+  background: var(--btn-primary-hover);
+}
+
+/* Secondary */
+.bayn-btn--secondary {
+  background: transparent;
+  color: var(--btn-primary-default);
+  border: 1px solid var(--btn-primary-default);
+  --btn-ripple-color: var(--btn-secondary-click-effect);
+}
+
+.bayn-btn--secondary:hover {
+  background: var(--btn-secondary-hover);
+  border-color: var(--btn-secondary-hover);
+}
+
+/* Tertiary */
+.bayn-btn--tertiary {
+  background: transparent;
+  color: var(--btn-primary-default);
+}
+
+.bayn-btn--tertiary:hover {
+  color: var(--btn-tertiary-hover);
+  text-decoration: underline;
+}
+
+/* Disabled: primary & tertiary use the dedicated faded-primary colour
+   (opacity reset to 1 so the token renders at its exact 50%) */
+.bayn-btn--primary:disabled {
+  background: var(--btn-disabled);
+  opacity: 1;
+}
+
+.bayn-btn--tertiary:disabled {
+  color: var(--btn-disabled);
+  opacity: 1;
+}
+
+.bayn-btn__label {
+  display: inline-block;
+}
+
+.bayn-btn__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Leading/trailing icons are directional chevrons — mirror them in RTL */
+[dir='rtl'] .bayn-btn__icon svg {
+  transform: scaleX(-1);
+}
+
+/* Ripple */
+.bayn-btn__ripple {
+  position: absolute;
+  border-radius: 50%;
+  transform: scale(0);
+  background: var(--btn-ripple-color);
+  pointer-events: none;
+  animation: bayn-ripple 0.55s ease-out;
+}
+
+@keyframes bayn-ripple {
+  to {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}

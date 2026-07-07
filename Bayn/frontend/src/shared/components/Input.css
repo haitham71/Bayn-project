@@ -1,0 +1,186 @@
+.bayn-input {
+  display: flex;
+  flex-direction: column;
+  width: 245px;
+  max-width: 100%;
+  font-family: var(--font-sans);
+}
+
+.bayn-input__field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 56px;
+  padding-block: 4px;
+  padding-inline: 12px 8px;
+  border-radius: 6px 6px 0 0;
+  background: var(--input-bg-default, rgba(215, 203, 185, 0.7));
+  border-bottom: 4px solid var(--input-border-default, #463e31);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.bayn-input:not(.bayn-input--disabled) .bayn-input__field:hover {
+  background: var(--input-bg-hover, #c9baa1);
+  border-bottom-color: var(--input-border-hover, #bca98a);
+}
+
+.bayn-input:not(.bayn-input--disabled) .bayn-input__field:focus-within {
+  background: var(--input-focus, #e4ddd0);
+  border-bottom-color: var(--input-border-hover, #bca98a);
+}
+
+.bayn-input__control {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.bayn-input__native {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  padding: 18px 0 2px;
+  font-family: inherit;
+  font-size: 16px;
+  line-height: 1.3;
+  color: var(--text-body-2, #463e31);
+}
+
+.bayn-input__native::placeholder {
+  color: transparent;
+}
+
+.bayn-input--multiline .bayn-input__control {
+  align-self: stretch;
+}
+
+.bayn-input--multiline .bayn-input__native {
+  resize: vertical;
+  min-height: 120px;
+  padding-top: 20px;
+}
+
+.bayn-input--multiline .bayn-input__native::-webkit-resizer {
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-position: bottom right;
+  background-size: 9px 9px;
+  background-image: linear-gradient(
+    135deg,
+    transparent 42%,
+    var(--text-supporting, #786c57) 42%,
+    var(--text-supporting, #786c57) 55%,
+    transparent 55%,
+    transparent 66%,
+    var(--text-supporting, #786c57) 66%,
+    var(--text-supporting, #786c57) 79%,
+    transparent 79%
+  );
+}
+
+[dir='rtl'] .bayn-input--multiline .bayn-input__native::-webkit-resizer {
+  background-position: bottom left;
+  background-image: linear-gradient(
+    225deg,
+    transparent 42%,
+    var(--text-supporting, #786c57) 42%,
+    var(--text-supporting, #786c57) 55%,
+    transparent 55%,
+    transparent 66%,
+    var(--text-supporting, #786c57) 66%,
+    var(--text-supporting, #786c57) 79%,
+    transparent 79%
+  );
+}
+
+.bayn-input__label {
+  position: absolute;
+  inset-inline-start: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  font-size: 16px;
+  color: var(--text-body-2, #463e31);
+  transition: transform 0.15s ease, font-size 0.15s ease, color 0.15s ease;
+}
+
+.bayn-input--multiline .bayn-input__label {
+  top: 20px;
+  transform: none;
+}
+
+.bayn-input__native:focus + .bayn-input__label,
+.bayn-input__native:not(:placeholder-shown) + .bayn-input__label {
+  top: 6px;
+  transform: none;
+  font-size: 12px;
+  color: var(--text-supporting, #786c57);
+}
+
+.bayn-input__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--text-body-2, #463e31);
+}
+
+.bayn-input__icon--trailing {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 100px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.bayn-input__icon--trailing:disabled {
+  cursor: default;
+}
+
+.bayn-input__support {
+  margin: 4px 16px 0;
+  font-size: 12px;
+  line-height: 1.3;
+  color: var(--text-supporting, #786c57);
+}
+
+.bayn-input__field:focus-within ~ .bayn-input__support {
+  color: var(--input-border-hover, #bca98a);
+}
+
+.bayn-input--error .bayn-input__field,
+.bayn-input--error:not(.bayn-input--disabled) .bayn-input__field:hover,
+.bayn-input--error:not(.bayn-input--disabled) .bayn-input__field:focus-within {
+  background: var(--input-focus, #e4ddd0);
+  border-bottom-color: var(--input-error, #900000);
+}
+
+.bayn-input--error .bayn-input__icon--trailing {
+  color: var(--input-error, #900000);
+}
+
+.bayn-input--error .bayn-input__support,
+.bayn-input--error .bayn-input__field:focus-within ~ .bayn-input__support {
+  color: var(--input-error, #900000);
+}
+
+.bayn-input--disabled .bayn-input__field {
+  background: var(--input-disabled, #aeaeae);
+  border-bottom-color: var(--input-disabled-border, #484848);
+}
+
+.bayn-input--disabled .bayn-input__native,
+.bayn-input--disabled .bayn-input__label,
+.bayn-input--disabled .bayn-input__icon {
+  color: var(--text-disabled-2, #606060);
+}
+
+.bayn-input--disabled .bayn-input__native {
+  cursor: not-allowed;
+}
