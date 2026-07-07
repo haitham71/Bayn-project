@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import IdentityLayout from '@/layouts/IdentityLayout';
 import Stepper from '../components/Stepper';
@@ -7,9 +7,18 @@ import Radio from '@/shared/components/Radio';
 import Button from '@/shared/components/Button';
 import Check from '@/assets/icons/check.svg?react';
 import useCountdown from '../hooks/useCountdown';
+import {
+  sendEmailOtp,
+  confirmEmailOtp,
+  sendPhoneOtp,
+  confirmPhoneOtp,
+} from '../services/authService';
+import { getApiErrorMessage } from '@/shared/lib/apiError';
 import './VerificationPage.css';
 
 const CHANNELS = ['email', 'phone'];
+// Authentica's OTP length. Bump to 6 if the codes arrive as 6 digits.
+const OTP_LENGTH = 4;
 
 export default function VerificationPage({
   email = 'user@email.com',
@@ -20,8 +29,13 @@ export default function VerificationPage({
   const [code, setCode] = useState('');
   const [active, setActive] = useState('email');
   const [verified, setVerified] = useState({ email: false, phone: false });
-  const [phase, setPhase] = useState('input'); // input | loading | success
+  const [phase, setPhase] = useState('input'); // input | loading | success | error
+  const [errorMsg, setErrorMsg] = useState('');
   const { formatted, isDone, reset } = useCountdown(32);
+
+  // Guards against sending an OTP twice for the same channel (React StrictMode
+  // runs effects twice in dev, and SMS sends cost credits).
+  const sentChannels = useRef(new Set());
 
   const steps = [
     { key: 'account', label: t('steps.account') },
@@ -31,12 +45,33 @@ export default function VerificationPage({
 
   const destination = active === 'email' ? email : phone;
 
-  // Sequence: loading -> success check (radio ticks) -> advance email to
-  // the phone step. The error phase/shake stays wired for real backend
-  // validation (setPhase('error') on a rejected code).
-  function handleComplete() {
+  async function sendOtp(channel) {
+    setErrorMsg('');
+    try {
+      if (channel === 'email') await sendEmailOtp();
+      else await sendPhoneOtp();
+      reset();
+    } catch (err) {
+      setErrorMsg(getApiErrorMessage(err, t('verification.sendFailed')));
+    }
+  }
+
+  // Auto-send the OTP the first time each channel becomes active.
+  useEffect(() => {
+    if (verified[active]) return;
+    if (sentChannels.current.has(active)) return;
+    sentChannels.current.add(active);
+    sendOtp(active);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active]);
+
+  async function handleComplete(entered) {
     setPhase('loading');
-    setTimeout(() => {
+    setErrorMsg('');
+    try {
+      if (active === 'email') await confirmEmailOtp(entered);
+      else await confirmPhoneOtp(entered);
+
       setPhase('success');
       setVerified((prev) => ({ ...prev, [active]: true }));
       setTimeout(() => {
@@ -45,9 +80,18 @@ export default function VerificationPage({
           setCode('');
           reset();
           setPhase('input');
+        } else {
+          setPhase('input');
         }
       }, 900);
-    }, 800);
+    } catch (err) {
+      setPhase('error');
+      setErrorMsg(getApiErrorMessage(err, t('verification.invalidCode')));
+      setTimeout(() => {
+        setCode('');
+        setPhase('input');
+      }, 1500);
+    }
   }
 
   return (
@@ -61,7 +105,7 @@ export default function VerificationPage({
 
         <div className={`verify__otp verify__otp--${phase}`}>
           <OtpInput
-            length={4}
+            length={OTP_LENGTH}
             value={code}
             onChange={setCode}
             onComplete={handleComplete}
@@ -75,12 +119,18 @@ export default function VerificationPage({
           )}
         </div>
 
+        {errorMsg && (
+          <p className="verify__error" role="alert">
+            {errorMsg}
+          </p>
+        )}
+
         <p className="verify__sent">{t('verification.sentTo')}</p>
         <span className="verify__destination" dir="ltr">{destination}</span>
 
         <div className="verify__resend">
           <span>{t('verification.didntReceive')}</span>
-          <Button variant="tertiary" size="sm" disabled={!isDone} onClick={() => reset()}>
+          <Button variant="tertiary" size="sm" disabled={!isDone} onClick={() => sendOtp(active)}>
             {t('verification.resend')}
           </Button>
           {!isDone && <span className="verify__timer">({formatted})</span>}

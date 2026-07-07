@@ -38,7 +38,11 @@ export default function App() {
         <SignUpPage onNavigate={goTo} initialData={signupData} onDataChange={setSignupData} />
       )}
       {page === 'verification' && (
-        <VerificationPage onEditInfo={() => goTo('signup')} />
+        <VerificationPage
+          email={signupData.email}
+          phone={signupData.phone}
+          onEditInfo={() => goTo('signup')}
+        />
       )}
     </>
   );

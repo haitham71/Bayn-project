@@ -49,7 +49,9 @@
     "bothRequired": "You must complete both email and phone verification before proceeding to the next step.",
     "nextStep": "Next Step",
     "wrongInfo": "Entered the wrong information?",
-    "editInfo": "Edit information"
+    "editInfo": "Edit information",
+    "invalidCode": "The code is incorrect or has expired.",
+    "sendFailed": "Couldn't send the code. Please try again."
   },
   "login": {
     "welcome": "Welcome Back!",
@@ -79,8 +81,9 @@
     "rules": [
       "At least 8 characters",
       "One uppercase letter",
+      "One lowercase letter",
       "One number",
-      "One Digit #,$,@ at least"
+      "One special character (#, $, @)"
     ],
     "termsPrefix": "By clicking here you agree to Bayn's ",
     "termsAgreement": "User Agreement",
@@ -89,6 +92,8 @@
     "termsAnd": " and ",
     "termsCookies": "Cookies Policy",
     "nextStep": "Next Step",
+    "submitting": "Creating account…",
+    "errorGeneric": "Something went wrong. Please try again.",
     "haveAccount": "Already have an account?",
     "logIn": "Log in",
     "errorEmpty": "Please fill in all required fields.",
@@ -99,7 +104,7 @@
     "errName": "Only letters are allowed.",
     "errNameEn": "Use English letters only.",
     "errNameAr": "Use Arabic letters only.",
-    "errUsername": "4+ letters, numbers, . or _; no dot at ends.",
+    "errUsername": "At least 4 letters; only letters, numbers and _ .",
     "errDobFormat": "Enter your date of birth as DD/MM/YYYY.",
     "errAge": "You must be at least 18 years old.",
     "errPhone": "Enter a valid number: +966 followed by 9 digits.",

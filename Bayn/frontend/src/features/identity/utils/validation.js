@@ -11,8 +11,8 @@ const EMAIL_RE = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]
 const NAME_RE = /^[A-Za-zء-ي]+(?: [A-Za-zء-ي]+)*$/;
 const NAME_EN_RE = /^[A-Za-z]+(?: [A-Za-z]+)*$/;
 const NAME_AR_RE = /^[ء-ي]+(?: [ء-ي]+)*$/;
-// Usernames may only hold letters, digits, dot and underscore.
-const USERNAME_ALLOWED_RE = /^[a-zA-Z0-9._]+$/;
+// Usernames may only hold letters, digits and underscore (matches the backend).
+const USERNAME_ALLOWED_RE = /^[a-zA-Z0-9_]+$/;
 
 export function validateEmail(value) {
   const v = value.trim();
@@ -31,8 +31,7 @@ export function validateName(value, { required = true, lang = 'any' } = {}) {
 export function validateUsername(value) {
   const v = value.trim();
   if (!v) return 'errRequired';
-  if (v.length > 20) return 'errUsername';
-  if (v.startsWith('.') || v.endsWith('.') || v.includes('..')) return 'errUsername';
+  if (v.length < 3 || v.length > 30) return 'errUsername';
   if (!USERNAME_ALLOWED_RE.test(v)) return 'errUsername';
   // Must contain at least 4 Latin letters (a–z).
   if ((v.match(/[a-zA-Z]/g) || []).length < 4) return 'errUsername';
@@ -76,7 +75,11 @@ export function validatePhone(value) {
 export function validatePassword(value) {
   if (!value) return 'errRequired';
   const ok =
-    value.length >= 8 && /[A-Z]/.test(value) && /[0-9]/.test(value) && /[#$@]/.test(value);
+    value.length >= 8 &&
+    /[A-Z]/.test(value) &&
+    /[a-z]/.test(value) &&
+    /[0-9]/.test(value) &&
+    /[#$@]/.test(value);
   return ok ? null : 'errPassword';
 }
 

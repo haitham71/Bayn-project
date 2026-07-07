@@ -15,6 +15,8 @@ import {
   formatDob,
   formatPhone,
 } from '../utils/validation';
+import { signup } from '../services/authService';
+import { getApiErrorMessage } from '@/shared/lib/apiError';
 import './SignUpPage.css';
 
 const EyeOpen = () => (
@@ -35,6 +37,7 @@ function passwordScore(pw) {
   return [
     pw.length >= 8,
     /[A-Z]/.test(pw),
+    /[a-z]/.test(pw),
     /[0-9]/.test(pw),
     /[#$@]/.test(pw),
   ].filter(Boolean).length;
@@ -45,6 +48,7 @@ function PasswordStrength({ password, t }) {
   const checks = [
     password.length >= 8,
     /[A-Z]/.test(password),
+    /[a-z]/.test(password),
     /[0-9]/.test(password),
     /[#$@]/.test(password),
   ];
@@ -55,7 +59,7 @@ function PasswordStrength({ password, t }) {
       <div className="pw-str__header">
         <span className="pw-str__title">{t('signup.strengthLabel')}</span>
         <div className="pw-str__bars">
-          {[0, 1, 2, 3].map(i => (
+          {[0, 1, 2, 3, 4].map(i => (
             <div
               key={i}
               className={`pw-str__bar${i < score ? ' pw-str__bar--on' : ''}`}
@@ -104,6 +108,7 @@ export default function SignUpPage({ onNavigate, initialData = {}, onDataChange 
   const [agreed, setAgreed] = useState(initialData.agreed || false);
   const [errors, setErrors] = useState({});
   const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   // Lift the current values up so they survive navigating to verification and
   // back (the page itself unmounts, but App keeps the data).
@@ -165,7 +170,7 @@ export default function SignUpPage({ onNavigate, initialData = {}, onDataChange 
     setErrors(prev => (prev[field] ? { ...prev, [field]: undefined } : prev));
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     setError('');
     const found = collectErrors();
@@ -182,7 +187,22 @@ export default function SignUpPage({ onNavigate, initialData = {}, onDataChange 
       setError(t('signup.errorTerms'));
       return;
     }
-    onNavigate('verification');
+
+    setSubmitting(true);
+    try {
+      // Creates the account and stores the tokens; signup logs the user in.
+      await signup({
+        email, username,
+        firstNameEn, secondNameEn, thirdNameEn, lastNameEn,
+        firstNameAr, secondNameAr, thirdNameAr, lastNameAr,
+        password, dob, phone,
+      });
+      onNavigate('verification');
+    } catch (err) {
+      setError(getApiErrorMessage(err, t('signup.errorGeneric')));
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   // Shared props that light up a field's error state + message.
@@ -315,8 +335,8 @@ export default function SignUpPage({ onNavigate, initialData = {}, onDataChange 
           </div>
 
           <div className="su__action-row">
-            <Button type="submit" variant="primary" size="lg" trailingIcon className="su__submit">
-              {t('signup.nextStep')}
+            <Button type="submit" variant="primary" size="lg" trailingIcon className="su__submit" disabled={submitting}>
+              {submitting ? t('signup.submitting') : t('signup.nextStep')}
             </Button>
             <p className="su__login-text">
               {t('signup.haveAccount')}{' '}
