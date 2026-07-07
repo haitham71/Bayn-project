@@ -1,56 +1,15 @@
-import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import Button from '@/shared/components/Button';
 import logoUrl from '@/assets/logo/Bayn-svg.svg?url';
 import './HomePage.css';
 
-/* ─── Schedule data ─────────────────────────────────────── */
-const SCHEDULE_EN = [
-  { time: '09:00 - 09:30', name: 'Team Standup',          borderColor: '#3B82F6', bgColor: 'rgba(59,130,246,0.09)',   avColors: ['#0F3D2E','#3B82F6','#F97316'], extra: 0 },
-  { time: '11:00 - 12:00', name: 'Design Review',          borderColor: '#10B981', bgColor: 'rgba(16,185,129,0.09)',  avColors: ['#0F3D2E','#3B82F6','#F97316'], extra: 1 },
-  { time: '14:00 - 15:00', name: 'Investor Call',          borderColor: '#F97316', bgColor: 'rgba(249,115,22,0.09)',  avColors: ['#0F3D2E','#3B82F6'],           extra: 0 },
-  { time: '16:30 - 17:00', name: 'Sprint Retrospective',   borderColor: '#8B5CF6', bgColor: 'rgba(139,92,246,0.09)', avColors: ['#0F3D2E','#3B82F6','#F97316'], extra: 2 },
+/* ─── Meeting colour palette (shared across both languages) ── */
+const MEETING_COLORS = [
+  { borderColor: '#3B82F6', bgColor: 'rgba(59,130,246,0.09)',   avColors: ['#0F3D2E','#3B82F6','#F97316'], extra: 0 },
+  { borderColor: '#10B981', bgColor: 'rgba(16,185,129,0.09)',   avColors: ['#0F3D2E','#3B82F6','#F97316'], extra: 1 },
+  { borderColor: '#F97316', bgColor: 'rgba(249,115,22,0.09)',   avColors: ['#0F3D2E','#3B82F6'],           extra: 0 },
+  { borderColor: '#8B5CF6', bgColor: 'rgba(139,92,246,0.09)',   avColors: ['#0F3D2E','#3B82F6','#F97316'], extra: 2 },
 ];
-
-const SCHEDULE_AR = [
-  { time: '09:00 - 09:30', name: 'اجتماع الفريق اليومي',   borderColor: '#3B82F6', bgColor: 'rgba(59,130,246,0.09)',   avColors: ['#0F3D2E','#3B82F6','#F97316'], extra: 0 },
-  { time: '11:00 - 12:00', name: 'مراجعة التصميم',          borderColor: '#10B981', bgColor: 'rgba(16,185,129,0.09)',  avColors: ['#0F3D2E','#3B82F6','#F97316'], extra: 1 },
-  { time: '14:00 - 15:00', name: 'اجتماع المستثمرين',       borderColor: '#F97316', bgColor: 'rgba(249,115,22,0.09)',  avColors: ['#0F3D2E','#3B82F6'],           extra: 0 },
-  { time: '16:30 - 17:00', name: 'مراجعة نهاية السبرنت',    borderColor: '#8B5CF6', bgColor: 'rgba(139,92,246,0.09)', avColors: ['#0F3D2E','#3B82F6','#F97316'], extra: 2 },
-];
-
-const TX = {
-  en: {
-    greetMorning:   'Good Morning',
-    greetAfternoon: 'Good Afternoon',
-    greetEvening:   'Good Evening',
-    sub:            "Here's what's happening today",
-    search:         'Search on Bayn',
-    requests:       'Requests',
-    projects:       'Projects',
-    meeting:        'Schedule a Meeting',
-    createIdea:     '+ Create New Idea',
-    scheduleTitle:  "Today's Schedule",
-    teamLabel:      'Current team',
-    progressLabel:  'Project progress',
-    statusLabel:    "Application's status",
-    recLabel:       'Recommended for you · Explore new ideas',
-  },
-  ar: {
-    greetMorning:   'صباح الخير',
-    greetAfternoon: 'مساء الخير',
-    greetEvening:   'مساء الخير',
-    sub:            'تابع عملك، وحقق المزيد اليوم',
-    search:         'ابحث في بين...',
-    requests:       'الطلبات',
-    projects:       'المشاريع',
-    meeting:        'جدولة اجتماع',
-    createIdea:     '+ إنشاء فكرة جديدة',
-    scheduleTitle:  'جدول اليوم',
-    teamLabel:      'الفريق الحالي',
-    progressLabel:  'تقدم المشروع',
-    statusLabel:    'حالة الطلبات',
-    recLabel:       'موصى به لك · استكشف أفكاراً جديدة',
-  },
-};
 
 /* ─── Icons ─────────────────────────────────────────────── */
 const BellIcon = () => (
@@ -91,19 +50,27 @@ const HeadsetIcon = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="
 
 /* ─── Component ─────────────────────────────────────────── */
 export default function HomePage({ onNavigate }) {
-  const [lang, setLang] = useState('en');
-  const isRtl = lang === 'ar';
-  const tx = TX[lang];
-  const schedule = lang === 'ar' ? SCHEDULE_AR : SCHEDULE_EN;
+  const { t, i18n } = useTranslation();
+
+  const isRtl  = i18n.dir() === 'rtl';
+  const toggleLang = () => i18n.changeLanguage(isRtl ? 'en' : 'ar');
+
+  // Merge translated schedule names with shared colour palette
+  const schedule = (t('home.schedule', { returnObjects: true }) || []).map(
+    (item, idx) => ({ ...MEETING_COLORS[idx], ...item })
+  );
 
   const hour = new Date().getHours();
   const greetKey = hour < 12 ? 'greetMorning' : hour < 17 ? 'greetAfternoon' : 'greetEvening';
 
   const today = new Date();
-  const dateLabel = today.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+  const dateLabel = today.toLocaleDateString(isRtl ? 'ar-SA' : 'en-US', {
+    month: 'long',
+    day:   'numeric',
+  });
 
   return (
-    <div className={`hp${isRtl ? ' hp--rtl' : ''}`} dir={isRtl ? 'rtl' : 'ltr'}>
+    <div className={`hp${isRtl ? ' hp--rtl' : ''}`} dir={i18n.dir()}>
 
       {/* ── Main ── */}
       <div className="hp__main">
@@ -127,7 +94,7 @@ export default function HomePage({ onNavigate }) {
           </button>
 
           <div className="hp__search" role="search">
-            <span className="hp__search-placeholder">{tx.search}</span>
+            <span className="hp__search-placeholder">{t('home.search')}</span>
             <SearchIcon />
           </div>
 
@@ -137,17 +104,21 @@ export default function HomePage({ onNavigate }) {
         {/* Content */}
         <div className="hp__content">
 
-          {/* Greeting + pills */}
+          {/* Greeting + action pills */}
           <div className="hp__top-row">
             <div>
-              <h1 className="hp__greeting">{tx[greetKey]} User!</h1>
-              <p className="hp__greeting-sub">{tx.sub}</p>
+              <h1 className="hp__greeting">{t(`home.${greetKey}`)}, User!</h1>
+              <p className="hp__greeting-sub">{t('home.sub')}</p>
             </div>
             <div className="hp__pills">
-              <button className="hp__pill" type="button">{tx.requests}</button>
-              <button className="hp__pill" type="button">{tx.projects}</button>
-              <button className="hp__pill" type="button">{tx.meeting}</button>
-              <button className="hp__pill hp__pill--primary" type="button">{tx.createIdea}</button>
+              <button className="hp__pill" type="button">{t('home.requests')}</button>
+              <button className="hp__pill" type="button">{t('home.projects')}</button>
+              <button className="hp__pill" type="button">{t('home.meeting')}</button>
+
+              {/* Primary action — Bayn Button component */}
+              <Button variant="primary" size="sm" className="hp__pill-btn">
+                {t('home.createIdea')}
+              </Button>
             </div>
           </div>
 
@@ -157,7 +128,7 @@ export default function HomePage({ onNavigate }) {
             {/* ── Today's Schedule (tall) ── */}
             <div className="hp__card hp__card--schedule">
               <div className="hp__sched-hd">
-                <span className="hp__sched-title">{tx.scheduleTitle}</span>
+                <span className="hp__sched-title">{t('home.scheduleTitle')}</span>
                 <span className="hp__sched-date">{dateLabel}</span>
               </div>
 
@@ -166,10 +137,7 @@ export default function HomePage({ onNavigate }) {
                   <div
                     key={i}
                     className="hp__meeting"
-                    style={{
-                      '--m-border': item.borderColor,
-                      '--m-bg':     item.bgColor,
-                    }}
+                    style={{ '--m-border': item.borderColor, '--m-bg': item.bgColor }}
                   >
                     <span className="hp__meeting-time">{item.time}</span>
                     <div className="hp__meeting-body">
@@ -188,20 +156,20 @@ export default function HomePage({ onNavigate }) {
               </div>
             </div>
 
-            {/* ── Row 1 placeholder cards ── */}
+            {/* ── Placeholder cards ── */}
             <div className="hp__card hp__card--ph">
-              <span className="hp__ph-label">{tx.teamLabel}</span>
+              <span className="hp__ph-label">{t('home.teamLabel')}</span>
             </div>
             <div className="hp__card hp__card--ph">
-              <span className="hp__ph-label">{tx.progressLabel}</span>
+              <span className="hp__ph-label">{t('home.progressLabel')}</span>
             </div>
             <div className="hp__card hp__card--ph">
-              <span className="hp__ph-label">{tx.statusLabel}</span>
+              <span className="hp__ph-label">{t('home.statusLabel')}</span>
             </div>
 
-            {/* ── Recommended (wide placeholder) ── */}
+            {/* ── Recommended (wide) ── */}
             <div className="hp__card hp__card--ph hp__card--wide">
-              <span className="hp__ph-label">{tx.recLabel}</span>
+              <span className="hp__ph-label">{t('home.recLabel')}</span>
             </div>
 
           </div>
@@ -234,7 +202,7 @@ export default function HomePage({ onNavigate }) {
             type="button"
             className="hp__nav-btn"
             aria-label="Toggle language"
-            onClick={() => setLang(isRtl ? 'en' : 'ar')}
+            onClick={toggleLang}
           >
             <NavGlobe />
           </button>

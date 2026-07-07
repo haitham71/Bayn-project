@@ -104,5 +104,27 @@
     "errAge": "You must be at least 18 years old.",
     "errPhone": "Enter a valid number: +966 followed by 9 digits.",
     "errPassword": "Password doesn't meet the requirements below."
+  },
+  "home": {
+    "greetMorning":   "Good Morning",
+    "greetAfternoon": "Good Afternoon",
+    "greetEvening":   "Good Evening",
+    "sub":            "Here's what's happening today",
+    "search":         "Search on Bayn",
+    "requests":       "Requests",
+    "projects":       "Projects",
+    "meeting":        "Schedule a Meeting",
+    "createIdea":     "+ Create New Idea",
+    "scheduleTitle":  "Today's Schedule",
+    "teamLabel":      "Current team",
+    "progressLabel":  "Project progress",
+    "statusLabel":    "Application's status",
+    "recLabel":       "Recommended for you · Explore new ideas",
+    "schedule": [
+      { "time": "09:00 - 09:30", "name": "Team Standup" },
+      { "time": "11:00 - 12:00", "name": "Design Review" },
+      { "time": "14:00 - 15:00", "name": "Investor Call" },
+      { "time": "16:30 - 17:00", "name": "Sprint Retrospective" }
+    ]
   }
 }
