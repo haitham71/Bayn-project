@@ -68,6 +68,7 @@ class User(Base):
     last_name_en: Mapped[str] = mapped_column(String(50), nullable=False)
 
     national_id: Mapped[Optional[str]] = mapped_column(String(20), unique=True, nullable=True)
+    birth_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
 
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     username: Mapped[str] = mapped_column(String(30), unique=True, nullable=False)

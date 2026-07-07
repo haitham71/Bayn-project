@@ -27,7 +27,7 @@ class UserSignup(BaseModel):
     second_name_ar: Optional[str] = None
     third_name_ar: Optional[str] = None
     last_name_ar: str
-
+    birth_date: Optional[datetime] = None # lst change 7/7
     first_name_en: str
     second_name_en: Optional[str] = None
     third_name_en: Optional[str] = None
@@ -139,6 +139,7 @@ class UserResponse(BaseModel):
     last_name_en: str
 
     national_id: Optional[str]
+    birth_date: Optional[datetime]
 
     email: str
     username: str
