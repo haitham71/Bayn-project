@@ -1,18 +1,11 @@
-/*
- * tokens.css — Bayn Design System
- * ضع هذا الملف في: src/styles/tokens.css
- * واستورده في src/main.jsx أو src/index.css:
- *   import './styles/tokens.css'
- */
- 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;550;600;700&family=Tajawal:wght@400;500;700&display=swap');
  
 :root {
-  /* ── Font families ─────────────────────────────────── */
+  /* ── Font ─────────────────────────────────── */
   --font-sans:    'Inter', system-ui, sans-serif;
   --font-arabic:  'Tajawal', system-ui, sans-serif;
  
-  /* ── Typography scale (used by components) ─────────── */
+  /* ── Typography ─────────── */
   --type-button-size:   20px;
   --type-button-weight: 550;
   --type-small-size:    16px;
