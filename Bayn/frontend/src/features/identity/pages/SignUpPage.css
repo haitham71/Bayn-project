@@ -34,9 +34,7 @@
   display: flex;
   flex-direction: column;
   gap: 18px;
-  flex: 1;
   min-height: 0;
-  justify-content: space-between;
 }
 
 /* Each row holds two fields side by side. */
@@ -120,8 +118,8 @@
 .pw-str__header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  justify-content: flex-start;
+  gap: 10px;
 }
 
 .pw-str__title {
@@ -134,12 +132,13 @@
 .pw-str__bars {
   display: flex;
   gap: 4px;
-  flex: 1;
+  flex: 0 0 auto;
+  width: 140px;
 }
 
 .pw-str__bar {
   flex: 1;
-  height: 3px;
+  height: 4px;
   border-radius: 4px;
   background: #C9BAA1;
   transition: background 0.2s;

@@ -15,6 +15,7 @@ export default function VerificationPage({
   email = 'user@email.com',
   phone = '+966 5X XXX XXXX',
   onEditInfo,
+  onNext,
 }) {
   const { t } = useTranslation();
   const [code, setCode] = useState('');
@@ -115,6 +116,7 @@ export default function VerificationPage({
           trailingIcon
           className="verify__next"
           disabled={!verified.email || !verified.phone}
+          onClick={onNext}
         >
           {t('verification.nextStep')}
         </Button>

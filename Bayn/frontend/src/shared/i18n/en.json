@@ -37,6 +37,18 @@
     "verification": "Verification",
     "profile": "Profile setup"
   },
+  "profile": {
+    "namesTitle": "Enter your full name",
+    "title": "Short title",
+    "titleHint": "A short title that describe who you are",
+    "experience": "Years of experience",
+    "location": "Location",
+    "bio": "Bio",
+    "skills": "Add your skills",
+    "removeSkill": "Remove {{skill}}",
+    "finish": "Finish",
+    "back": "Back"
+  },
   "verification": {
     "title": "Enter verification code",
     "sentTo": "We've sent a 4-digit verification code to:",

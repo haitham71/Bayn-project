@@ -53,8 +53,8 @@
 
 .identity-layout__quick-actions {
   position: absolute;
-  top: 750px;
-  inset-inline-start: -70px;
+  top: 15px;
+  inset-inline-start: -60px;
   z-index: 2;
   display: flex;
   flex-direction: column;

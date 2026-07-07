@@ -37,6 +37,18 @@
     "verification": "التحقق",
     "profile": "إعداد الملف"
   },
+  "profile": {
+    "namesTitle": "أدخل اسمك الكامل",
+    "title": "المسمى المختصر",
+    "titleHint": "مسمى مختصر يصف من أنت",
+    "experience": "سنوات الخبرة",
+    "location": "الموقع",
+    "bio": "نبذة تعريفية",
+    "skills": "أضف مهاراتك",
+    "removeSkill": "إزالة {{skill}}",
+    "finish": "إنهاء",
+    "back": "رجوع"
+  },
   "verification": {
     "title": "أدخل رمز التحقق",
     "sentTo": "أرسلنا رمز تحقّق مكوّن من 4 أرقام إلى:",

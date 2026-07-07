@@ -2,10 +2,11 @@ import { useState } from 'react';
 import LoginPage        from '@/features/identity/pages/LoginPage';
 import SignUpPage       from '@/features/identity/pages/SignUpPage';
 import VerificationPage from '@/features/identity/pages/VerificationPage';
+import ProfileSetupPage from '@/features/identity/pages/ProfileSetupPage';
 import HomePage         from '@/features/home/pages/HomePage';
 
 const PAGE_KEY = 'bayn-page';
-const PAGES = ['login', 'signup', 'verification', 'home'];
+const PAGES = ['login', 'signup', 'verification', 'profile', 'home'];
 
 function readPage() {
   try {
@@ -17,7 +18,7 @@ function readPage() {
 }
 
 export default function App() {
-  const [page, setPage] = useState('home');
+  const [page, setPage] = useState('signup');
   const [signupData, setSignupData] = useState({});
 
   const goTo = (next) => {
@@ -27,11 +28,23 @@ export default function App() {
     } catch {}
   };
 
+  // Merge each step's slice so pages only touch their own fields and never
+  // clobber values captured on the other steps.
+  const patchData = (patch) => setSignupData((prev) => ({ ...prev, ...patch }));
+
   return (
     <>
       {page === 'login'        && <LoginPage onNavigate={goTo} />}
-      {page === 'signup'       && <SignUpPage onNavigate={goTo} initialData={signupData} onDataChange={setSignupData} />}
-      {page === 'verification' && <VerificationPage onEditInfo={() => goTo('signup')} />}
+      {page === 'signup'       && <SignUpPage onNavigate={goTo} initialData={signupData} onDataChange={patchData} />}
+      {page === 'verification' && (
+        <VerificationPage
+          email={signupData.email}
+          phone={signupData.phone}
+          onEditInfo={() => goTo('signup')}
+          onNext={() => goTo('profile')}
+        />
+      )}
+      {page === 'profile'      && <ProfileSetupPage onNavigate={goTo} initialData={signupData} onDataChange={patchData} />}
       {page === 'home'         && <HomePage onNavigate={goTo} />}
     </>
   );
