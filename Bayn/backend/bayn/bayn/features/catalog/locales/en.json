@@ -1,0 +1,18 @@
+{
+  "skill": {
+    "not_found": "Skill not found",
+    "already_added": "Skill already added to profile",
+    "not_in_profile": "Skill not found in your profile"
+  },
+  "specialization": {
+    "not_found": "Specialization not found",
+    "already_added": "Specialization already added to profile",
+    "not_in_profile": "Specialization not found in your profile"
+  },
+  "industry": {
+    "not_found": "Industry not found"
+  },
+  "country": {
+    "not_found": "Country not found"
+  }
+}

@@ -23,7 +23,7 @@
 #### projects
 | Class | Type | Key Attributes |
 |---|---|---|
-| `Project` | Model | id, title, description, more_info, specialization_id (FK), industry_id (FK), is_hidden |
+| `Project` | Model | id, title, description, more_info, specialization_id (FK), industry_id (FK), is_hidden, availibility|
 | `ProjectMembership` | Model | id, user_id (FK), project_id (FK), role (OWNER \| MEMBER) |
 | `ProjectRole` | Enum | OWNER \| MEMBER — per-project, separate from UserRole |
  
@@ -38,7 +38,7 @@
 #### contracts
 | Class | Type | Key Attributes |
 |---|---|---|
-| `Contract` | Model | id, contract_type, status, meeting_id (FK), project_id (FK), confidentiality_period_months, party_one_user_id (FK), party_one_name, party_one_national_id, party_one_token (UK), party_one_signature_image, party_one_signed_pdf, party_one_signed_at, party_one_signer_ip, party_two_*(same set), generated_pdf_key |
+| `Contract` | Model | id, contract_type, status, meeting_id (FK), project_id (FK), confidentiality_period_months, party_one_user_id (FK), party_one_name, party_one_national_id, party_one_token (UK), party_one_signature_image, party_one_signed_pdf, party_one_signed_at, party_one_signer_ip, party_two_signer_ip,      party_one_token_expires_at, party_two_token_expires_at, generated_pdf_key |
 | `ContractStatus` | Enum | PENDING_PARTY_ONE → PENDING_PARTY_TWO → SIGNED \| EXPIRED |
 | `ContractType` | Enum | NDA \| COMMITMENT |
  
@@ -194,6 +194,7 @@ erDiagram
     uuid specialization_id FK
     uuid industry_id FK
     bool is_hidden
+    datetime availibility
     datetime created_at
     datetime updated_at
   }
@@ -260,6 +261,8 @@ erDiagram
     datetime party_two_signed_at
     string party_two_signer_ip
     string generated_pdf_key
+    datetime party_one_token_expires_at
+    datetime party_two_token_expires_at
     datetime created_at
     datetime updated_at
   }
