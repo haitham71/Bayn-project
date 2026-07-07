@@ -1,0 +1,79 @@
+.bayn-stepper {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  justify-content: center;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.bayn-stepper__step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bayn-stepper__marker {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--color-secondary-700, #bca98a);
+  background: transparent;
+  color: var(--text-supporting, #786c57);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.bayn-stepper__label {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  white-space: nowrap;
+  color: var(--text-supporting, #786c57);
+}
+
+.bayn-stepper__line {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 2px;
+  margin: 0 8px;
+  border-radius: 2px;
+  background: var(--color-secondary-600, #c9baa1);
+}
+
+/* Done + active share the filled green marker */
+.bayn-stepper__step--done .bayn-stepper__marker,
+.bayn-stepper__step--active .bayn-stepper__marker {
+  background: var(--btn-primary-default, #295e4d);
+  border-color: var(--btn-primary-default, #295e4d);
+  color: var(--btn-text, #ebe5dc);
+}
+
+.bayn-stepper__step--done .bayn-stepper__label,
+.bayn-stepper__step--active .bayn-stepper__label {
+  color: var(--text-title, #0f3d2e);
+}
+
+.bayn-stepper__step--active .bayn-stepper__label {
+  font-weight: 600;
+}
+
+/* Connector after a completed step is green; otherwise it stays muted */
+.bayn-stepper__step--done .bayn-stepper__line {
+  background: var(--btn-primary-default, #295e4d);
+}
+
+@media (max-width: 560px) {
+  .bayn-stepper__label {
+    display: none;
+  }
+  .bayn-stepper__line {
+    width: 24px;
+    margin: 0 6px;
+  }
+}

@@ -200,7 +200,7 @@ export default function SignUpPage({ onNavigate }) {
       setError(tx.errorTerms);
       return;
     }
-    alert('Step 1 complete!');
+    onNavigate('verification');
   }
 
   return (
