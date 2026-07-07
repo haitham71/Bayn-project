@@ -60,6 +60,8 @@ class UserSignup(BaseModel):
             raise ValueError(t("validation", "password_lowercase", locale))
         if not re.search(r"\d", value):
             raise ValueError(t("validation", "password_number", locale))
+        if not re.search(r"[@#$]", value):
+            raise ValueError(t("validation", "password_special_char", locale))
         return value
 
 

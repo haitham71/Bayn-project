@@ -58,12 +58,12 @@ class User(Base):
 
     # four-part name in Arabic and English (national ID requires the full name)
     first_name_ar: Mapped[str] = mapped_column(String(50), nullable=False)
-    second_name_ar: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    second_name_ar: Mapped[str] = mapped_column(String(50), nullable=True)
     third_name_ar: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     last_name_ar: Mapped[str] = mapped_column(String(50), nullable=False)
 
     first_name_en: Mapped[str] = mapped_column(String(50), nullable=False)
-    second_name_en: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    second_name_en: Mapped[str] = mapped_column(String(50), nullable=True)
     third_name_en: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     last_name_en: Mapped[str] = mapped_column(String(50), nullable=False)
 
