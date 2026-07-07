@@ -91,6 +91,14 @@
     "logIn": "Log in",
     "errorEmpty": "Please fill in all required fields.",
     "errorPassword": "Passwords do not match.",
-    "errorTerms": "Please agree to the terms."
+    "errorTerms": "Please agree to the terms.",
+    "errRequired": "This field is required.",
+    "errEmail": "Please enter a valid email address.",
+    "errName": "Only letters are allowed.",
+    "errUsername": "4+ letters, numbers, . or _; no dot at ends.",
+    "errDobFormat": "Enter your date of birth as DD/MM/YYYY.",
+    "errAge": "You must be at least 18 years old.",
+    "errPhone": "Enter a valid number: +966 followed by 9 digits.",
+    "errPassword": "Password doesn't meet the requirements below."
   }
 }

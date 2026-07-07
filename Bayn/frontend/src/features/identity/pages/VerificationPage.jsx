@@ -76,7 +76,7 @@ export default function VerificationPage({
         </div>
 
         <p className="verify__sent">{t('verification.sentTo')}</p>
-        <span className="verify__destination">{destination}</span>
+        <span className="verify__destination" dir="ltr">{destination}</span>
 
         <div className="verify__resend">
           <span>{t('verification.didntReceive')}</span>

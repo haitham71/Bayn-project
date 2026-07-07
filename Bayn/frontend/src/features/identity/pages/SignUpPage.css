@@ -5,11 +5,12 @@
 .identity-layout__content.su__content {
   max-width: 720px;
   justify-content: flex-start;
-  padding-block: 24px;
+  padding-block: 16px;
+  min-height: 0;
 }
 
 .su__title {
-  margin: 0 0 20px;
+  margin: 0 0 16px;
   font-family: var(--font-sans);
   font-size: 36px;
   font-weight: 700;
@@ -19,7 +20,7 @@
 }
 
 .su__stepper {
-  margin: 0 0 28px;
+  margin: 0 0 20px;
 }
 
 /* ── Form grid ────────────────────────── */
@@ -36,14 +37,27 @@
   gap: 14px 20px;
 }
 
+/* Fixed, equal gap in both columns so the rows line up left-to-right
+   (space-between would drift because the right column is taller). */
 .su__col {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 24px;
 }
 
 .su__input.bayn-input {
   width: 100%;
+  position: relative;
+}
+
+/* Float the helper/error line into the gap below each field so it never pushes
+   the following fields — keeps the two columns aligned when only one shows an
+   error, so appearing text doesn't distort the layout. */
+.su__input .bayn-input__support {
+  position: absolute;
+  top: 100%;
+  inset-inline-start: 0;
+  margin: 3px 0 0;
 }
 
 .su__error {

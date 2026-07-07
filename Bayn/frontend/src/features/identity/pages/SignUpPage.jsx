@@ -1,10 +1,20 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import IdentityLayout from '@/layouts/IdentityLayout';
 import Stepper from '../components/Stepper';
 import Button from '@/shared/components/Button';
 import Input from '@/shared/components/Input';
 import Checkbox from '@/shared/components/Checkbox';
+import {
+  validateEmail,
+  validateName,
+  validateUsername,
+  validateDob,
+  validatePhone,
+  validatePassword,
+  formatDob,
+  formatPhone,
+} from '../utils/validation';
 import './SignUpPage.css';
 
 const EyeOpen = () => (
@@ -64,7 +74,7 @@ function PasswordStrength({ password, t }) {
   );
 }
 
-export default function SignUpPage({ onNavigate }) {
+export default function SignUpPage({ onNavigate, initialData = {}, onDataChange }) {
   const { t } = useTranslation();
 
   const steps = [
@@ -73,37 +83,74 @@ export default function SignUpPage({ onNavigate }) {
     { key: 'profile', label: t('steps.profile') },
   ];
 
-  const [email, setEmail] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [username, setUsername] = useState('');
-  const [middleName, setMiddleName] = useState('');
-  const [dob, setDob] = useState('');
-  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState(initialData.email || '');
+  const [firstName, setFirstName] = useState(initialData.firstName || '');
+  const [lastName, setLastName] = useState(initialData.lastName || '');
+  const [password, setPassword] = useState(initialData.password || '');
+  const [confirmPassword, setConfirmPassword] = useState(initialData.confirmPassword || '');
+  const [username, setUsername] = useState(initialData.username || '');
+  const [middleName, setMiddleName] = useState(initialData.middleName || '');
+  const [dob, setDob] = useState(initialData.dob || '');
+  const [phone, setPhone] = useState(initialData.phone || '+966');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [agreed, setAgreed] = useState(false);
+  const [agreed, setAgreed] = useState(initialData.agreed || false);
+  const [errors, setErrors] = useState({});
   const [error, setError] = useState('');
+
+  // Lift the current values up so they survive navigating to verification and
+  // back (the page itself unmounts, but App keeps the data).
+  useEffect(() => {
+    onDataChange?.({
+      email, firstName, lastName, password, confirmPassword,
+      username, middleName, dob, phone, agreed,
+    });
+  }, [email, firstName, lastName, password, confirmPassword, username, middleName, dob, phone, agreed]);
+
+  // Turns the validators' error codes into a field -> localized message map.
+  function collectErrors() {
+    const next = {};
+    const email_ = validateEmail(email);
+    if (email_) next.email = email_;
+    const first = validateName(firstName);
+    if (first) next.firstName = first;
+    const last = validateName(lastName);
+    if (last) next.lastName = last;
+    const middle = validateName(middleName);
+    if (middle) next.middleName = middle;
+    const user = validateUsername(username);
+    if (user) next.username = user;
+    const birth = validateDob(dob);
+    if (birth) next.dob = birth;
+    const tel = validatePhone(phone);
+    if (tel) next.phone = tel;
+    const pass = validatePassword(password);
+    if (pass) next.password = pass;
+    if (!pass && confirmPassword !== password) next.confirmPassword = 'errorPassword';
+    return next;
+  }
+
+  // Clears a single field's error once the user starts fixing it.
+  function clearError(field) {
+    setErrors(prev => (prev[field] ? { ...prev, [field]: undefined } : prev));
+  }
 
   function handleSubmit(e) {
     e.preventDefault();
     setError('');
-    if (!email || !firstName || !lastName || !password || !confirmPassword) {
-      setError(t('signup.errorEmpty'));
-      return;
-    }
-    if (password !== confirmPassword) {
-      setError(t('signup.errorPassword'));
-      return;
-    }
+    const found = collectErrors();
+    setErrors(found);
+    if (Object.values(found).some(Boolean)) return;
     if (!agreed) {
       setError(t('signup.errorTerms'));
       return;
     }
     onNavigate('verification');
   }
+
+  // Shared props that light up a field's error state + message.
+  const fieldError = field =>
+    errors[field] ? { error: true, errorText: t(`signup.${errors[field]}`) } : {};
 
   return (
     <IdentityLayout contentClassName="su__content">
@@ -116,34 +163,83 @@ export default function SignUpPage({ onNavigate }) {
       <form className="su__form" onSubmit={handleSubmit} noValidate>
         <div className="su__grid">
           <div className="su__col">
-            <Input label={t('signup.email')} type="email" value={email} onChange={e => setEmail(e.target.value)} className="su__input" />
-            <Input label={t('signup.firstName')} value={firstName} onChange={e => setFirstName(e.target.value)} className="su__input" />
-            <Input label={t('signup.lastName')} value={lastName} onChange={e => setLastName(e.target.value)} className="su__input" />
+            <Input
+              label={t('signup.email')}
+              type="email"
+              value={email}
+              onChange={e => { setEmail(e.target.value); clearError('email'); }}
+              className="su__input"
+              {...fieldError('email')}
+            />
+            <Input
+              label={t('signup.firstName')}
+              value={firstName}
+              onChange={e => { setFirstName(e.target.value); clearError('firstName'); }}
+              className="su__input"
+              {...fieldError('firstName')}
+            />
+            <Input
+              label={t('signup.lastName')}
+              value={lastName}
+              onChange={e => { setLastName(e.target.value); clearError('lastName'); }}
+              className="su__input"
+              {...fieldError('lastName')}
+            />
             <Input
               label={t('signup.password')}
               type={showPassword ? 'text' : 'password'}
               value={password}
-              onChange={e => setPassword(e.target.value)}
+              onChange={e => { setPassword(e.target.value); clearError('password'); }}
               trailingIcon={showPassword ? <EyeOpen /> : <EyeOff />}
               onTrailingClick={() => setShowPassword(p => !p)}
               className="su__input"
+              {...fieldError('password')}
             />
             <Input
               label={t('signup.confirmPassword')}
               type={showConfirm ? 'text' : 'password'}
               value={confirmPassword}
-              onChange={e => setConfirmPassword(e.target.value)}
+              onChange={e => { setConfirmPassword(e.target.value); clearError('confirmPassword'); }}
               trailingIcon={showConfirm ? <EyeOpen /> : <EyeOff />}
               onTrailingClick={() => setShowConfirm(p => !p)}
               className="su__input"
+              {...fieldError('confirmPassword')}
             />
           </div>
 
           <div className="su__col">
-            <Input label={t('signup.username')} value={username} onChange={e => setUsername(e.target.value)} className="su__input" />
-            <Input label={t('signup.middleName')} value={middleName} onChange={e => setMiddleName(e.target.value)} className="su__input" />
-            <Input label={t('signup.dob')} value={dob} onChange={e => setDob(e.target.value)} className="su__input" />
-            <Input label={t('signup.phone')} type="tel" value={phone} onChange={e => setPhone(e.target.value)} className="su__input" />
+            <Input
+              label={t('signup.username')}
+              value={username}
+              onChange={e => { setUsername(e.target.value); clearError('username'); }}
+              className="su__input"
+              {...fieldError('username')}
+            />
+            <Input
+              label={t('signup.middleName')}
+              value={middleName}
+              onChange={e => { setMiddleName(e.target.value); clearError('middleName'); }}
+              className="su__input"
+              {...fieldError('middleName')}
+            />
+            <Input
+              label={t('signup.dob')}
+              inputMode="numeric"
+              value={dob}
+              onChange={e => { setDob(formatDob(e.target.value)); clearError('dob'); }}
+              supportingText="DD/MM/YYYY"
+              className="su__input"
+              {...fieldError('dob')}
+            />
+            <Input
+              label={t('signup.phone')}
+              type="tel"
+              inputMode="numeric"
+              value={phone}
+              onChange={e => { setPhone(formatPhone(e.target.value)); clearError('phone'); }}
+              className="su__input"
+              {...fieldError('phone')}
+            />
             <PasswordStrength password={password} t={t} />
           </div>
         </div>
