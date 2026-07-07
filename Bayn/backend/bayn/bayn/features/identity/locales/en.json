@@ -6,6 +6,8 @@
     "invalid_credentials": "Invalid email or password",
     "invalid_token": "Invalid or expired token",
     "account_deactivated": "This account has been deactivated",
+    "email_not_verified": "Please verify your email before logging in",
+    "phone_not_verified": "Please verify your phone number before logging in",
     "user_not_found": "User not found",
     "admin_required": "Admin access required",
     "no_permission": "You do not have permission",

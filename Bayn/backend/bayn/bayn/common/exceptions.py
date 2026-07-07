@@ -55,3 +55,13 @@ class InvalidCredentialsError(UnauthorizedError):
 class InvalidTokenError(UnauthorizedError):
     def __init__(self, message: str | None = None, locale: str = DEFAULT_LOCALE):
         super().__init__(message or t("identity", "invalid_token", locale), locale=locale)
+
+
+class EmailNotVerifiedError(ForbiddenError):
+    def __init__(self, message: str | None = None, locale: str = DEFAULT_LOCALE):
+        super().__init__(message or t("identity", "auth.email_not_verified", locale), locale=locale)
+
+
+class PhoneNotVerifiedError(ForbiddenError):
+    def __init__(self, message: str | None = None, locale: str = DEFAULT_LOCALE):
+        super().__init__(message or t("identity", "auth.phone_not_verified", locale), locale=locale)
