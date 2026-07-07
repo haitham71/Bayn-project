@@ -59,16 +59,16 @@ class User(Base):
     # four-part name in Arabic and English (national ID requires the full name)
     first_name_ar: Mapped[str] = mapped_column(String(50), nullable=False)
     second_name_ar: Mapped[str] = mapped_column(String(50), nullable=True)
-    third_name_ar: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    third_name_ar: Mapped[str] = mapped_column(String(50), nullable=True)
     last_name_ar: Mapped[str] = mapped_column(String(50), nullable=False)
 
     first_name_en: Mapped[str] = mapped_column(String(50), nullable=False)
     second_name_en: Mapped[str] = mapped_column(String(50), nullable=True)
-    third_name_en: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    third_name_en: Mapped[str] = mapped_column(String(50), nullable=True)
     last_name_en: Mapped[str] = mapped_column(String(50), nullable=False)
 
     national_id: Mapped[Optional[str]] = mapped_column(String(20), unique=True, nullable=True)
-    birth_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    birth_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
 
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     username: Mapped[str] = mapped_column(String(30), unique=True, nullable=False)
