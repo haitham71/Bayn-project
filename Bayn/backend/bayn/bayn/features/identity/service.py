@@ -132,7 +132,6 @@ async def create_user(db: AsyncSession, payload: UserSignup, locale: str = DEFAU
         third_name_en=payload.third_name_en,
         last_name_en=payload.last_name_en,
         email=payload.email,
-        national_id=payload.national_id,
         birth_date=payload.birth_date,
         username=payload.username,
         password_hash=hash_password(payload.password),
