@@ -30,7 +30,7 @@ class TestSignup:
         "last_name_en": "Al-Ahmad",
         "email": "new@example.com",
         "username": "new_user",
-        "password": "TestPass123",
+        "password": "TestPass123@",
     }
 
     @pytest.mark.asyncio
@@ -100,8 +100,11 @@ class TestLogin:
     """POST /auth/login"""
 
     @pytest.mark.asyncio
-    async def test_login_success(self, client: AsyncClient, test_user: User):
-        
+    async def test_login_success(self, client: AsyncClient, db, test_user: User):
+        test_user.is_email_verified = True
+        test_user.is_number_verified = True
+        await db.commit()
+
         response = await client.post("/auth/login", json={
             "email": test_user.email,
             "password": "TestPass123",
@@ -159,8 +162,11 @@ class TestTokens:
 
 
     @pytest.mark.asyncio
-    async def test_refresh_token_success(self, client: AsyncClient, test_user: User):
-        
+    async def test_refresh_token_success(self, client: AsyncClient, db, test_user: User):
+        test_user.is_email_verified = True
+        test_user.is_number_verified = True
+        await db.commit()
+
         login = await client.post("/auth/login", json={
             "email": test_user.email,
             "password": "TestPass123",
@@ -174,9 +180,13 @@ class TestTokens:
         assert "access_token" in response.json()
 
     @pytest.mark.asyncio
-    async def test_refresh_with_access_token_fails(self, client: AsyncClient, test_user: User):
+    async def test_refresh_with_access_token_fails(self, client: AsyncClient, db, test_user: User):
         """decode_token checks the token's declared type explicitly, so an
         access token can't be replayed against the refresh endpoint."""
+        test_user.is_email_verified = True
+        test_user.is_number_verified = True
+        await db.commit()
+
         login = await client.post("/auth/login", json={
             "email": test_user.email,
             "password": "TestPass123",
@@ -190,14 +200,14 @@ class TestTokens:
     @pytest.mark.asyncio
     async def test_protected_route_without_token(self, client: AsyncClient):
         
-        response = await client.get("/auth/me")
+        response = await client.get("/auth/profile")
         assert response.status_code == 403
 
     @pytest.mark.asyncio
     async def test_protected_route_with_invalid_token(self, client: AsyncClient):
         
         response = await client.get(
-            "/auth/me",
+            "/auth/profile",
             headers={"Authorization": "Bearer fake.token.here"},
         )
         assert response.status_code == 401
@@ -213,7 +223,7 @@ class TestProfile:
     @pytest.mark.asyncio
     async def test_get_me(self, client: AsyncClient, test_user: User, auth_headers: dict):
         
-        response = await client.get("/auth/me", headers=auth_headers)
+        response = await client.get("/auth/profile", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -225,7 +235,7 @@ class TestProfile:
     async def test_update_profile_partial(self, client: AsyncClient, auth_headers: dict):
 
         response = await client.patch(
-            "/auth/me",
+            "/auth/profile",
             headers=auth_headers,
             json={"city": "الرياض", "git_profile": "https://github.com/test"},
         )
@@ -238,7 +248,7 @@ class TestProfile:
     @pytest.mark.asyncio
     async def test_soft_delete_account(self, client: AsyncClient, db, auth_headers: dict):
         # Soft delete: the row is retained (for audit), not actually removed
-        response = await client.delete("/auth/me", headers=auth_headers)
+        response = await client.delete("/auth/profile", headers=auth_headers)
 
         assert response.status_code == 200
         assert "deleted" in response.json()["message"].lower()
