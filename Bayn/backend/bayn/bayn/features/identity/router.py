@@ -21,7 +21,12 @@ from bayn.features.identity.schemas import (
     UserResponse,
     UserSignup,
     UserLogin,
+    PasswordActionMessageResponse,
+    ForgotPasswordRequest,
+    ResetPasswordConfirm,
+    ChangePasswordRequest,
 )
+from bayn.features.identity import password_service
 from bayn.features.identity.service import _build_user_response
 
 router = APIRouter(prefix="/auth", tags=["Identity"])
@@ -161,3 +166,65 @@ async def confirm_phone_otp(
     return await service.verify_phone_otp(
         db=db, user=current_user, otp_code=payload.otp_code, locale=locale,
     )
+
+# ── Forgot Password (RESET flow - unauthenticated) ────────────────────────
+
+
+
+@router.post(
+    "/password/forgot",
+    response_model=PasswordActionMessageResponse,
+    summary="طلب رابط إعادة تعيين كلمة المرور",
+)
+async def forgot_password(
+    payload: ForgotPasswordRequest,
+    db: AsyncSession = Depends(get_db),
+    locale: str = Depends(get_locale),
+) -> PasswordActionMessageResponse:
+    return await password_service.request_password_reset(db, payload.email, locale)
+
+
+@router.post(
+    "/password/reset",
+    response_model=PasswordActionMessageResponse,
+    summary="تأكيد إعادة تعيين كلمة المرور",
+)
+async def reset_password(
+    payload: ResetPasswordConfirm,
+    db: AsyncSession = Depends(get_db),
+    locale: str = Depends(get_locale),
+) -> PasswordActionMessageResponse:
+    return await password_service.confirm_password_reset(
+        db, payload.token, payload.new_password, locale
+    )
+
+
+# ── Change Password (CHANGE flow - authenticated) ─────────────────────────
+
+@router.post(
+    "/password/change/request",
+    response_model=PasswordActionMessageResponse,
+    summary="طلب تغيير كلمة المرور (يرسل رابط تأكيد)",
+)
+async def change_password_request(
+    payload: ChangePasswordRequest,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+    locale: str = Depends(get_locale),
+) -> PasswordActionMessageResponse:
+    return await password_service.request_password_change(
+        db, current_user, payload.current_password, payload.new_password, locale
+    )
+
+
+@router.post(
+    "/password/change/confirm",
+    response_model=PasswordActionMessageResponse,
+    summary="تأكيد تغيير كلمة المرور عبر الرابط",
+)
+async def change_password_confirm(
+    token: str,
+    db: AsyncSession = Depends(get_db),
+    locale: str = Depends(get_locale),
+) -> PasswordActionMessageResponse:
+    return await password_service.confirm_password_change(db, token, locale)

@@ -10,7 +10,8 @@ import uuid
 from datetime import date, datetime
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, EmailStr, ValidationInfo, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, ValidationInfo, field_validator, Field
+
 
 from bayn.core.i18n import DEFAULT_LOCALE, t
 
@@ -175,4 +176,19 @@ class OTPSendResponse(BaseModel):
 
 
 class MessageResponse(BaseModel):
+    message: str
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordConfirm(BaseModel):
+    token: str
+    new_password: str = Field(min_length=8)
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str = Field(min_length=8)
+    
+class PasswordActionMessageResponse(BaseModel):
     message: str

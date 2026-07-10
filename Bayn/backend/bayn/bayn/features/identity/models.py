@@ -7,6 +7,7 @@ from typing import Optional
 
 from sqlalchemy import Boolean, Date, DateTime, Enum, ForeignKey, Integer, String, func
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from bayn.core.database import Base
@@ -29,6 +30,9 @@ class OTPStatus(str, enum.Enum):
     verified = "verified"
     expired = "expired"
 
+class PasswordActionType(str, enum.Enum):
+    RESET = "reset"
+    CHANGE = "change"
 
 class Country(Base):
     __tablename__ = "countries"
@@ -73,6 +77,20 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     username: Mapped[str] = mapped_column(String(30), unique=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+
+    # password action fields are used for password reset/change flows; they are cleared after the action is completed
+
+    password_action_token_hash: Mapped[str | None] = mapped_column(String, nullable=True)
+    password_action_type: Mapped[PasswordActionType | None] = mapped_column(
+        SAEnum(PasswordActionType), nullable=True
+    )
+    password_action_expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
+    # pending password hash is used to store the new password hash during a password change flow, until the user confirms the change
+    pending_password_hash: Mapped[str | None] = mapped_column(String, nullable=True)
+
 
     phone_country_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True), ForeignKey("countries.id"), nullable=True

@@ -24,7 +24,7 @@ class EmailClient:
         self.port = settings.SMTP_PORT
         self.username = settings.SMTP_USERNAME
         self.password = settings.SMTP_PASSWORD
-        self.from_address = settings.EMAIL_FROM_ADDRESS
+        self.from_address = settings.EMAIL_FROM
 
     async def send_email(
         self,
