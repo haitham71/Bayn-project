@@ -64,15 +64,15 @@ async def refresh_token(
 
 # ── Profile ───────────────────────────────────────────────────────────────────
 
-@router.get("/me", response_model=UserResponse, summary="جلب بيانات المستخدم الحالي")
-async def get_me(
+@router.get("/profile", response_model=UserResponse, summary="جلب بيانات المستخدم الحالي")
+async def get_profile(
     current_user: User = Depends(get_current_active_user),
 ) -> UserResponse:
     return _build_user_response(current_user)
 
 
-@router.patch("/me", response_model=UserResponse, summary="تحديث الملف الشخصي")
-async def update_me(
+@router.patch("/profile", response_model=UserResponse, summary="تحديث الملف الشخصي")
+async def update_profile(
     payload: UpdateProfileRequest,
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
@@ -80,8 +80,8 @@ async def update_me(
     return await service.update_profile(db, current_user, payload)
 
 
-@router.delete("/me", response_model=MessageResponse, summary="حذف الحساب (soft delete)")
-async def delete_me(
+@router.delete("/profile", response_model=MessageResponse, summary="حذف الحساب (soft delete)")
+async def delete_profile(
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ) -> MessageResponse:
@@ -91,7 +91,7 @@ async def delete_me(
 
 # ── Avatar ────────────────────────────────────────────────────────────────────
 
-@router.post("/me/avatar", response_model=UserResponse, summary="رفع أو تحديث صورة الملف الشخصي")
+@router.post("/profile/avatar", response_model=UserResponse, summary="رفع أو تحديث صورة الملف الشخصي")
 async def upload_avatar(
     file: UploadFile = File(..., description="JPG / PNG / WebP, max 5MB"),
     current_user: User = Depends(get_current_active_user),
@@ -108,7 +108,7 @@ async def upload_avatar(
     )
 
 
-@router.delete("/me/avatar", response_model=UserResponse, summary="حذف صورة الملف الشخصي")
+@router.delete("/profile/avatar", response_model=UserResponse, summary="حذف صورة الملف الشخصي")
 async def delete_avatar(
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
