@@ -27,10 +27,14 @@
   margin: 0 auto;
 }
 
-/* Hero column */
+/* Hero column — kept a fixed viewport height and stuck to the top so it stays
+   the same size (floating) no matter how tall the form content grows. */
 .identity-layout__hero {
   flex: 1 1 35%;
-  position: relative;
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  height: 100vh;
   background-size: cover;
   background-position: center;
   border-start-start-radius: 48px;

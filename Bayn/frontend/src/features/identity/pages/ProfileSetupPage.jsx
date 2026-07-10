@@ -22,7 +22,6 @@ export default function ProfileSetupPage({ onNavigate, initialData = {}, onDataC
     { key: 'profile', label: t('steps.profile') },
   ];
 
-  const [nameLang, setNameLang] = useState(initialData.nameLang || 'en');
   const [firstNameEn, setFirstNameEn] = useState(initialData.firstNameEn || '');
   const [secondNameEn, setSecondNameEn] = useState(initialData.secondNameEn || '');
   const [thirdNameEn, setThirdNameEn] = useState(initialData.thirdNameEn || '');
@@ -46,12 +45,11 @@ export default function ProfileSetupPage({ onNavigate, initialData = {}, onDataC
   // Persist everything up so it survives navigating back to earlier steps.
   useEffect(() => {
     onDataChange?.({
-      nameLang,
       firstNameEn, secondNameEn, thirdNameEn, lastNameEn,
       firstNameAr, secondNameAr, thirdNameAr, lastNameAr,
       title, experience, location, bio, skills,
     });
-  }, [nameLang, firstNameEn, secondNameEn, thirdNameEn, lastNameEn, firstNameAr, secondNameAr, thirdNameAr, lastNameAr, title, experience, location, bio, skills]);
+  }, [firstNameEn, secondNameEn, thirdNameEn, lastNameEn, firstNameAr, secondNameAr, thirdNameAr, lastNameAr, title, experience, location, bio, skills]);
 
   function addSkill(value) {
     const v = value.trim();
@@ -73,20 +71,31 @@ export default function ProfileSetupPage({ onNavigate, initialData = {}, onDataC
     }
   }
 
-  // The name fields for the language the toggle is currently showing.
-  const nameSet = nameLang === 'en'
-    ? [
-        { key: 'firstNameEn', label: 'firstName', value: firstNameEn, set: setFirstNameEn },
+  // Both name languages are shown together. First and last names carry over
+  // from the account step (captured on the sign-up form) so they are locked
+  // here; only the middle names stay editable.
+  const nameGroups = [
+    {
+      lng: 'en',
+      heading: t('profile.langEnglish'),
+      fields: [
+        { key: 'firstNameEn', label: 'firstName', value: firstNameEn, set: setFirstNameEn, disabled: true },
         { key: 'secondNameEn', label: 'secondName', value: secondNameEn, set: setSecondNameEn },
         { key: 'thirdNameEn', label: 'thirdName', value: thirdNameEn, set: setThirdNameEn },
-        { key: 'lastNameEn', label: 'lastName', value: lastNameEn, set: setLastNameEn },
-      ]
-    : [
-        { key: 'firstNameAr', label: 'firstName', value: firstNameAr, set: setFirstNameAr },
+        { key: 'lastNameEn', label: 'lastName', value: lastNameEn, set: setLastNameEn, disabled: true },
+      ],
+    },
+    {
+      lng: 'ar',
+      heading: t('profile.langArabic'),
+      fields: [
+        { key: 'firstNameAr', label: 'firstName', value: firstNameAr, set: setFirstNameAr, disabled: true },
         { key: 'secondNameAr', label: 'secondName', value: secondNameAr, set: setSecondNameAr },
         { key: 'thirdNameAr', label: 'thirdName', value: thirdNameAr, set: setThirdNameAr },
-        { key: 'lastNameAr', label: 'lastName', value: lastNameAr, set: setLastNameAr },
-      ];
+        { key: 'lastNameAr', label: 'lastName', value: lastNameAr, set: setLastNameAr, disabled: true },
+      ],
+    },
+  ];
 
   function collectErrors() {
     const next = {};
@@ -111,12 +120,6 @@ export default function ProfileSetupPage({ onNavigate, initialData = {}, onDataC
     const found = collectErrors();
     setErrors(found);
 
-    // Surface hidden-language name errors by switching the toggle to them.
-    const enNameErr = found.firstNameEn || found.secondNameEn || found.thirdNameEn || found.lastNameEn;
-    const arNameErr = found.firstNameAr || found.secondNameAr || found.thirdNameAr || found.lastNameAr;
-    if (nameLang === 'en' && !enNameErr && arNameErr) setNameLang('ar');
-    else if (nameLang === 'ar' && !arNameErr && enNameErr) setNameLang('en');
-
     if (Object.values(found).some(Boolean)) return;
     onNavigate('home');
   }
@@ -136,35 +139,24 @@ export default function ProfileSetupPage({ onNavigate, initialData = {}, onDataC
         <p className="ps__subtitle">{t('profile.namesTitle')}</p>
 
         <div className="ps__names">
-          <div className="ps__lang-toggle" role="group" aria-label="Name language">
-            <button
-              type="button"
-              className={`ps__lang-opt${nameLang === 'en' ? ' ps__lang-opt--active' : ''}`}
-              onClick={() => setNameLang('en')}
-            >
-              English
-            </button>
-            <button
-              type="button"
-              className={`ps__lang-opt${nameLang === 'ar' ? ' ps__lang-opt--active' : ''}`}
-              onClick={() => setNameLang('ar')}
-            >
-              العربية
-            </button>
-          </div>
-
-          <div className="ps__names-grid">
-            {nameSet.map(f => (
-              <Input
-                key={f.key}
-                label={t(`signup.${f.label}`, { lng: nameLang })}
-                value={f.value}
-                onChange={e => { f.set(e.target.value); clearError(f.key); }}
-                className="ps__input"
-                {...fieldError(f.key)}
-              />
-            ))}
-          </div>
+          {nameGroups.map(group => (
+            <div key={group.lng} className="ps__names-group">
+              <p className="ps__names-lang">{group.heading}</p>
+              <div className="ps__names-grid">
+                {group.fields.map(f => (
+                  <Input
+                    key={f.key}
+                    label={t(`signup.${f.label}`)}
+                    value={f.value}
+                    onChange={e => { f.set(e.target.value); clearError(f.key); }}
+                    disabled={f.disabled}
+                    className="ps__input"
+                    {...fieldError(f.key)}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
 
         <hr className="ps__divider" />

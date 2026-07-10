@@ -81,7 +81,7 @@ export default function VerificationPage({
 
         <div className="verify__resend">
           <span>{t('verification.didntReceive')}</span>
-          <Button variant="tertiary" size="sm" disabled={!isDone} onClick={() => reset()}>
+          <Button variant="tertiary" size="sm" disabled={!isDone || verified.phone} onClick={() => reset()}>
             {t('verification.resend')}
           </Button>
           {!isDone && <span className="verify__timer">({formatted})</span>}
@@ -123,7 +123,7 @@ export default function VerificationPage({
 
         <p className="verify__edit">
           <span>{t('verification.wrongInfo')}</span>
-          <Button variant="tertiary" size="sm" onClick={onEditInfo}>
+          <Button variant="tertiary" size="sm" onClick={onEditInfo} disabled={verified.phone}>
             {t('verification.editInfo')}
           </Button>
         </p>

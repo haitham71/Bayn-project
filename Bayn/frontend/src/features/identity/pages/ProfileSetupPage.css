@@ -38,39 +38,25 @@
   text-align: center;
 }
 
-/* Names section: language toggle + the four name fields for that language. */
+/* Names section: both language groups (English + Arabic) stacked, each with
+   its four name fields. First/last names are locked (carried from sign-up). */
 .ps__names {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 28px;
 }
 
-.ps__lang-toggle {
-  align-self: center;
-  display: inline-flex;
-  padding: 4px;
-  border-radius: 10px;
-  background: var(--input-bg-default, rgba(215, 203, 185, 0.45));
-  border: 1px solid var(--color-secondary-700, #bca98a);
+.ps__names-group {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
-.ps__lang-opt {
-  min-width: 96px;
-  padding: 7px 18px;
-  border: none;
-  border-radius: 7px;
-  background: transparent;
-  color: var(--text-supporting, #786c57);
-  font-family: var(--font-sans);
+.ps__names-lang {
+  margin: 0;
   font-size: 14px;
   font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease;
-}
-
-.ps__lang-opt--active {
-  background: var(--btn-primary-default, #295e4d);
-  color: var(--btn-text, #ebe5dc);
+  color: var(--text-supporting, #786c57);
 }
 
 .ps__names-grid {

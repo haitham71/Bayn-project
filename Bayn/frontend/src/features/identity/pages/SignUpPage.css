@@ -22,7 +22,7 @@
 }
 
 .su__stepper {
-  margin: 0 0 8px;
+  margin: 0 0 50px;
 }
 
 /* ── Form ──────────────────────────────── */
@@ -33,7 +33,7 @@
 .su__form {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 20px;
   min-height: 0;
 }
 

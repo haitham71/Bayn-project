@@ -5,8 +5,11 @@ import Stepper from '../components/Stepper';
 import Button from '@/shared/components/Button';
 import Input from '@/shared/components/Input';
 import Checkbox from '@/shared/components/Checkbox';
+import Eye from '@/assets/icons/eye.svg?react';
+import EyeOff from '@/assets/icons/eye-off.svg?react';
 import {
   validateEmail,
+  validateName,
   validateUsername,
   validateDob,
   validatePhone,
@@ -15,20 +18,6 @@ import {
   formatPhone,
 } from '../utils/validation';
 import './SignUpPage.css';
-
-const EyeOpen = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-    <circle cx="12" cy="12" r="3" />
-  </svg>
-);
-
-const EyeOff = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-    <line x1="1" y1="1" x2="23" y2="23" />
-  </svg>
-);
 
 function passwordScore(pw) {
   return [
@@ -83,6 +72,10 @@ export default function SignUpPage({ onNavigate, initialData = {}, onDataChange 
   ];
 
   const [email, setEmail] = useState(initialData.email || '');
+  const [firstNameAr, setFirstNameAr] = useState(initialData.firstNameAr || '');
+  const [lastNameAr, setLastNameAr] = useState(initialData.lastNameAr || '');
+  const [firstNameEn, setFirstNameEn] = useState(initialData.firstNameEn || '');
+  const [lastNameEn, setLastNameEn] = useState(initialData.lastNameEn || '');
   const [username, setUsername] = useState(initialData.username || '');
   const [password, setPassword] = useState(initialData.password || '');
   const [confirmPassword, setConfirmPassword] = useState(initialData.confirmPassword || '');
@@ -98,16 +91,24 @@ export default function SignUpPage({ onNavigate, initialData = {}, onDataChange 
   // back (the page itself unmounts, but App keeps the data).
   useEffect(() => {
     onDataChange?.({
-      email, username,
+      email, firstNameAr, lastNameAr, firstNameEn, lastNameEn, username,
       password, confirmPassword, dob, phone, agreed,
     });
-  }, [email, username, password, confirmPassword, dob, phone, agreed]);
+  }, [email, firstNameAr, lastNameAr, firstNameEn, lastNameEn, username, password, confirmPassword, dob, phone, agreed]);
 
   // Turns the validators' error codes into a field -> localized message map.
   function collectErrors() {
     const next = {};
     const email_ = validateEmail(email);
     if (email_) next.email = email_;
+    const fnAr = validateName(firstNameAr, { lang: 'ar' });
+    if (fnAr) next.firstNameAr = fnAr;
+    const lnAr = validateName(lastNameAr, { lang: 'ar' });
+    if (lnAr) next.lastNameAr = lnAr;
+    const fnEn = validateName(firstNameEn, { lang: 'en' });
+    if (fnEn) next.firstNameEn = fnEn;
+    const lnEn = validateName(lastNameEn, { lang: 'en' });
+    if (lnEn) next.lastNameEn = lnEn;
     const user = validateUsername(username);
     if (user) next.username = user;
 
@@ -153,6 +154,7 @@ export default function SignUpPage({ onNavigate, initialData = {}, onDataChange 
       </div>
 
       <form className="su__form" onSubmit={handleSubmit} noValidate>
+
         <div className="su__row">
           <Input
             label={t('signup.email')}
@@ -170,6 +172,42 @@ export default function SignUpPage({ onNavigate, initialData = {}, onDataChange 
             {...fieldError('username')}
           />
         </div>
+
+
+        <div className="su__row">
+          <Input
+            label={t('signup.firstNameAr')}
+            value={firstNameAr}
+            onChange={e => { setFirstNameAr(e.target.value); clearError('firstNameAr'); }}
+            className="su__input"
+            {...fieldError('firstNameAr')}
+          />
+          <Input
+            label={t('signup.lastNameAr')}
+            value={lastNameAr}
+            onChange={e => { setLastNameAr(e.target.value); clearError('lastNameAr'); }}
+            className="su__input"
+            {...fieldError('lastNameAr')}
+          />
+        </div>
+
+        <div className="su__row">
+          <Input
+            label={t('signup.firstNameEn')}
+            value={firstNameEn}
+            onChange={e => { setFirstNameEn(e.target.value); clearError('firstNameEn'); }}
+            className="su__input"
+            {...fieldError('firstNameEn')}
+          />
+          <Input
+            label={t('signup.lastNameEn')}
+            value={lastNameEn}
+            onChange={e => { setLastNameEn(e.target.value); clearError('lastNameEn'); }}
+            className="su__input"
+            {...fieldError('lastNameEn')}
+          />
+        </div>
+
 
         <div className="su__row">
           <Input
@@ -198,7 +236,7 @@ export default function SignUpPage({ onNavigate, initialData = {}, onDataChange 
             type={showPassword ? 'text' : 'password'}
             value={password}
             onChange={e => { setPassword(e.target.value); clearError('password'); }}
-            trailingIcon={showPassword ? <EyeOpen /> : <EyeOff />}
+            trailingIcon={showPassword ? <Eye width={20} height={20} aria-hidden="true" /> : <EyeOff width={20} height={20} aria-hidden="true" />}
             onTrailingClick={() => setShowPassword(p => !p)}
             className="su__input"
             {...fieldError('password')}
@@ -208,7 +246,7 @@ export default function SignUpPage({ onNavigate, initialData = {}, onDataChange 
             type={showConfirm ? 'text' : 'password'}
             value={confirmPassword}
             onChange={e => { setConfirmPassword(e.target.value); clearError('confirmPassword'); }}
-            trailingIcon={showConfirm ? <EyeOpen /> : <EyeOff />}
+            trailingIcon={showConfirm ? <Eye width={20} height={20} aria-hidden="true" /> : <EyeOff width={20} height={20} aria-hidden="true" />}
             onTrailingClick={() => setShowConfirm(p => !p)}
             className="su__input"
             {...fieldError('confirmPassword')}
