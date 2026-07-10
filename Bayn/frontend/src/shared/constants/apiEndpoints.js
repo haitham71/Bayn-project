@@ -6,7 +6,7 @@ export const API = {
     signup: '/auth/signup',
     login: '/auth/login',
     refresh: '/auth/refresh',
-    me: '/auth/me',
+    profile: '/auth/profile',
     sendEmailOtp: '/auth/verify-email/send',
     confirmEmailOtp: '/auth/verify-email/confirm',
     sendPhoneOtp: '/auth/verify-phone/send',
