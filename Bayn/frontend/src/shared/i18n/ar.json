@@ -35,7 +35,7 @@
   "steps": {
     "account": "معلومات الحساب",
     "verification": "التحقق",
-    "profile": "إعداد الملف"
+    "profile": "إعداد الملف الشخصي"
   },
   "profile": {
     "namesTitle": "أدخل اسمك الكامل",
@@ -50,6 +50,24 @@
     "removeSkill": "إزالة {{skill}}",
     "finish": "إنهاء",
     "back": "رجوع"
+  },
+  "myProfile": {
+    "title": "ملفي الشخصي",
+    "previewTitle": "معاينة الملف الشخصي",
+    "tabAccount": "معلومات الحساب",
+    "tabProfile": "معلومات الملف الشخصي",
+    "changePassword": "تغيير كلمة المرور",
+    "currentPassword": "كلمة المرور الحالية",
+    "newPassword": "كلمة المرور الجديدة",
+    "confirmNewPassword": "تأكيد كلمة المرور الجديدة",
+    "confirmPasswordChange": "تأكيد تغيير كلمة المرور",
+    "confirmAccountUpdate": "تأكيد تحديث معلومات الحساب",
+    "confirmProfileUpdate": "تأكيد تحديث المعلومات الشخصية",
+    "sectionBio": "نبذة تعريفية",
+    "sectionExperience": "سنوات الخبرة",
+    "sectionSkills": "المهارات",
+    "changePhoto": "تغيير الصورة",
+    "save": "حفظ التغييرات"
   },
   "verification": {
     "title": "أدخل رمز التحقق",

@@ -51,6 +51,24 @@
     "finish": "Finish",
     "back": "Back"
   },
+  "myProfile": {
+    "title": "My Profile",
+    "previewTitle": "Profile View",
+    "tabAccount": "Account information",
+    "tabProfile": "Profile Information",
+    "changePassword": "Change password",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "confirmNewPassword": "Confirm new password",
+    "confirmPasswordChange": "Confirm password change",
+    "confirmAccountUpdate": "Confirm account update",
+    "confirmProfileUpdate": "Confirm profile update",
+    "sectionBio": "Bio",
+    "sectionExperience": "Years of Experience",
+    "sectionSkills": "Skills",
+    "changePhoto": "Change photo",
+    "save": "Save changes"
+  },
   "verification": {
     "title": "Enter verification code",
     "sentTo": "We've sent a 4-digit verification code to:",

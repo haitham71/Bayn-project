@@ -4,9 +4,10 @@ import SignUpPage       from '@/features/identity/pages/SignUpPage';
 import VerificationPage from '@/features/identity/pages/VerificationPage';
 import ProfileSetupPage from '@/features/identity/pages/ProfileSetupPage';
 import HomePage         from '@/features/home/pages/HomePage';
+import MyProfilePage    from '@/features/profile/pages/MyProfilePage';
 
 const PAGE_KEY = 'bayn-page';
-const PAGES = ['login', 'signup', 'verification', 'profile', 'home'];
+const PAGES = ['login', 'signup', 'verification', 'profile', 'home', 'myprofile'];
 
 function readPage() {
   try {
@@ -18,7 +19,7 @@ function readPage() {
 }
 
 export default function App() {
-  const [page, setPage] = useState('home');
+  const [page, setPage] = useState('myprofile');
   const [signupData, setSignupData] = useState({});
 
   const goTo = (next) => {
@@ -46,6 +47,7 @@ export default function App() {
       )}
       {page === 'profile'      && <ProfileSetupPage onNavigate={goTo} initialData={signupData} onDataChange={patchData} />}
       {page === 'home'         && <HomePage onNavigate={goTo} />}
+      {page === 'myprofile'    && <MyProfilePage onNavigate={goTo} />}
     </>
   );
 }

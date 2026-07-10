@@ -22,7 +22,9 @@ function greetingKey() {
   return 'greetEvening';
 }
 
-export default function HomePage() {
+const SIDEBAR_ROUTES = { home: 'home', profile: 'myprofile' };
+
+export default function HomePage({ onNavigate }) {
   const { t, i18n } = useTranslation();
 
   const greeting = t(`home.${greetingKey()}`);
@@ -46,7 +48,10 @@ export default function HomePage() {
 
   return (
     <div className="home">
-      <Sidebar activeKey="home" />
+      <Sidebar
+        activeKey="home"
+        onNavigate={(key) => SIDEBAR_ROUTES[key] && onNavigate?.(SIDEBAR_ROUTES[key])}
+      />
 
       <div className="home__main">
         <Navbar userName={t('home.profileName')} />

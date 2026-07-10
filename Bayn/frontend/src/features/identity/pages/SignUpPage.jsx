@@ -7,6 +7,7 @@ import Input from '@/shared/components/Input';
 import Checkbox from '@/shared/components/Checkbox';
 import Eye from '@/assets/icons/eye.svg?react';
 import EyeOff from '@/assets/icons/eye-off.svg?react';
+import PasswordStrength from '@/shared/components/PasswordStrength';
 import {
   validateEmail,
   validateName,
@@ -18,49 +19,6 @@ import {
   formatPhone,
 } from '../utils/validation';
 import './SignUpPage.css';
-
-function passwordScore(pw) {
-  return [
-    pw.length >= 8,
-    /[A-Z]/.test(pw),
-    /[0-9]/.test(pw),
-    /[#$@]/.test(pw),
-  ].filter(Boolean).length;
-}
-
-function PasswordStrength({ password, t }) {
-  const score = passwordScore(password);
-  const checks = [
-    password.length >= 8,
-    /[A-Z]/.test(password),
-    /[0-9]/.test(password),
-    /[#$@]/.test(password),
-  ];
-  const rules = t('signup.rules', { returnObjects: true });
-
-  return (
-    <div className="pw-str">
-      <div className="pw-str__header">
-        <span className="pw-str__title">{t('signup.strengthLabel')}</span>
-        <div className="pw-str__bars">
-          {[0, 1, 2, 3].map(i => (
-            <div
-              key={i}
-              className={`pw-str__bar${i < score ? ' pw-str__bar--on' : ''}`}
-            />
-          ))}
-        </div>
-      </div>
-      <ul className="pw-str__list">
-        {rules.map((rule, i) => (
-          <li key={i} className={`pw-str__rule${checks[i] ? ' pw-str__rule--ok' : ''}`}>
-            {rule}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
 
 export default function SignUpPage({ onNavigate, initialData = {}, onDataChange }) {
   const { t } = useTranslation();
@@ -253,7 +211,7 @@ export default function SignUpPage({ onNavigate, initialData = {}, onDataChange 
           />
         </div>
 
-        <PasswordStrength password={password} t={t} />
+        <PasswordStrength password={password} />
 
         {error && <p className="su__error">{error}</p>}
 
