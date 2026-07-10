@@ -77,7 +77,9 @@ class RefreshTokenRequest(BaseModel):
 
 class UpdateProfileRequest(BaseModel):
     """Partial update — only fields present in the request are changed."""
-    city: Optional[str] = None
+    country_id: Optional[uuid.UUID] = None
+    city_id: Optional[uuid.UUID] = None
+    job_title: Optional[str] = None
     git_profile: Optional[str] = None
     industry_id: Optional[uuid.UUID] = None
     phone_country_id: Optional[uuid.UUID] = None
@@ -150,7 +152,9 @@ class UserResponse(BaseModel):
     phone_country_id: Optional[uuid.UUID]
     phone_number: Optional[int]
 
-    city: Optional[str]
+    country_id: Optional[uuid.UUID]
+    city_id: Optional[uuid.UUID]
+    job_title: Optional[str]
     industry_id: Optional[uuid.UUID]
     git_profile: Optional[str]
 

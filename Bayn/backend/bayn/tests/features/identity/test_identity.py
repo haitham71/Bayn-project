@@ -13,7 +13,7 @@ import pytest
 import pytest_asyncio
 from httpx import AsyncClient
 
-from bayn.features.identity.models import User
+from bayn.features.identity.models import City, User
 
 
 # ═══════════════════════════════════════════════════════
@@ -232,17 +232,17 @@ class TestProfile:
         assert "password_hash" not in data
 
     @pytest.mark.asyncio
-    async def test_update_profile_partial(self, client: AsyncClient, auth_headers: dict):
+    async def test_update_profile_partial(self, client: AsyncClient, auth_headers: dict, test_city: City):
 
         response = await client.patch(
             "/auth/profile",
             headers=auth_headers,
-            json={"city": "الرياض", "git_profile": "https://github.com/test"},
+            json={"city_id": str(test_city.id), "git_profile": "https://github.com/test"},
         )
 
         assert response.status_code == 200
         data = response.json()
-        assert data["city"] == "الرياض"
+        assert data["city_id"] == str(test_city.id)
         assert data["git_profile"] == "https://github.com/test"
 
     @pytest.mark.asyncio

@@ -55,6 +55,23 @@ class Country(Base):
         return f"<Country {self.iso2} - {self.name_en}>"
 
 
+class City(Base):
+    __tablename__ = "cities"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    country_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("countries.id"), nullable=False)
+    name_en: Mapped[str] = mapped_column(String(100), nullable=False)
+    name_ar: Mapped[str] = mapped_column(String(100), nullable=False)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    country: Mapped["Country"] = relationship("Country", foreign_keys=[country_id])
+
+    def __repr__(self) -> str:
+        return f"<City {self.name_en}>"
+
+
 class User(Base):
     __tablename__ = "users"
 
@@ -98,7 +115,15 @@ class User(Base):
     # local number without the dial code, e.g. 501234567
     phone_number: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
 
-    city: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    # country of residence — independent of phone_country_id (dial code can differ from where the user lives)
+    country_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("countries.id"), nullable=True
+    )
+    # city is picked from the cities lookup table, not free text
+    city_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("cities.id"), nullable=True
+    )
+    job_title: Mapped[Optional[str]] = mapped_column(String(150), nullable=True)
     industry_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True), ForeignKey("industries.id"), nullable=True
     )
@@ -129,6 +154,12 @@ class User(Base):
 
     phone_country: Mapped[Optional["Country"]] = relationship(
         "Country", back_populates="users", foreign_keys=[phone_country_id]
+    )
+    country: Mapped[Optional["Country"]] = relationship(
+        "Country", foreign_keys=[country_id]
+    )
+    city: Mapped[Optional["City"]] = relationship(
+        "City", foreign_keys=[city_id]
     )
     otp_logs: Mapped[list["AuthenticaOTPLog"]] = relationship(
         "AuthenticaOTPLog", back_populates="user", cascade="all, delete-orphan"

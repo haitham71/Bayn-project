@@ -20,7 +20,7 @@ from sqlalchemy.pool import StaticPool
 from bayn.common.exceptions import NotFoundError
 from bayn.core.database import Base, get_db
 from bayn.core.security import create_access_token, hash_password
-from bayn.features.identity.models import Country, User
+from bayn.features.identity.models import City, Country, User
 from bayn.main import app
 
 
@@ -102,6 +102,18 @@ async def test_country(db: AsyncSession) -> Country:
     await db.flush()
     await db.refresh(country)
     return country
+
+@pytest_asyncio.fixture
+async def test_city(db: AsyncSession, test_country: Country) -> City:
+    city = City(
+        country_id=test_country.id,
+        name_en="Riyadh",
+        name_ar="الرياض",
+    )
+    db.add(city)
+    await db.flush()
+    await db.refresh(city)
+    return city
 
 @pytest_asyncio.fixture
 async def test_user(db: AsyncSession, test_country: Country) -> User:

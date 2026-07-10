@@ -10,7 +10,7 @@ from bayn.core.i18n import get_locale
 from bayn.features.catalog import service
 from bayn.features.catalog.schemas import (
     AddSkillRequest, AddSpecializationRequest,
-    CountryResponse, IndustryResponse, SkillResponse,
+    CityResponse, CountryResponse, IndustryResponse, SkillResponse,
     UserSkillResponse, UserSpecializationResponse,
 )
 from bayn.features.identity.dependencies import get_current_active_user
@@ -23,6 +23,14 @@ catalog_router = APIRouter(prefix="/catalog", tags=["Catalog"])
 @catalog_router.get("/countries", response_model=list[CountryResponse], summary="List all countries")
 async def list_countries(db: AsyncSession = Depends(get_db)) -> list[CountryResponse]:
     return await service.get_all_countries(db)
+
+
+@catalog_router.get("/cities", response_model=list[CityResponse], summary="List cities (optionally filtered by country)")
+async def list_cities(
+    country_id: uuid.UUID | None = Query(None, description="Filter cities by country"),
+    db: AsyncSession = Depends(get_db),
+) -> list[CityResponse]:
+    return await service.get_all_cities(db, country_id)
 
 
 @catalog_router.get("/industries", response_model=list[IndustryResponse], summary="List all industries")

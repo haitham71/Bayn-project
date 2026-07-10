@@ -8,7 +8,7 @@ from sqlalchemy.orm import selectinload
 
 from bayn.common.exceptions import ConflictError, NotFoundError
 from bayn.core.i18n import DEFAULT_LOCALE, t
-from bayn.features.identity.models import Country
+from bayn.features.identity.models import City, Country
 from bayn.features.catalog.models import (
     Industry, Skill, Specialization, UserSkill, UserSpecialization,
 )
@@ -16,6 +16,14 @@ from bayn.features.catalog.models import (
 
 async def get_all_countries(db: AsyncSession) -> list[Country]:
     result = await db.execute(select(Country).order_by(Country.name_en))
+    return result.scalars().all()
+
+
+async def get_all_cities(db: AsyncSession, country_id: uuid.UUID | None = None) -> list[City]:
+    query = select(City).order_by(City.name_en)
+    if country_id is not None:
+        query = query.where(City.country_id == country_id)
+    result = await db.execute(query)
     return result.scalars().all()
 
 

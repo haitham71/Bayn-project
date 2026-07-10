@@ -15,6 +15,14 @@ class CountryResponse(BaseModel):
     dial_code: str
 
 
+class CityResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    country_id: uuid.UUID
+    name_en: str
+    name_ar: str
+
+
 class SkillResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: uuid.UUID
