@@ -2,7 +2,6 @@ import { useTranslation } from 'react-i18next';
 import Search from '@/assets/icons/search.svg?react';
 import Bell from '@/assets/icons/bell.svg?react';
 import MessageSquare from '@/assets/icons/message-square-text.svg?react';
-import ChevronDown from '@/assets/icons/chevron-down.svg?react';
 import './Navbar.css';
 
 // Shared dashboard top bar: search field on the leading edge, notification and
@@ -41,7 +40,6 @@ export default function Navbar({ userName, onSearch }) {
         <button type="button" className="bayn-topbar__profile">
           <span className="bayn-topbar__avatar" aria-hidden="true">{initial}</span>
           <span className="bayn-topbar__name">{name}</span>
-          <ChevronDown className="bayn-topbar__chev" width={18} height={18} aria-hidden="true" />
         </button>
       </div>
     </header>

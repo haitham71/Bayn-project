@@ -78,16 +78,19 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 6px 10px;
+  padding: 0;
   border: none;
-  border-radius: 12px;
   background: transparent;
   cursor: pointer;
-  transition: background-color 0.15s ease;
 }
 
-.bayn-topbar__profile:hover {
-  background: var(--bg-surface-secondary);
+/* Hover cue sits on the name only — no box behind the whole chip. */
+.bayn-topbar__name {
+  transition: color 0.15s ease;
+}
+
+.bayn-topbar__profile:hover .bayn-topbar__name {
+  color: var(--btn-primary-hover);
 }
 
 .bayn-topbar__avatar {
@@ -99,20 +102,21 @@
   border-radius: 50%;
   background: linear-gradient(135deg, var(--color-primary-300), var(--color-primary-600));
   color: var(--color-neutral-100);
+  font-family: var(--font-sans);
   font-weight: 700;
   font-size: 16px;
 }
 
 .bayn-topbar__name {
+  font-family: var(--font-sans);
   font-size: 20px;
   font-weight: 550;
   color: var(--btn-primary-default);
   white-space: nowrap;
 }
 
-.bayn-topbar__chev {
-  color: var(--btn-primary-default);
-  flex: 0 0 auto;
+[dir='rtl'] .bayn-topbar__name {
+  font-family: var(--font-ar);
 }
 
 @media (max-width: 720px) {

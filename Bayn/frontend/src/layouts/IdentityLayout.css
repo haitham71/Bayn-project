@@ -66,9 +66,6 @@
 }
 
 /* Size/shape/colour come from Button (iconOnly, primary); we only add the lift */
-.identity-layout__circle {
-  box-shadow: 0 8px 20px -8px rgba(4, 18, 14, 0.5);
-}
 
 .identity-layout__lang {
   position: absolute;

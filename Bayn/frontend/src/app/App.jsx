@@ -13,12 +13,12 @@ function readPage() {
     const saved = localStorage.getItem(PAGE_KEY);
     return PAGES.includes(saved) ? saved : 'login';
   } catch {
-    return 'login';
+    return 'home';
   }
 }
 
 export default function App() {
-  const [page, setPage] = useState('signup');
+  const [page, setPage] = useState('home');
   const [signupData, setSignupData] = useState({});
 
   const goTo = (next) => {
