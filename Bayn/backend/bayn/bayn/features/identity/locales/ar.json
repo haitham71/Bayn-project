@@ -33,7 +33,8 @@
     "delete_failed": "فشل حذف الصورة"
   },
   "profile": {
-    "national_id_already_in_use": "رقم الهوية الوطنية مسجل مسبقاً لحساب آخر"
+    "national_id_already_in_use": "رقم الهوية الوطنية مسجل مسبقاً لحساب آخر",
+    "incomplete": "الرجاء إكمال ملفك الشخصي قبل حجز الاجتماع"
   },
   "account": {
     "deleted": "تم حذف الحساب بنجاح"

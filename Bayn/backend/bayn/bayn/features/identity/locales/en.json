@@ -33,7 +33,8 @@
     "delete_failed": "Failed to delete avatar"
   },
   "profile": {
-    "national_id_already_in_use": "This national ID is already registered to another account"
+    "national_id_already_in_use": "This national ID is already registered to another account",
+    "incomplete": "Please complete your profile before booking a meeting"
   },
   "account": {
     "deleted": "Account deleted successfully"

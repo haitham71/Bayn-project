@@ -135,6 +135,7 @@ class User(Base):
         UUID(as_uuid=True), ForeignKey("cities.id"), nullable=True
     )
     job_title: Mapped[Optional[str]] = mapped_column(String(150), nullable=True)
+    bio: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     years_of_experience: Mapped[Optional[ExperienceRange]] = mapped_column(
         SAEnum(ExperienceRange, values_callable=lambda x: [e.value for e in x]), nullable=True
     )

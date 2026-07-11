@@ -100,6 +100,10 @@ class RefreshTokenRequest(BaseModel):
 
 class UpdateProfileRequest(BaseModel):
     """Partial update — only fields present in the request are changed."""
+    second_name_ar: Optional[str] = None
+    third_name_ar: Optional[str] = None
+    second_name_en: Optional[str] = None
+    third_name_en: Optional[str] = None
     country_id: Optional[uuid.UUID] = None
     city_id: Optional[uuid.UUID] = None
     job_title: Optional[str] = None
@@ -109,6 +113,7 @@ class UpdateProfileRequest(BaseModel):
     phone_country_id: Optional[uuid.UUID] = None
     phone_number: Optional[int] = None
     national_id: Optional[str] = None
+    bio: Optional[str] = Field(default=None, max_length=500)
 
     @field_validator("phone_number")
     @classmethod
@@ -167,6 +172,7 @@ class UserResponse(BaseModel):
     years_of_experience: Optional[ExperienceRange]
     industry_id: Optional[uuid.UUID]
     git_profile: Optional[str]
+    bio: Optional[str]
 
     avatar_url: Optional[str] = None
 
@@ -174,6 +180,9 @@ class UserResponse(BaseModel):
     is_active: bool
     is_email_verified: bool
     is_number_verified: bool
+
+    is_profile_complete: bool
+    missing_profile_fields: list[str]
 
     created_at: datetime
 

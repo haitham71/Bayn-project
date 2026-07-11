@@ -72,8 +72,9 @@ async def refresh_token(
 @router.get("/profile", response_model=UserResponse, summary="جلب بيانات المستخدم الحالي")
 async def get_profile(
     current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
 ) -> UserResponse:
-    return _build_user_response(current_user)
+    return await _build_user_response(db, current_user)
 
 
 @router.patch("/profile", response_model=UserResponse, summary="تحديث الملف الشخصي")
