@@ -64,6 +64,7 @@ def _build_user_response(user: User) -> UserResponse:
         country_id=user.country_id,
         city_id=user.city_id,
         job_title=user.job_title,
+        years_of_experience=user.years_of_experience,
         industry_id=user.industry_id,
         git_profile=user.git_profile,
         avatar_url=avatar_url,

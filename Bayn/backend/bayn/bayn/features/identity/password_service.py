@@ -72,7 +72,7 @@ async def request_password_reset(
     # Always return the same generic response, whether or not the user
     # exists - this prevents "user enumeration" attacks where an attacker
     # probes which emails are registered by checking for different replies.
-    generic_message = t("password_reset.generic_message", locale=locale)
+    generic_message = t("identity", "password_reset.generic_message", locale=locale)
 
     if user is None:
         return PasswordActionMessageResponse(message=generic_message)
@@ -95,8 +95,8 @@ async def request_password_reset(
 
     await email_client.send_email(
         to=user.email,
-        subject=t("password_reset.email_subject", locale=locale),
-        body=t("password_reset.email_plain_text", locale=locale, link=reset_link),
+        subject=t("identity", "password_reset.email_subject", locale=locale),
+        body=t("identity", "password_reset.email_plain_text", locale=locale, link=reset_link),
         html_body=_build_reset_email_html(reset_link, locale),
     )
 
@@ -123,16 +123,16 @@ async def confirm_password_reset(
     if user is None or user.password_action_type != PasswordActionType.RESET:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=t("password_reset.invalid_or_expired", locale=locale),
+            detail=t("identity", "password_reset.invalid_or_expired", locale=locale),
         )
 
     if user.password_action_expires_at < datetime.now(timezone.utc):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=t("password_reset.expired", locale=locale),
+            detail=t("identity", "password_reset.expired", locale=locale),
         )
 
-    user.hashed_password = hash_password(new_password)
+    user.password_hash = hash_password(new_password)
 
     # Single-use only: clear the token immediately to prevent replay.
     user.password_action_token_hash = None
@@ -150,7 +150,7 @@ async def confirm_password_reset(
         await db.rollback()
         raise e
 
-    return PasswordActionMessageResponse(message=t("password_reset.success", locale=locale))
+    return PasswordActionMessageResponse(message=t("identity", "password_reset.success", locale=locale))
 
 
 # CHANGE flow (logged-in user, requires email confirmation)
@@ -161,10 +161,10 @@ async def request_password_change(
 ) -> PasswordActionMessageResponse:
     # The user is already authenticated, so we verify their current password
     # upfront before even sending the confirmation email.
-    if not verify_password(current_password, user.hashed_password):
+    if not verify_password(current_password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=t("password_change.current_password_incorrect", locale=locale),
+            detail=t("identity", "password_change.current_password_incorrect", locale=locale),
         )
 
     raw_token = _generate_raw_token()
@@ -187,13 +187,13 @@ async def request_password_change(
 
     await email_client.send_email(
         to=user.email,
-        subject=t("password_change.email_subject", locale=locale),
-        body=t("password_change.email_plain_text", locale=locale, link=confirm_link),
+        subject=t("identity", "password_change.email_subject", locale=locale),
+        body=t("identity", "password_change.email_plain_text", locale=locale, link=confirm_link),
         html_body=_build_change_email_html(confirm_link, locale),
     )
 
     return PasswordActionMessageResponse(
-        message=t("password_change.request_sent", locale=locale)
+        message=t("identity", "password_change.request_sent", locale=locale)
     )
 
 
@@ -219,7 +219,7 @@ async def confirm_password_change(
     if user is None or user.password_action_type != PasswordActionType.CHANGE:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=t("password_change.invalid_or_expired", locale=locale),
+            detail=t("identity", "password_change.invalid_or_expired", locale=locale),
         )
 
     if user.password_action_expires_at < datetime.now(timezone.utc):
@@ -231,10 +231,10 @@ async def confirm_password_change(
         await db.commit()
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=t("password_change.expired", locale=locale),
+            detail=t("identity", "password_change.expired", locale=locale),
         )
 
-    user.hashed_password = user.pending_password_hash
+    user.password_hash = user.pending_password_hash
     user.pending_password_hash = None
     user.password_action_token_hash = None
     user.password_action_type = None
@@ -249,7 +249,7 @@ async def confirm_password_change(
         await db.rollback()
         raise e
 
-    return PasswordActionMessageResponse(message=t("password_change.success", locale=locale))
+    return PasswordActionMessageResponse(message=t("identity", "password_change.success", locale=locale))
 
 
 
@@ -264,10 +264,10 @@ def _build_reset_email_html(link: str, locale: str) -> str:
     is_rtl = locale == "ar"
     return f"""
     <div dir="{'rtl' if is_rtl else 'ltr'}" style="font-family: Arial, sans-serif;">
-        <h2>{t('password_reset.email_body_title', locale=locale)}</h2>
-        <p>{t('password_reset.email_body_text', locale=locale, minutes=RESET_TOKEN_TTL_MINUTES)}</p>
-        <p>{t('password_reset.email_body_ignore', locale=locale)}</p>
-        <a href="{link}">{t('password_reset.email_button', locale=locale)}</a>
+        <h2>{t('identity', 'password_reset.email_body_title', locale=locale)}</h2>
+        <p>{t('identity', 'password_reset.email_body_text', locale=locale, minutes=RESET_TOKEN_TTL_MINUTES)}</p>
+        <p>{t('identity', 'password_reset.email_body_ignore', locale=locale)}</p>
+        <a href="{link}">{t('identity', 'password_reset.email_button', locale=locale)}</a>
     </div>
     """
 
@@ -276,8 +276,8 @@ def _build_change_email_html(link: str, locale: str) -> str:
     is_rtl = locale == "ar"
     return f"""
     <div dir="{'rtl' if is_rtl else 'ltr'}" style="font-family: Arial, sans-serif;">
-        <h2>{t('password_change.email_body_title', locale=locale)}</h2>
-        <p>{t('password_change.email_body_text', locale=locale)}</p>
-        <a href="{link}">{t('password_change.email_button', locale=locale)}</a>
+        <h2>{t('identity', 'password_change.email_body_title', locale=locale)}</h2>
+        <p>{t('identity', 'password_change.email_body_text', locale=locale)}</p>
+        <a href="{link}">{t('identity', 'password_change.email_button', locale=locale)}</a>
     </div>
     """

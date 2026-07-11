@@ -34,6 +34,17 @@ class PasswordActionType(str, enum.Enum):
     RESET = "reset"
     CHANGE = "change"
 
+
+# values_callable (used wherever this is mapped) stores these .value strings
+# in Postgres, e.g. "1-2" — member names are just valid-identifier stand-ins
+class ExperienceRange(str, enum.Enum):
+    less_than_1 = "less_than_1"
+    range_1_2 = "1-2"
+    range_2_3 = "2-3"
+    range_3_4 = "3-4"
+    range_5_10 = "5-10"
+    more_than_10 = "10+"
+
 class Country(Base):
     __tablename__ = "countries"
 
@@ -124,6 +135,9 @@ class User(Base):
         UUID(as_uuid=True), ForeignKey("cities.id"), nullable=True
     )
     job_title: Mapped[Optional[str]] = mapped_column(String(150), nullable=True)
+    years_of_experience: Mapped[Optional[ExperienceRange]] = mapped_column(
+        SAEnum(ExperienceRange, values_callable=lambda x: [e.value for e in x]), nullable=True
+    )
     industry_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True), ForeignKey("industries.id"), nullable=True
     )

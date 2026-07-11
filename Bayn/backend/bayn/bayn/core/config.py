@@ -31,12 +31,15 @@ class Settings(BaseSettings):
     CALCOM_CLIENT_ID: str | None = None
     CALCOM_CLIENT_SECRET: str | None = None
 
-    SMTP_HOST: str | None = None 
+    SMTP_HOST: str | None = None
     SMTP_PORT: int = 587
     SMTP_USERNAME: str | None = None
     SMTP_PASSWORD: str | None = None
     EMAIL_FROM: str | None = None
     EMAIL_FROM_NAME: str | None = None
+
+
+    FRONTEND_URL: str = "http://localhost:3000"
 
     model_config = SettingsConfigDict(
         env_file=".env",

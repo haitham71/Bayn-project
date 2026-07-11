@@ -14,6 +14,7 @@ from pydantic import BaseModel, ConfigDict, EmailStr, ValidationInfo, field_vali
 
 
 from bayn.core.i18n import DEFAULT_LOCALE, t
+from bayn.features.identity.models import ExperienceRange
 
 
 def _locale_from(info: ValidationInfo) -> str:
@@ -80,6 +81,7 @@ class UpdateProfileRequest(BaseModel):
     country_id: Optional[uuid.UUID] = None
     city_id: Optional[uuid.UUID] = None
     job_title: Optional[str] = None
+    years_of_experience: Optional[ExperienceRange] = None
     git_profile: Optional[str] = None
     industry_id: Optional[uuid.UUID] = None
     phone_country_id: Optional[uuid.UUID] = None
@@ -155,6 +157,7 @@ class UserResponse(BaseModel):
     country_id: Optional[uuid.UUID]
     city_id: Optional[uuid.UUID]
     job_title: Optional[str]
+    years_of_experience: Optional[ExperienceRange]
     industry_id: Optional[uuid.UUID]
     git_profile: Optional[str]
 
