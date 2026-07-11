@@ -72,7 +72,7 @@ export default function MyProjectsPage({ onNavigate }) {
                   </article>
                 ))}
 
-                <button type="button" className="mp__add">
+                <button type="button" className="mp__add" onClick={() => onNavigate?.('createidea')}>
                   <Plus width={56} height={56} aria-hidden="true" />
                   <span className="mp__add-label">{t('myProjects.postNew')}</span>
                 </button>

@@ -1,0 +1,238 @@
+/* Create idea — dashboard: numbered form card + sticky idea-summary rail. */
+.ci {
+  min-height: 100vh;
+  background: var(--bg-surface-primary);
+}
+
+.ci__main {
+  padding-block: 22px 40px;
+  padding-inline: 108px 40px;
+}
+
+.ci__body {
+  margin-top: 26px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 400px;
+  align-items: start;
+  gap: 24px;
+}
+
+/* ---- Numbered form ---- */
+.ci__form {
+  border: 1px solid var(--bg-surface-secondary, #d7cbb9);
+  border-radius: 8px;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.25);
+  padding: 32px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.ci__step {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ci__step-head {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.ci__step-num {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  border-radius: 100px;
+  background: var(--text-title, #0f3d2e);
+  color: var(--btn-text, #ebe5dc);
+  font-family: var(--font-sans);
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.48px;
+  box-shadow: inset 0 0 4px rgba(255, 255, 255, 0.25);
+}
+
+.ci__step-title {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-title, #0f3d2e);
+}
+
+.ci__step-note {
+  margin: 0;
+  padding-inline-start: 53px;
+  font-size: 12px;
+  color: var(--text-supporting, #786c57);
+}
+
+.ci__note-em {
+  text-decoration: underline;
+}
+
+.ci__step-body {
+  margin-top: 10px;
+  padding-inline-start: 53px;
+}
+
+.ci__input.bayn-input {
+  width: 100%;
+}
+
+/* Counter helper text sits at the trailing end. */
+.ci__input--counter .bayn-input__support {
+  text-align: end;
+}
+
+.ci__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.ci__input--sm.bayn-input {
+  width: 250px;
+  flex: 0 0 auto;
+}
+
+.ci__input--grow.bayn-input {
+  flex: 1 1 260px;
+}
+
+/* Skill chips */
+.ci__chips {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ci__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 6px;
+  border-radius: 33px;
+  background: rgba(119, 181, 160, 0.21);
+  color: var(--text-title, #0f3d2e);
+  font-size: 12px;
+}
+
+.ci__chip-x {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-supporting, #786c57);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.ci__chip-x:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: var(--text-title, #0f3d2e);
+}
+
+/* ---- Idea summary rail ---- */
+.ci__summary {
+  position: sticky;
+  top: 22px;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  border: 1px solid var(--bg-surface-secondary, #d7cbb9);
+  border-radius: 8px;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.25);
+}
+
+.ci__summary-title {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-title, #0f3d2e);
+}
+
+.ci__summary-ready {
+  margin: 12px 0 0;
+  text-align: center;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-title, #0f3d2e);
+}
+
+.ci__summary-hint {
+  margin: 8px 0 16px;
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-body-2, #463e31);
+}
+
+.ci__summary-rows {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.ci__summary-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 0;
+  border-top: 1px solid var(--bg-surface-secondary, #d7cbb9);
+  color: var(--text-body-2, #463e31);
+  font-size: 12px;
+}
+
+.ci__summary-label {
+  flex: 1 1 auto;
+}
+
+.ci__summary-value {
+  font-weight: 500;
+  color: var(--text-body, var(--btn-primary-default, #295e4d));
+}
+
+.ci__actions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+@media (max-width: 1100px) {
+  .ci__body {
+    grid-template-columns: 1fr;
+  }
+  .ci__summary {
+    position: static;
+  }
+}
+
+@media (max-width: 720px) {
+  .ci__main {
+    padding-inline: 24px;
+  }
+  .ci__form {
+    padding: 24px 20px;
+  }
+  .ci__step-note,
+  .ci__step-body {
+    padding-inline-start: 0;
+  }
+}
