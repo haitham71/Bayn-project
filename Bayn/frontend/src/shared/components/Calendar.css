@@ -124,11 +124,27 @@
   background: var(--bg-surface-secondary, #d7cbb9);
 }
 
+/* Green marks upcoming days that have meetings/appointments. */
 .cal__cell--marked,
 .cal__cell--marked:hover {
   background: var(--btn-primary-default, #295e4d);
   color: var(--color-neutral-100, #fff);
   font-weight: 600;
+}
+
+/* Current day. */
+.cal__cell--today,
+.cal__cell--today:hover {
+  background: var(--color-secondary-800, #9a8a71);
+  color: var(--color-neutral-100, #fff);
+  font-weight: 600;
+}
+
+/* Past days are dimmed and not selectable. */
+.cal__cell--past {
+  color: var(--color-secondary-700, #bca98a);
+  opacity: 0.6;
+  cursor: default;
 }
 
 .cal__cell--muted {

@@ -107,7 +107,6 @@ export default function MyProjectsPage({ onNavigate }) {
           <aside className="mp__side">
             <Calendar
               title={t('myProjects.calendarTitle')}
-              initialDate={new Date(2025, 8, 1)}
               markedDates={MEETINGS.map((m) => m.date)}
             />
 

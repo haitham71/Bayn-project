@@ -62,6 +62,10 @@ export default function Calendar({
   // Trailing next-month days needed to fill the final week row.
   const trailing = (7 - ((firstWeekday + daysInMonth) % 7)) % 7;
 
+  // Midnight today, for dimming past days and marking the current one.
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
   return (
     <div className="cal">
       {title && <p className="cal__title">{title}</p>}
@@ -115,13 +119,24 @@ export default function Calendar({
         ))}
 
         {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => {
-          const isMarked = marked.has(dayKey(view.year, view.month, day));
+          const cellDate = new Date(view.year, view.month, day);
+          const isToday = cellDate.getTime() === todayStart.getTime();
+          const isPast = cellDate < todayStart;
+          // Green only marks upcoming days that have meetings/appointments.
+          const isMarked = !isPast && !isToday && marked.has(dayKey(view.year, view.month, day));
+
+          let cls = 'cal__cell';
+          if (isToday) cls += ' cal__cell--today';
+          else if (isPast) cls += ' cal__cell--past';
+          else if (isMarked) cls += ' cal__cell--marked';
+
           return (
             <button
               key={`d-${day}`}
               type="button"
-              className={`cal__cell${isMarked ? ' cal__cell--marked' : ''}`}
-              onClick={() => onSelectDate?.(new Date(view.year, view.month, day))}
+              className={cls}
+              disabled={isPast}
+              onClick={() => onSelectDate?.(cellDate)}
             >
               {day}
             </button>
