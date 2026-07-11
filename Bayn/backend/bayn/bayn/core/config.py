@@ -31,6 +31,10 @@ class Settings(BaseSettings):
     CALCOM_CLIENT_ID: str | None = None
     CALCOM_CLIENT_SECRET: str | None = None
 
+    DAILY_API_KEY: str | None = None
+    DAILY_API_URL: str | None = None
+    DAILY_DOMAIN: str | None = None
+
     SMTP_HOST: str | None = None
     SMTP_PORT: int = 587
     SMTP_USERNAME: str | None = None
@@ -38,6 +42,9 @@ class Settings(BaseSettings):
     EMAIL_FROM: str | None = None
     EMAIL_FROM_NAME: str | None = None
 
+
+    NDA_SERVICE_URL: str | None = None
+    NDA_SERVICE_KEY: str | None = None
 
     FRONTEND_URL: str = "http://localhost:3000"
 
