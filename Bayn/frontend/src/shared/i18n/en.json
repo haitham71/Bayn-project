@@ -69,6 +69,26 @@
     "changePhoto": "Change photo",
     "save": "Save changes"
   },
+  "calendar": {
+    "prevMonth": "Previous month",
+    "nextMonth": "Next month",
+    "month": "Month",
+    "year": "Year"
+  },
+  "myProjects": {
+    "youOwn": "Projects you own",
+    "youWorkOn": "Projects you work on",
+    "projectLabel": "Project",
+    "postNew": "Post new idea/project",
+    "viewDetails": "View details",
+    "dashboard": "Dashboard",
+    "planningStage": "Planning stage",
+    "opening": "{{count}} Opening",
+    "postedDaysAgo": "Posted {{count}} days ago",
+    "calendarTitle": "Your calendar",
+    "meetingJoinRequest": "Meeting for join request",
+    "meetingWeeklyTeam": "Weekly team meeting"
+  },
   "verification": {
     "title": "Enter verification code",
     "sentTo": "We've sent a 4-digit verification code to:",

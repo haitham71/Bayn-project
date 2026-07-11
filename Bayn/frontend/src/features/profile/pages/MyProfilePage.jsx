@@ -18,7 +18,7 @@ const BIO_MAX = 200;
 
 // Maps a sidebar item key to an app page so the shared Sidebar can drive
 // top-level navigation from this screen.
-const SIDEBAR_ROUTES = { home: 'home', profile: 'myprofile' };
+const SIDEBAR_ROUTES = { home: 'home', projects: 'myprojects', profile: 'myprofile' };
 
 const TABS = [
   { key: 'account', labelKey: 'myProfile.tabAccount' },

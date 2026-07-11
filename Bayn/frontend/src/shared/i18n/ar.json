@@ -69,6 +69,26 @@
     "changePhoto": "تغيير الصورة",
     "save": "حفظ التغييرات"
   },
+  "calendar": {
+    "prevMonth": "الشهر السابق",
+    "nextMonth": "الشهر التالي",
+    "month": "الشهر",
+    "year": "السنة"
+  },
+  "myProjects": {
+    "youOwn": "المشاريع التي تملكها",
+    "youWorkOn": "المشاريع التي تعمل عليها",
+    "projectLabel": "مشروع",
+    "postNew": "انشر فكرة/مشروع جديد",
+    "viewDetails": "عرض التفاصيل",
+    "dashboard": "لوحة التحكم",
+    "planningStage": "مرحلة التخطيط",
+    "opening": "{{count}} شاغر",
+    "postedDaysAgo": "نُشر قبل {{count}} أيام",
+    "calendarTitle": "تقويمك",
+    "meetingJoinRequest": "اجتماع لطلب انضمام",
+    "meetingWeeklyTeam": "اجتماع الفريق الأسبوعي"
+  },
   "verification": {
     "title": "أدخل رمز التحقق",
     "sentTo": "أرسلنا رمز تحقّق مكوّن من 4 أرقام إلى:",

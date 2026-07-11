@@ -22,7 +22,7 @@ function greetingKey() {
   return 'greetEvening';
 }
 
-const SIDEBAR_ROUTES = { home: 'home', profile: 'myprofile' };
+const SIDEBAR_ROUTES = { home: 'home', projects: 'myprojects', profile: 'myprofile' };
 
 export default function HomePage({ onNavigate }) {
   const { t, i18n } = useTranslation();
