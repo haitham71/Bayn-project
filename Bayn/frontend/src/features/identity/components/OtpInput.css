@@ -1,0 +1,45 @@
+.bayn-otp {
+  display: flex;
+  gap: 16px;
+}
+
+.bayn-otp__box {
+  width: 64px;
+  height: 64px;
+  border: 1px solid var(--input-border-hover, #bca98a);
+  border-radius: 12px;
+  background: var(--input-bg-default, rgba(215, 203, 185, 0.45));
+  color: var(--text-title, #0f3d2e);
+  font-family: var(--font-sans);
+  font-size: 28px;
+  font-weight: 600;
+  text-align: center;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.bayn-otp__box:hover:not(:disabled) {
+  border-color: var(--input-border-default, #463e31);
+}
+
+.bayn-otp__box:focus {
+  border-color: var(--btn-primary-default, #295e4d);
+  box-shadow: 0 0 0 0.5px var(--bg-border-primary);
+}
+
+.bayn-otp--error .bayn-otp__box {
+  border-color: var(--input-error, #900000);
+}
+
+.bayn-otp--disabled .bayn-otp__box {
+  background: var(--input-disabled, #aeaeae);
+  cursor: not-allowed;
+}
+
+@media (max-width: 480px) {
+  .bayn-otp__box {
+    width: 56px;
+    height: 56px;
+    font-size: 24px;
+  }
+}

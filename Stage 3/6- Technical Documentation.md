@@ -977,6 +977,25 @@ S3-compatible storage. Object keys (not full URLs) are stored in the database. F
 
 ---
 
+### HTTP Status Codes Summary
+
+| Status | System Exception | Short Meaning | Real-world Example |
+| :--- | :--- | :--- | :--- |
+| **`400`** | `ValidationError` | Logical business rule violation | Requesting an OTP for an already verified account |
+| **`401`** | `UnauthorizedError` | Unauthenticated / Unknown identity | Missing, expired JWT token, or wrong password |
+| **`403`** | `ForbiddenError` | Authenticated but lacks permissions | A regular user trying to access the Admin dashboard |
+| **`404`** | `NotFoundError` | Requested resource does not exist | Fetching an order ID that is not in the database |
+| **`409`** | `ConflictError` | Data conflict with existing records | Registering with an email that is already taken |
+
+### Quick Takeaways:
+* **`400`:** Valid format, but breaks business logic.
+* **`401`:** I don't know who you are (Log in first).
+* **`403`:** I know who you are, but you are not allowed here.
+* **`404`:** What you are looking for cannot be found.
+* **`409`:** What you are trying to create already exists.
+
+---
+
 ## API Classification Summary
 
 | # | Method | Endpoint | Type | Notes |

@@ -7,7 +7,7 @@ Response schemas never include password_hash or other sensitive fields.
 
 import re
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, EmailStr, ValidationInfo, field_validator
@@ -27,7 +27,7 @@ class UserSignup(BaseModel):
     second_name_ar: Optional[str] = None
     third_name_ar: Optional[str] = None
     last_name_ar: str
-
+    birth_date: Optional[date] = None # lst change 7/7 لازم يكون فوق 18
     first_name_en: str
     second_name_en: Optional[str] = None
     third_name_en: Optional[str] = None
@@ -60,6 +60,8 @@ class UserSignup(BaseModel):
             raise ValueError(t("validation", "password_lowercase", locale))
         if not re.search(r"\d", value):
             raise ValueError(t("validation", "password_number", locale))
+        if not re.search(r"[@#$]", value):
+            raise ValueError(t("validation", "password_special_char", locale))
         return value
 
 
@@ -139,6 +141,7 @@ class UserResponse(BaseModel):
     last_name_en: str
 
     national_id: Optional[str]
+    birth_date: Optional[date]
 
     email: str
     username: str

@@ -8,8 +8,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from bayn.common.exceptions import (
+    EmailNotVerifiedError,
     InvalidCredentialsError,
     NotFoundError,
+    PhoneNotVerifiedError,
     UserAlreadyExistsError,
     ValidationError,
 )
@@ -54,6 +56,7 @@ def _build_user_response(user: User) -> UserResponse:
         third_name_en=user.third_name_en,
         last_name_en=user.last_name_en,
         national_id=user.national_id,
+        birth_date=user.birth_date,
         email=user.email,
         username=user.username,
         phone_country_id=user.phone_country_id,
@@ -129,6 +132,7 @@ async def create_user(db: AsyncSession, payload: UserSignup, locale: str = DEFAU
         third_name_en=payload.third_name_en,
         last_name_en=payload.last_name_en,
         email=payload.email,
+        birth_date=payload.birth_date,
         username=payload.username,
         password_hash=hash_password(payload.password),
         phone_country_id=payload.phone_country_id,
@@ -152,6 +156,12 @@ async def authenticate_user(db: AsyncSession, payload: UserLogin, locale: str = 
 
     if not user.is_active:
         raise InvalidCredentialsError(t("identity", "auth.invalid_credentials", locale))
+
+    if not user.is_email_verified:
+        raise EmailNotVerifiedError(t("identity", "auth.email_not_verified", locale))
+
+    if not user.is_number_verified:
+        raise PhoneNotVerifiedError(t("identity", "auth.phone_not_verified", locale))
 
     return _issue_tokens(user)
 

@@ -1,6 +1,7 @@
 """App entry point. Run: uvicorn bayn.main:app --reload"""
 
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from bayn.common.exceptions import AppException
@@ -15,6 +16,17 @@ app = FastAPI(
     title="Beyn API",
     description="Identity & Authentication Service",
     version="1.0.0",
+)
+
+
+# Allow the local frontend (Vite dev server) to call the API from the browser.
+# A regex so it works whichever localhost port Vite lands on (5173, 5174, …).
+app.add_middleware(
+    CORSMiddleware,
+    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1):\d+",
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
