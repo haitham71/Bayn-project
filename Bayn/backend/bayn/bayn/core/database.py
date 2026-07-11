@@ -73,3 +73,4 @@ async def get_db() -> AsyncSession:
 
 from bayn.features.identity import models as identity_models
 from bayn.features.catalog import models as catalog_models
+from bayn.features.projects import models as projects_models
