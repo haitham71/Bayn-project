@@ -31,6 +31,9 @@
     "upload_failed": "Failed to upload avatar",
     "delete_failed": "Failed to delete avatar"
   },
+  "profile": {
+    "national_id_already_in_use": "This national ID is already registered to another account"
+  },
   "account": {
     "deleted": "Account deleted successfully"
   },

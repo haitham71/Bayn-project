@@ -31,6 +31,9 @@
     "upload_failed": "فشل رفع الصورة",
     "delete_failed": "فشل حذف الصورة"
   },
+  "profile": {
+    "national_id_already_in_use": "رقم الهوية الوطنية مسجل مسبقاً لحساب آخر"
+  },
   "account": {
     "deleted": "تم حذف الحساب بنجاح"
   },

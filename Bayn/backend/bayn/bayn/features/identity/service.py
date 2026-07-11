@@ -4,10 +4,12 @@ import uuid
 from datetime import datetime, timezone
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from bayn.common.exceptions import (
+    ConflictError,
     EmailNotVerifiedError,
     InvalidCredentialsError,
     NotFoundError,
@@ -33,6 +35,9 @@ from bayn.features.identity.schemas import (
 )
 from bayn.integrations.authentica import AuthenticaError, AuthenticaOTPInvalid, authentica_client
 from bayn.integrations.storage.cloudflare import InvalidFileError, StorageError, r2_client
+
+# used to keep authenticate_user's timing constant for unknown emails
+_DUMMY_PASSWORD_HASH = hash_password(str(uuid.uuid4()))
 
 
 def _build_user_response(user: User) -> UserResponse:
@@ -143,7 +148,12 @@ async def create_user(db: AsyncSession, payload: UserSignup, locale: str = DEFAU
     )
 
     db.add(user)
-    await db.commit()
+    try:
+        await db.commit()
+    except IntegrityError:
+        # a concurrent signup slipped in between the checks above and this commit
+        await db.rollback()
+        raise UserAlreadyExistsError(t("identity", "auth.email_or_username_already_in_use", locale))
     await db.refresh(user)
 
     # signup logs the user straight in
@@ -153,8 +163,13 @@ async def create_user(db: AsyncSession, payload: UserSignup, locale: str = DEFAU
 async def authenticate_user(db: AsyncSession, payload: UserLogin, locale: str = DEFAULT_LOCALE) -> TokenResponse:
     user = await get_user_by_email(db, payload.email)
 
+    # verify_password always runs, even for an unknown email, so response
+    # timing can't be used to tell "no such user" from "wrong password"
+    password_hash = user.password_hash if user else _DUMMY_PASSWORD_HASH
+    password_ok = verify_password(payload.password, password_hash)
+
     # same error for wrong email and wrong password to prevent user enumeration
-    if user is None or not verify_password(payload.password, user.password_hash):
+    if user is None or not password_ok:
         raise InvalidCredentialsError(t("identity", "auth.invalid_credentials", locale))
 
     if not user.is_active:
@@ -181,13 +196,28 @@ async def refresh_access_token(db: AsyncSession, user_id: uuid.UUID, locale: str
 
 # ── Profile ───────────────────────────────────────────────────────────────────
 
-async def update_profile(db: AsyncSession, user: User, payload: UpdateProfileRequest) -> UserResponse:
+async def update_profile(
+    db: AsyncSession, user: User, payload: UpdateProfileRequest, locale: str = DEFAULT_LOCALE
+) -> UserResponse:
     # exclude_unset so only the fields the user actually sent get updated
     updates = payload.model_dump(exclude_unset=True)
+
+    # changing the phone number/country invalidates the prior OTP verification
+    phone_changed = any(
+        field in updates and updates[field] != getattr(user, field)
+        for field in ("phone_number", "phone_country_id")
+    )
+
     for field, value in updates.items():
         setattr(user, field, value)
+    if phone_changed:
+        user.is_number_verified = False
 
-    await db.commit()
+    try:
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        raise ConflictError(t("identity", "profile.national_id_already_in_use", locale))
     await db.refresh(user)
     return _build_user_response(user)
 

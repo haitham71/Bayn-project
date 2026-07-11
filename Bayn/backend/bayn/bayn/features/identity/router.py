@@ -81,8 +81,9 @@ async def update_profile(
     payload: UpdateProfileRequest,
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
+    locale: str = Depends(get_locale),
 ) -> UserResponse:
-    return await service.update_profile(db, current_user, payload)
+    return await service.update_profile(db, current_user, payload, locale)
 
 
 @router.delete("/profile", response_model=MessageResponse, summary="حذف الحساب (soft delete)")
