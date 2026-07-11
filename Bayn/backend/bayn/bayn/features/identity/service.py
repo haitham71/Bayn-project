@@ -24,6 +24,7 @@ from bayn.core.security import (
     verify_password,
 )
 from bayn.core.i18n import DEFAULT_LOCALE, t
+from bayn.features.catalog.models import UserSkill
 from bayn.features.identity.models import AuthenticaOTPLog, OTPChannel, OTPStatus, User
 from bayn.features.identity.schemas import (
     OTPSendResponse,
@@ -39,8 +40,32 @@ from bayn.integrations.storage.cloudflare import InvalidFileError, StorageError,
 # used to keep authenticate_user's timing constant for unknown emails
 _DUMMY_PASSWORD_HASH = hash_password(str(uuid.uuid4()))
 
+# fields a profile must have filled in, plus at least one skill, before it
+# counts as "complete" (e.g. required to book a meeting)
+_PROFILE_COMPLETENESS_FIELDS = (
+    "second_name_ar", "third_name_ar", "second_name_en", "third_name_en",
+    "national_id", "birth_date", "country_id", "city_id",
+    "job_title", "industry_id", "years_of_experience",
+    "avatar_key", "bio",
+)
+MAX_SKILLS_PER_USER = 7
 
-def _build_user_response(user: User) -> UserResponse:
+
+async def _count_user_skills(db: AsyncSession, user_id: uuid.UUID) -> int:
+    result = await db.execute(
+        select(func.count()).select_from(UserSkill).where(UserSkill.user_id == user_id)
+    )
+    return result.scalar_one()
+
+
+def _profile_completeness(user: User, skill_count: int) -> tuple[bool, list[str]]:
+    missing = [field for field in _PROFILE_COMPLETENESS_FIELDS if not getattr(user, field)]
+    if skill_count == 0:
+        missing.append("skills")
+    return not missing, missing
+
+
+async def _build_user_response(db: AsyncSession, user: User) -> UserResponse:
     # avatar_url is derived from avatar_key here; the schema knows nothing about R2
     avatar_url = None
     if user.avatar_key:
@@ -49,6 +74,9 @@ def _build_user_response(user: User) -> UserResponse:
         except StorageError:
             # a broken URL shouldn't fail the whole response
             avatar_url = None
+
+    skill_count = await _count_user_skills(db, user.id)
+    is_complete, missing_fields = _profile_completeness(user, skill_count)
 
     return UserResponse(
         id=user.id,
@@ -72,20 +100,23 @@ def _build_user_response(user: User) -> UserResponse:
         years_of_experience=user.years_of_experience,
         industry_id=user.industry_id,
         git_profile=user.git_profile,
+        bio=user.bio,
         avatar_url=avatar_url,
         role=user.role.value,
         is_active=user.is_active,
         is_email_verified=user.is_email_verified,
         is_number_verified=user.is_number_verified,
+        is_profile_complete=is_complete,
+        missing_profile_fields=missing_fields,
         created_at=user.created_at,
     )
 
 
-def _issue_tokens(user: User) -> TokenResponse:
+async def _issue_tokens(db: AsyncSession, user: User) -> TokenResponse:
     return TokenResponse(
         access_token=create_access_token(user.id),
         refresh_token=create_refresh_token(user.id),
-        user=_build_user_response(user),
+        user=await _build_user_response(db, user),
     )
 
 
@@ -164,7 +195,7 @@ async def create_user(db: AsyncSession, payload: UserSignup, locale: str = DEFAU
         pass
 
     # signup logs the user straight in
-    return _issue_tokens(user)
+    return await _issue_tokens(db, user)
 
 
 async def authenticate_user(db: AsyncSession, payload: UserLogin, locale: str = DEFAULT_LOCALE) -> TokenResponse:
@@ -188,7 +219,7 @@ async def authenticate_user(db: AsyncSession, payload: UserLogin, locale: str = 
     if not user.is_number_verified:
         raise PhoneNotVerifiedError(t("identity", "auth.phone_not_verified", locale))
 
-    return _issue_tokens(user)
+    return await _issue_tokens(db, user)
 
 
 async def refresh_access_token(db: AsyncSession, user_id: uuid.UUID, locale: str = DEFAULT_LOCALE) -> TokenResponse:
@@ -198,7 +229,7 @@ async def refresh_access_token(db: AsyncSession, user_id: uuid.UUID, locale: str
     if not user.is_active:
         raise InvalidCredentialsError(t("identity", "auth.invalid_credentials", locale))
 
-    return _issue_tokens(user)
+    return await _issue_tokens(db, user)
 
 
 # ── Profile ───────────────────────────────────────────────────────────────────
@@ -226,7 +257,7 @@ async def update_profile(
         await db.rollback()
         raise ConflictError(t("identity", "profile.national_id_already_in_use", locale))
     await db.refresh(user)
-    return _build_user_response(user)
+    return await _build_user_response(db, user)
 
 
 async def soft_delete_account(db: AsyncSession, user: User) -> None:
@@ -263,7 +294,7 @@ async def upload_avatar(
     user.avatar_key = new_avatar_key
     await db.commit()
     await db.refresh(user)
-    return _build_user_response(user)
+    return await _build_user_response(db, user)
 
 
 async def delete_avatar(db: AsyncSession, user: User, locale: str = DEFAULT_LOCALE) -> UserResponse:
@@ -278,7 +309,7 @@ async def delete_avatar(db: AsyncSession, user: User, locale: str = DEFAULT_LOCA
     user.avatar_key = None
     await db.commit()
     await db.refresh(user)
-    return _build_user_response(user)
+    return await _build_user_response(db, user)
 
 
 # ── OTP ───────────────────────────────────────────────────────────────────────
@@ -358,7 +389,7 @@ async def verify_email_otp(db: AsyncSession, user: User, otp_code: str, locale: 
         except Exception:
             pass
 
-    return _build_user_response(user)
+    return await _build_user_response(db, user)
 
 
 async def send_phone_otp(db: AsyncSession, user: User, locale: str = DEFAULT_LOCALE) -> OTPSendResponse:
@@ -424,4 +455,4 @@ async def verify_phone_otp(db: AsyncSession, user: User, otp_code: str, locale: 
 
     await db.commit()
     await db.refresh(user)
-    return _build_user_response(user)
+    return await _build_user_response(db, user)

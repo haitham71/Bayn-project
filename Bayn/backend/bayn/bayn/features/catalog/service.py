@@ -6,8 +6,9 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from bayn.common.exceptions import ConflictError, NotFoundError
+from bayn.common.exceptions import ConflictError, NotFoundError, ValidationError
 from bayn.core.i18n import DEFAULT_LOCALE, t
+from bayn.features.identity import service as identity_service
 from bayn.features.identity.models import City, Country
 from bayn.features.catalog.models import (
     Industry, Skill, Specialization, UserSkill, UserSpecialization,
@@ -57,6 +58,10 @@ async def add_skill_to_user(
     )
     if existing:
         raise ConflictError(t("catalog", "skill.already_added", locale))
+
+    skill_count = await identity_service._count_user_skills(db, user_id)
+    if skill_count >= identity_service.MAX_SKILLS_PER_USER:
+        raise ValidationError(t("catalog", "skill.limit_reached", locale))
 
     link = UserSkill(user_id=user_id, skill_id=skill_id)
     db.add(link)
