@@ -5,9 +5,10 @@ from fastapi.responses import JSONResponse
 
 from bayn.common.exceptions import AppException
 from bayn.features.identity.router import router as identity_router
+from bayn.features.project.router import router as project_router
 # imported so their tables register on Base.metadata for migrations
 from bayn.features.catalog.models import Industry, Skill, Specialization, UserSkill, UserSpecialization  # noqa: F401
-from bayn.features.catalog.router import catalog_router, profile_router
+from bayn.features.catalog.router import catalog_router, profile_router                                     ## Adding # noqa to a line indicates that the linter (a program that automatically checks code quality) should not check this line. Any warnings that code may have generated will be ignored.
 
 
 app = FastAPI(
@@ -26,6 +27,7 @@ async def app_exception_handler(request: Request, exc: AppException) -> JSONResp
 app.include_router(identity_router)
 app.include_router(catalog_router)
 app.include_router(profile_router)
+app.include_router(project_router)
 
 
 @app.get("/health", tags=["System"])
