@@ -9,16 +9,19 @@ Run:
     pytest tests/features/identity/test_identity.py::TestSignup -v
 """
 
+from datetime import date
 from unittest.mock import AsyncMock
 
 import pytest
 import pytest_asyncio
 from httpx import AsyncClient
 
-from bayn.common.exceptions import UserAlreadyExistsError
+from bayn.common.exceptions import IncompleteProfileError, UserAlreadyExistsError
 from bayn.core.security import hash_password
+from bayn.features.catalog.models import Skill, UserSkill
 from bayn.features.identity import service
-from bayn.features.identity.models import City, Country, User
+from bayn.features.identity.dependencies import require_complete_profile
+from bayn.features.identity.models import City, Country, ExperienceRange, User
 from bayn.features.identity.schemas import UserLogin, UserSignup
 
 
@@ -375,6 +378,71 @@ class TestProfile:
         )
 
         assert response.status_code == 409
+
+    @pytest.mark.asyncio
+    async def test_profile_incomplete_by_default(self, client: AsyncClient, auth_headers: dict):
+        response = await client.get("/auth/profile", headers=auth_headers)
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["is_profile_complete"] is False
+        assert "bio" in data["missing_profile_fields"]
+        assert "skills" in data["missing_profile_fields"]
+
+    @pytest.mark.asyncio
+    async def test_update_profile_fills_bio_and_extra_names(
+        self, client: AsyncClient, auth_headers: dict
+    ):
+        response = await client.patch(
+            "/auth/profile",
+            headers=auth_headers,
+            json={
+                "second_name_ar": "عبدالله",
+                "third_name_ar": "سالم",
+                "second_name_en": "Abdullah",
+                "third_name_en": "Salem",
+                "bio": "Backend developer.",
+            },
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["second_name_ar"] == "عبدالله"
+        assert data["third_name_en"] == "Salem"
+        assert data["bio"] == "Backend developer."
+        assert "bio" not in data["missing_profile_fields"]
+
+    @pytest.mark.asyncio
+    async def test_require_complete_profile_blocks_incomplete(self, db, test_user: User):
+        with pytest.raises(IncompleteProfileError):
+            await require_complete_profile(user=test_user, db=db)
+
+    @pytest.mark.asyncio
+    async def test_require_complete_profile_allows_complete(
+        self, db, test_user: User, test_city: City
+    ):
+        test_user.second_name_ar = "عبدالله"
+        test_user.third_name_ar = "سالم"
+        test_user.second_name_en = "Abdullah"
+        test_user.third_name_en = "Salem"
+        test_user.national_id = "1029384756"
+        test_user.birth_date = date(1995, 1, 1)
+        test_user.country_id = test_city.country_id
+        test_user.city_id = test_city.id
+        test_user.job_title = "Backend Engineer"
+        test_user.industry_id = test_city.country_id  # any non-null FK value; not committed
+        test_user.years_of_experience = ExperienceRange.less_than_1
+        test_user.avatar_key = "avatars/test.png"
+        test_user.bio = "Backend developer with a few years of experience."
+
+        skill = Skill(name="Python")
+        db.add(skill)
+        await db.flush()
+        db.add(UserSkill(user_id=test_user.id, skill_id=skill.id))
+
+        result = await require_complete_profile(user=test_user, db=db)
+
+        assert result is test_user
 
 
 # ═══════════════════════════════════════════════════════

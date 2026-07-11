@@ -65,3 +65,8 @@ class EmailNotVerifiedError(ForbiddenError):
 class PhoneNotVerifiedError(ForbiddenError):
     def __init__(self, message: str | None = None, locale: str = DEFAULT_LOCALE):
         super().__init__(message or t("identity", "auth.phone_not_verified", locale), locale=locale)
+
+
+class IncompleteProfileError(ForbiddenError):
+    def __init__(self, message: str | None = None, locale: str = DEFAULT_LOCALE):
+        super().__init__(message or t("identity", "profile.incomplete", locale), locale=locale)

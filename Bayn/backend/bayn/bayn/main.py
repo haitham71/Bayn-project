@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from bayn.common.exceptions import AppException
+from bayn.core.config import settings
 from bayn.features.identity.router import router as identity_router
 
 # imported so their tables register on Base.metadata for migrations
@@ -21,10 +22,11 @@ app = FastAPI(
 )
 
 
-# Allow the local frontend (Vite dev server) to call the API from the browser.
-# A regex so it works whichever localhost port Vite lands on (5173, 5174, …).
+# allow_origin_regex covers local dev (any localhost port Vite lands on);
+# allow_origins covers the deployed frontend, read from FRONTEND_URL in .env
 app.add_middleware(
     CORSMiddleware,
+    allow_origins=[settings.FRONTEND_URL],
     allow_origin_regex=r"https?://(localhost|127\.0\.0\.1):\d+",
     allow_credentials=True,
     allow_methods=["*"],
