@@ -1,9 +1,9 @@
 """Identity business logic — no HTTP concerns; raises exceptions the router maps to responses."""
 
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -156,6 +156,13 @@ async def create_user(db: AsyncSession, payload: UserSignup, locale: str = DEFAU
         raise UserAlreadyExistsError(t("identity", "auth.email_or_username_already_in_use", locale))
     await db.refresh(user)
 
+    # kick off email verification automatically; signup still succeeds if the send fails
+    # for any reason (rejected by Authentica, network error, timeout, ...)
+    try:
+        await send_email_otp(db, user, locale)
+    except Exception:
+        pass
+
     # signup logs the user straight in
     return _issue_tokens(user)
 
@@ -276,9 +283,29 @@ async def delete_avatar(db: AsyncSession, user: User, locale: str = DEFAULT_LOCA
 
 # ── OTP ───────────────────────────────────────────────────────────────────────
 
+_OTP_RATE_LIMIT = 3
+_OTP_RATE_LIMIT_WINDOW = timedelta(hours=24)
+
+
+async def _check_otp_rate_limit(
+    db: AsyncSession, user_id: uuid.UUID, channel: OTPChannel, locale: str
+) -> None:
+    result = await db.execute(
+        select(func.count()).select_from(AuthenticaOTPLog).where(
+            AuthenticaOTPLog.user_id == user_id,
+            AuthenticaOTPLog.channel == channel,
+            AuthenticaOTPLog.sent_at >= datetime.now(timezone.utc) - _OTP_RATE_LIMIT_WINDOW,
+        )
+    )
+    if result.scalar_one() >= _OTP_RATE_LIMIT:
+        raise ValidationError(t("identity", "otp.rate_limit_exceeded", locale))
+
+
 async def send_email_otp(db: AsyncSession, user: User, locale: str = DEFAULT_LOCALE) -> OTPSendResponse:
     if user.is_email_verified:
         raise ValidationError(t("identity", "otp.email_already_verified", locale))
+
+    await _check_otp_rate_limit(db, user.id, OTPChannel.email, locale)
 
     try:
         await authentica_client.send_email_otp(user.email)
@@ -322,6 +349,15 @@ async def verify_email_otp(db: AsyncSession, user: User, otp_code: str, locale: 
 
     await db.commit()
     await db.refresh(user)
+
+    # chain straight into phone verification; a failed send doesn't undo the email confirmation
+    if user.phone_number and user.phone_country_id:
+        try:
+            phone_user = await get_user_by_id(db, user.id, locale)
+            await send_phone_otp(db, phone_user, locale)
+        except Exception:
+            pass
+
     return _build_user_response(user)
 
 
@@ -335,6 +371,8 @@ async def send_phone_otp(db: AsyncSession, user: User, locale: str = DEFAULT_LOC
     # relationship must be loaded to read dial_code
     if not user.phone_country:
         raise ValidationError(t("identity", "otp.phone_country_not_found", locale))
+
+    await _check_otp_rate_limit(db, user.id, OTPChannel.sms, locale)
 
     try:
         await authentica_client.send_sms_otp(

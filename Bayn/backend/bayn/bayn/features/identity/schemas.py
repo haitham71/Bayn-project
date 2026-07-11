@@ -22,6 +22,23 @@ def _locale_from(info: ValidationInfo) -> str:
     return (info.context or {}).get("locale", DEFAULT_LOCALE)
 
 
+def _validate_saudi_phone(value: int, locale: str) -> int:
+    phone = str(value).strip()
+
+    if phone.startswith('+966'):
+        raise ValueError(t("validation", "phone_prefix_plus966", locale))
+    if phone.startswith('966'):
+        raise ValueError(t("validation", "phone_prefix_966", locale))
+    if phone.startswith('0'):
+        raise ValueError(t("validation", "phone_leading_zero", locale))
+    if not phone.isdigit():
+        raise ValueError(t("validation", "phone_digits_only", locale))
+    if not re.match(r"^5\d{8}$", phone):
+        raise ValueError(t("validation", "phone_format", locale))
+
+    return int(phone)
+
+
 # Request Schemas
 
 class UserSignup(BaseModel):
@@ -39,8 +56,8 @@ class UserSignup(BaseModel):
     username: str
     password: str
 
-    phone_country_id: Optional[uuid.UUID] = None
-    phone_number: Optional[int] = None
+    phone_country_id: uuid.UUID
+    phone_number: int
 
     @field_validator("username")
     @classmethod
@@ -49,6 +66,11 @@ class UserSignup(BaseModel):
             locale = _locale_from(info)
             raise ValueError(t("validation", "username_format", locale))
         return value.lower()
+
+    @field_validator("phone_number")
+    @classmethod
+    def validate_phone_number(cls, value: int, info: ValidationInfo) -> int:
+        return _validate_saudi_phone(value, _locale_from(info))
 
     @field_validator("password")
     @classmethod
@@ -93,22 +115,7 @@ class UpdateProfileRequest(BaseModel):
     def validate_saudi_phone(cls, value: int | None, info: ValidationInfo) -> int | None:
         if value is None:
             return None
-
-        locale = _locale_from(info)
-        phone = str(value).strip()
-
-        if phone.startswith('+966'):
-            raise ValueError(t("validation", "phone_prefix_plus966", locale))
-        if phone.startswith('966'):
-            raise ValueError(t("validation", "phone_prefix_966", locale))
-        if phone.startswith('0'):
-            raise ValueError(t("validation", "phone_leading_zero", locale))
-        if not phone.isdigit():
-            raise ValueError(t("validation", "phone_digits_only", locale))
-        if not re.match(r"^5\d{8}$", phone):
-            raise ValueError(t("validation", "phone_format", locale))
-
-        return int(phone)
+        return _validate_saudi_phone(value, _locale_from(info))
 
 
 class OTPVerifyRequest(BaseModel):

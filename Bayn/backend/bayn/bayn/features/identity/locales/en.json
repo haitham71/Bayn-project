@@ -24,7 +24,8 @@
     "verification_failed": "OTP verification failed",
     "no_pending_otp": "No pending OTP found — request a new one",
     "sent_email": "OTP sent to your email",
-    "sent_phone": "OTP sent to your phone number"
+    "sent_phone": "OTP sent to your phone number",
+    "rate_limit_exceeded": "You've reached the maximum number of OTP requests for today. Please try again later"
   },
   "avatar": {
     "no_avatar_to_delete": "No avatar to delete",
