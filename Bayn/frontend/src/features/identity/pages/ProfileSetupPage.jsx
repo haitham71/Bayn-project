@@ -197,9 +197,6 @@ export default function ProfileSetupPage({ onNavigate, initialData = {}, onDataC
           <Button type="submit" variant="primary" size="lg" trailingIcon className="ps__submit">
             {t('profile.finish')}
           </Button>
-          <button type="button" className="ps__back-link" onClick={() => onNavigate('verification')}>
-            {t('profile.back')}
-          </button>
         </div>
       </form>
     </IdentityLayout>
