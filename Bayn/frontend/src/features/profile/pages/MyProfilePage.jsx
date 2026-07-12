@@ -7,7 +7,7 @@ import Button from '@/shared/components/Button';
 import Select from '@/shared/components/Select';
 import SkillsInput from '@/shared/components/SkillsInput';
 import PasswordStrength from '@/shared/components/PasswordStrength';
-import { validatePassword } from '@/features/identity/utils/validation';
+import { validateName, validateUsername, validatePassword } from '@/features/identity/utils/validation';
 import Camera from '@/assets/icons/camera.svg?react';
 import MapPin from '@/assets/icons/map-pin.svg?react';
 import Eye from '@/assets/icons/eye.svg?react';
@@ -35,6 +35,30 @@ const LOCATION_OPTIONS = [
   'Medina, Saudi Arabia',
 ].map((v) => ({ value: v, label: v }));
 
+// Seed values (stand-in for the account fetched from the API). Both the form
+// fields and the initial preview snapshot start from here.
+const SEED = {
+  username: 'assad.dev',
+  firstNameEn: 'Assad', secondNameEn: 'Saad', thirdNameEn: '', lastNameEn: 'Al-saeed',
+  firstNameAr: 'أسعد', secondNameAr: 'سعد', thirdNameAr: '', lastNameAr: 'السعيد',
+  shortTitle: 'Software Engineer',
+  bio: 'Experienced in software development and passionate about building innovative solutions. I enjoy collaborating with ambitious teams to create impactful products.',
+  experience: '2-3 Years',
+  location: 'Riyadh, Saudi Arabia',
+  skills: ['React', 'Node js', 'Python', 'Mysql', 'Java Script'],
+};
+
+// The subset of fields the Profile View reflects.
+function previewSnapshot(s) {
+  return {
+    username: s.username,
+    firstNameEn: s.firstNameEn, lastNameEn: s.lastNameEn,
+    firstNameAr: s.firstNameAr, lastNameAr: s.lastNameAr,
+    shortTitle: s.shortTitle, bio: s.bio,
+    experience: s.experience, location: s.location, skills: s.skills,
+  };
+}
+
 // Small trailing eye toggle shared by the password fields.
 function eyeToggle(shown) {
   return shown
@@ -43,13 +67,14 @@ function eyeToggle(shown) {
 }
 
 export default function MyProfilePage({ onNavigate }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [activeTab, setActiveTab] = useState('account');
 
   // --- Account information ---
-  const [username, setUsername] = useState('assad.dev');
+  const [username, setUsername] = useState(SEED.username);
   const [email] = useState('user@email.com');
   const [phone] = useState('+966 501 34567');
+  const [accountErrors, setAccountErrors] = useState({});
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
@@ -59,50 +84,60 @@ export default function MyProfilePage({ onNavigate }) {
   const [pwErrors, setPwErrors] = useState({});
 
   // --- Profile information (four-part name in both languages) ---
-  const [firstNameEn, setFirstNameEn] = useState('Assad');
-  const [secondNameEn, setSecondNameEn] = useState('Saad');
-  const [thirdNameEn, setThirdNameEn] = useState('');
-  const [lastNameEn, setLastNameEn] = useState('Al-saeed');
-  const [firstNameAr, setFirstNameAr] = useState('أسعد');
-  const [secondNameAr, setSecondNameAr] = useState('سعد');
-  const [thirdNameAr, setThirdNameAr] = useState('');
-  const [lastNameAr, setLastNameAr] = useState('السعيد');
-  const [shortTitle, setShortTitle] = useState('Software Engineer');
-  const [bio, setBio] = useState(
-    'Experienced in software development and passionate about building innovative solutions. I enjoy collaborating with ambitious teams to create impactful products.',
-  );
-  const [experience, setExperience] = useState('2-3 Years');
-  const [location, setLocation] = useState('Riyadh, Saudi Arabia');
-  const [skills, setSkills] = useState(['React', 'Node js', 'Python', 'Mysql', 'Java Script']);
+  const [firstNameEn, setFirstNameEn] = useState(SEED.firstNameEn);
+  const [secondNameEn, setSecondNameEn] = useState(SEED.secondNameEn);
+  const [thirdNameEn, setThirdNameEn] = useState(SEED.thirdNameEn);
+  const [lastNameEn, setLastNameEn] = useState(SEED.lastNameEn);
+  const [firstNameAr, setFirstNameAr] = useState(SEED.firstNameAr);
+  const [secondNameAr, setSecondNameAr] = useState(SEED.secondNameAr);
+  const [thirdNameAr, setThirdNameAr] = useState(SEED.thirdNameAr);
+  const [lastNameAr, setLastNameAr] = useState(SEED.lastNameAr);
+  const [shortTitle, setShortTitle] = useState(SEED.shortTitle);
+  const [bio, setBio] = useState(SEED.bio);
+  const [experience, setExperience] = useState(SEED.experience);
+  const [location, setLocation] = useState(SEED.location);
+  const [skills, setSkills] = useState(SEED.skills);
+  const [nameErrors, setNameErrors] = useState({});
+
+  // Values shown in the Profile View — updated only when changes are confirmed.
+  const [committed, setCommitted] = useState(() => previewSnapshot(SEED));
 
   const nameGroups = [
     {
       lng: 'en',
       heading: t('profile.langEnglish'),
       fields: [
-        { key: 'firstNameEn', label: 'firstName', value: firstNameEn, set: setFirstNameEn },
-        { key: 'secondNameEn', label: 'secondName', value: secondNameEn, set: setSecondNameEn },
-        { key: 'thirdNameEn', label: 'thirdName', value: thirdNameEn, set: setThirdNameEn },
-        { key: 'lastNameEn', label: 'lastName', value: lastNameEn, set: setLastNameEn },
+        { key: 'firstNameEn', label: 'firstName', value: firstNameEn, set: setFirstNameEn, lang: 'en', required: true },
+        { key: 'secondNameEn', label: 'secondName', value: secondNameEn, set: setSecondNameEn, lang: 'en', required: false },
+        { key: 'thirdNameEn', label: 'thirdName', value: thirdNameEn, set: setThirdNameEn, lang: 'en', required: false },
+        { key: 'lastNameEn', label: 'lastName', value: lastNameEn, set: setLastNameEn, lang: 'en', required: true },
       ],
     },
     {
       lng: 'ar',
       heading: t('profile.langArabic'),
       fields: [
-        { key: 'firstNameAr', label: 'firstName', value: firstNameAr, set: setFirstNameAr },
-        { key: 'secondNameAr', label: 'secondName', value: secondNameAr, set: setSecondNameAr },
-        { key: 'thirdNameAr', label: 'thirdName', value: thirdNameAr, set: setThirdNameAr },
-        { key: 'lastNameAr', label: 'lastName', value: lastNameAr, set: setLastNameAr },
+        { key: 'firstNameAr', label: 'firstName', value: firstNameAr, set: setFirstNameAr, lang: 'ar', required: true },
+        { key: 'secondNameAr', label: 'secondName', value: secondNameAr, set: setSecondNameAr, lang: 'ar', required: false },
+        { key: 'thirdNameAr', label: 'thirdName', value: thirdNameAr, set: setThirdNameAr, lang: 'ar', required: false },
+        { key: 'lastNameAr', label: 'lastName', value: lastNameAr, set: setLastNameAr, lang: 'ar', required: true },
       ],
     },
   ];
+  const allNameFields = nameGroups.flatMap((g) => g.fields);
 
 
-  // Confirm actions — integration points for the backend once it's wired.
+  // Confirm actions — validate, then push the values into the preview snapshot.
   function handleAccountUpdate() {
+    const err = validateUsername(username);
+    setAccountErrors(err ? { username: err } : {});
+    if (err) return;
+    setCommitted((c) => ({ ...c, username }));
     // TODO: persist username via the account API.
   }
+
+  const accountFieldError = (field) =>
+    accountErrors[field] ? { error: true, errorText: t(`signup.${accountErrors[field]}`) } : {};
 
   function handlePasswordChange() {
     // Same rules the sign-up form enforces, plus a current-password check
@@ -125,11 +160,34 @@ export default function MyProfilePage({ onNavigate }) {
   const pwFieldError = (field) =>
     pwErrors[field] ? { error: true, errorText: t(`signup.${pwErrors[field]}`) } : {};
 
+  function clearNameError(field) {
+    setNameErrors((prev) => (prev[field] ? { ...prev, [field]: undefined } : prev));
+  }
+
+  const nameFieldError = (field) =>
+    nameErrors[field] ? { error: true, errorText: t(`signup.${nameErrors[field]}`) } : {};
+
   function handleProfileUpdate() {
+    const next = {};
+    allNameFields.forEach((f) => {
+      const err = validateName(f.value, { lang: f.lang, required: f.required });
+      if (err) next[f.key] = err;
+    });
+    setNameErrors(next);
+    if (Object.values(next).some(Boolean)) return;
+    setCommitted((c) => ({
+      ...c,
+      firstNameEn, lastNameEn, firstNameAr, lastNameAr,
+      shortTitle, bio, experience, location, skills,
+    }));
     // TODO: persist the profile fields via the profile API.
   }
 
-  const fullName = [firstNameEn, lastNameEn].filter(Boolean).join(' ');
+  // Preview name follows the active language (Arabic names on the AR UI).
+  const previewName = (i18n.language === 'ar'
+    ? [committed.firstNameAr, committed.lastNameAr]
+    : [committed.firstNameEn, committed.lastNameEn]
+  ).filter(Boolean).join(' ');
 
   return (
     <div className="myp bayn-scroll">
@@ -139,7 +197,7 @@ export default function MyProfilePage({ onNavigate }) {
       />
 
       <div className="myp__main">
-        <Navbar userName={fullName} />
+        <Navbar userName={previewName} />
 
         <main className="myp__body">
           {/* Editable form with tabs */}
@@ -167,8 +225,12 @@ export default function MyProfilePage({ onNavigate }) {
                   <Input
                     label={t('signup.username')}
                     value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    onChange={(e) => {
+                      setUsername(e.target.value);
+                      setAccountErrors((p) => (p.username ? {} : p));
+                    }}
                     className="myp__input"
+                    {...accountFieldError('username')}
                   />
                   <Input
                     label={t('signup.email')}
@@ -255,8 +317,9 @@ export default function MyProfilePage({ onNavigate }) {
                           key={f.key}
                           label={t(`signup.${f.label}`)}
                           value={f.value}
-                          onChange={(e) => f.set(e.target.value)}
+                          onChange={(e) => { f.set(e.target.value); clearNameError(f.key); }}
                           className="myp__input"
+                          {...nameFieldError(f.key)}
                         />
                       ))}
                     </div>
@@ -325,32 +388,32 @@ export default function MyProfilePage({ onNavigate }) {
 
             <div className="myp__avatar-wrap">
               <span className="myp__avatar" aria-hidden="true">
-                {fullName.trim().charAt(0).toUpperCase()}
+                {previewName.trim().charAt(0).toUpperCase()}
               </span>
               <button type="button" className="myp__avatar-btn" aria-label={t('myProfile.changePhoto')}>
                 <Camera width={24} height={24} aria-hidden="true" />
               </button>
             </div>
 
-            <p className="myp__preview-name">{fullName}</p>
-            <p className="myp__preview-username">{username}</p>
-            <p className="myp__preview-role">{shortTitle}</p>
+            <p className="myp__preview-name">{previewName}</p>
+            <p className="myp__preview-username">{committed.username}</p>
+            <p className="myp__preview-role">{committed.shortTitle}</p>
             <p className="myp__preview-location">
               <MapPin width={18} height={18} aria-hidden="true" />
-              {location}
+              {committed.location}
             </p>
 
             <hr className="myp__preview-divider" />
 
             <h3 className="myp__preview-heading">{t('myProfile.sectionBio')}</h3>
-            <p className="myp__preview-bio">{bio}</p>
+            <p className="myp__preview-bio">{committed.bio}</p>
 
             <h3 className="myp__preview-heading">{t('myProfile.sectionExperience')}</h3>
-            <p className="myp__preview-exp">{experience}</p>
+            <p className="myp__preview-exp">{committed.experience}</p>
 
             <h3 className="myp__preview-heading">{t('myProfile.sectionSkills')}</h3>
             <ul className="myp__preview-skills">
-              {skills.map((skill) => (
+              {committed.skills.map((skill) => (
                 <li key={skill} className="myp__pill">{skill}</li>
               ))}
             </ul>

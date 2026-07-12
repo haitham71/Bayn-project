@@ -21,7 +21,7 @@ function readPage() {
 }
 
 export default function App() {
-  const [page, setPage] = useState('login');
+  const [page, setPage] = useState('home');
   const [signupData, setSignupData] = useState({});
 
   const goTo = (next) => {
