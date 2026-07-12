@@ -1,50 +1,19 @@
-# change the contents of the files in the directory -locals- different error message for each feature
 {
-  "auth": {
-    "email_already_in_use": "Email already in use",
-    "username_already_in_use": "Username already in use",
-    "email_or_username_already_in_use": "Email or username already in use",
-    "invalid_credentials": "Invalid email or password",
-    "invalid_token": "Invalid or expired token",
-    "account_deactivated": "This account has been deactivated",
-    "user_not_found": "User not found",
-    "admin_required": "Admin access required",
-    "no_permission": "You do not have permission",
-    "authentication_required": "Authentication required"
-  },
-  "otp": {
-    "email_already_verified": "Email is already verified",
-    "phone_already_verified": "Phone number is already verified",
-    "phone_not_set": "Phone number not set",
-    "phone_country_required": "Phone number and country must be set before verification",
-    "phone_country_not_found": "Phone country not found",
-    "send_failed": "Failed to send OTP",
-    "invalid_code": "Invalid or expired OTP code",
-    "verification_failed": "OTP verification failed",
-    "no_pending_otp": "No pending OTP found — request a new one",
-    "sent_email": "OTP sent to your email",
-    "sent_phone": "OTP sent to your phone number"
-  },
-  "avatar": {
-    "no_avatar_to_delete": "No avatar to delete",
-    "upload_failed": "Failed to upload avatar",
-    "delete_failed": "Failed to delete avatar"
-  },
-  "account": {
-    "deleted": "Account deleted successfully"
-  },
-  "validation": {
-    "invalid_data": "Invalid request data",
-    "resource_not_found": "Resource not found",
-    "resource_already_exists": "Resource already exists",
-    "password_min_length": "Password must be at least 8 characters",
-    "password_uppercase": "Password must contain at least one uppercase letter",
-    "password_lowercase": "Password must contain at least one lowercase letter",
-    "password_number": "Password must contain at least one number",
-    "phone_prefix_plus966": "Phone number must be in format 5XXXXXXXX (e.g., 501234567), not +966",
-    "phone_prefix_966": "Phone number must be in format 5XXXXXXXX (e.g., 501234567), not 966",
-    "phone_leading_zero": "Phone number must be in format 5XXXXXXXX (e.g., 501234567), not 05XXXXXXX",
-    "phone_digits_only": "Phone number must contain digits only",
-    "phone_format": "Phone number must start with 5 and be exactly 9 digits long (e.g., 501234567)"
+  "projects": {
+    "not_found": "The requested project could not be found",
+    "not_owner": "Access denied — only the project owner can modify or delete this project",
+    "already_exists": "A membership record already exists for this user and project combination",
+    "invalid_industry": "The selected industry identifier is invalid or does not exist",
+    "invalid_specialization": "The selected specialization identifier is invalid or does not exist",
+    "title_required": "Project title is required and cannot be empty",
+    "title_max_length": "Project title cannot exceed 200 characters",
+    "description_required": "Project description is required and cannot be empty",
+    "description_max_length": "Project description cannot exceed 500 characters",
+    "more_info_max_length": "Additional information details cannot exceed 1000 characters",
+    "invalid_url": "The project URL format is invalid",
+    "url_max_length": "The project URL cannot exceed 200 characters",
+    "too_many_images": "You cannot upload more than 10 images for a single project",
+    "image_url_format": "One or more image links have an invalid URL format",
+    "invalid_availability": "The provided availability timestamp format is invalid"
   }
 }
