@@ -4,12 +4,12 @@ import Sidebar from '@/shared/components/Sidebar';
 import Navbar from '@/shared/components/Navbar';
 import Input from '@/shared/components/Input';
 import Select from '@/shared/components/Select';
+import SkillsInput from '@/shared/components/SkillsInput';
 import Button from '@/shared/components/Button';
 import Calendar from '@/shared/components/Calendar';
 import Eye from '@/assets/icons/eye.svg?react';
 import UserPlus from '@/assets/icons/user-plus.svg?react';
 import CalendarIcon from '@/assets/icons/calendar.svg?react';
-import X from '@/assets/icons/x.svg?react';
 import './CreateIdeaPage.css';
 
 const TITLE_MAX = 100;
@@ -40,32 +40,11 @@ export default function CreateIdeaPage({ onNavigate }) {
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [skills, setSkills] = useState(['React', 'React', 'React', 'React']);
-  const [skillInput, setSkillInput] = useState('');
+  const [skills, setSkills] = useState([]);
   const [teamSize, setTeamSize] = useState('');
   const [roles, setRoles] = useState('');
   const [category, setCategory] = useState('');
   const [stage, setStage] = useState('');
-
-  function addSkill(value) {
-    const v = value.trim();
-    setSkillInput('');
-    if (!v) return;
-    setSkills([...skills, v]);
-  }
-
-  function removeSkill(index) {
-    setSkills(skills.filter((_, i) => i !== index));
-  }
-
-  function handleSkillKey(e) {
-    if (e.key === 'Enter' || e.key === ',') {
-      e.preventDefault();
-      addSkill(skillInput);
-    } else if (e.key === 'Backspace' && !skillInput && skills.length) {
-      removeSkill(skills.length - 1);
-    }
-  }
 
   const summaryRows = [
     { icon: Eye, label: t('createIdea.visibility'), value: t('createIdea.visibilityValue') },
@@ -118,32 +97,12 @@ export default function CreateIdeaPage({ onNavigate }) {
             </Step>
 
             <Step n={3} title={t('createIdea.step3Title')} note={t('createIdea.step3Note')}>
-              <Input
+              <SkillsInput
                 label={t('createIdea.step3Label')}
                 supportingText={t('createIdea.step3Placeholder')}
-                value={skillInput}
-                onChange={(e) => setSkillInput(e.target.value)}
-                onKeyDown={handleSkillKey}
-                onBlur={() => addSkill(skillInput)}
-                className="ci__input"
+                value={skills}
+                onChange={setSkills}
               />
-              {skills.length > 0 && (
-                <ul className="ci__chips">
-                  {skills.map((skill, i) => (
-                    <li key={`${skill}-${i}`} className="ci__chip">
-                      <span className="ci__chip-label">{skill}</span>
-                      <button
-                        type="button"
-                        className="ci__chip-x"
-                        onClick={() => removeSkill(i)}
-                        aria-label={t('profile.removeSkill', { skill })}
-                      >
-                        <X width={14} height={14} aria-hidden="true" />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
             </Step>
 
             <Step n={4} title={t('createIdea.step4Title')}>

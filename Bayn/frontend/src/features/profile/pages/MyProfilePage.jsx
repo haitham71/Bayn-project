@@ -5,13 +5,13 @@ import Navbar from '@/shared/components/Navbar';
 import Input from '@/shared/components/Input';
 import Button from '@/shared/components/Button';
 import Select from '@/shared/components/Select';
+import SkillsInput from '@/shared/components/SkillsInput';
 import PasswordStrength from '@/shared/components/PasswordStrength';
 import { validatePassword } from '@/features/identity/utils/validation';
 import Camera from '@/assets/icons/camera.svg?react';
 import MapPin from '@/assets/icons/map-pin.svg?react';
 import Eye from '@/assets/icons/eye.svg?react';
 import EyeOff from '@/assets/icons/eye-off.svg?react';
-import X from '@/assets/icons/x.svg?react';
 import './MyProfilePage.css';
 
 const BIO_MAX = 200;
@@ -74,7 +74,6 @@ export default function MyProfilePage({ onNavigate }) {
   const [experience, setExperience] = useState('2-3 Years');
   const [location, setLocation] = useState('Riyadh, Saudi Arabia');
   const [skills, setSkills] = useState(['React', 'Node js', 'Python', 'Mysql', 'Java Script']);
-  const [skillInput, setSkillInput] = useState('');
 
   const nameGroups = [
     {
@@ -99,25 +98,6 @@ export default function MyProfilePage({ onNavigate }) {
     },
   ];
 
-  function addSkill(value) {
-    const v = value.trim();
-    setSkillInput('');
-    if (!v || skills.some((s) => s.toLowerCase() === v.toLowerCase())) return;
-    setSkills([...skills, v]);
-  }
-
-  function removeSkill(index) {
-    setSkills(skills.filter((_, i) => i !== index));
-  }
-
-  function handleSkillKey(e) {
-    if (e.key === 'Enter' || e.key === ',') {
-      e.preventDefault();
-      addSkill(skillInput);
-    } else if (e.key === 'Backspace' && !skillInput && skills.length) {
-      removeSkill(skills.length - 1);
-    }
-  }
 
   // Confirm actions — integration points for the backend once it's wired.
   function handleAccountUpdate() {
@@ -319,33 +299,12 @@ export default function MyProfilePage({ onNavigate }) {
                   />
                 </div>
 
-                <div className="myp__skills">
-                  <Input
-                    label={t('profile.skills')}
-                    value={skillInput}
-                    onChange={(e) => setSkillInput(e.target.value)}
-                    onKeyDown={handleSkillKey}
-                    onBlur={() => addSkill(skillInput)}
-                    className="myp__input myp__input--full"
-                  />
-                  {skills.length > 0 && (
-                    <ul className="myp__chips">
-                      {skills.map((skill, i) => (
-                        <li key={skill} className="myp__chip">
-                          <span className="myp__chip-label">{skill}</span>
-                          <button
-                            type="button"
-                            className="myp__chip-x"
-                            onClick={() => removeSkill(i)}
-                            aria-label={t('profile.removeSkill', { skill })}
-                          >
-                            <X width={14} height={14} aria-hidden="true" />
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
+                <SkillsInput
+                  label={t('profile.skills')}
+                  value={skills}
+                  onChange={setSkills}
+                  className="myp__input--full"
+                />
 
                 <Button
                   type="button"

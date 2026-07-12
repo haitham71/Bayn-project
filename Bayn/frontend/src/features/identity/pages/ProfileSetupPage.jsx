@@ -5,7 +5,7 @@ import Stepper from '../components/Stepper';
 import Button from '@/shared/components/Button';
 import Input from '@/shared/components/Input';
 import Select from '@/shared/components/Select';
-import X from '@/assets/icons/x.svg?react';
+import SkillsInput from '@/shared/components/SkillsInput';
 import { validateName } from '../utils/validation';
 import './ProfileSetupPage.css';
 
@@ -48,7 +48,6 @@ export default function ProfileSetupPage({ onNavigate, initialData = {}, onDataC
   const [location, setLocation] = useState(initialData.location || '');
   const [bio, setBio] = useState(initialData.bio || '');
   const [skills, setSkills] = useState(initialData.skills || []);
-  const [skillInput, setSkillInput] = useState('');
 
   const [errors, setErrors] = useState({});
 
@@ -61,25 +60,6 @@ export default function ProfileSetupPage({ onNavigate, initialData = {}, onDataC
     });
   }, [firstNameEn, secondNameEn, thirdNameEn, lastNameEn, firstNameAr, secondNameAr, thirdNameAr, lastNameAr, title, experience, location, bio, skills]);
 
-  function addSkill(value) {
-    const v = value.trim();
-    setSkillInput('');
-    if (!v || skills.some((s) => s.toLowerCase() === v.toLowerCase())) return;
-    setSkills([...skills, v]);
-  }
-
-  function removeSkill(index) {
-    setSkills(skills.filter((_, i) => i !== index));
-  }
-
-  function handleSkillKey(e) {
-    if (e.key === 'Enter' || e.key === ',') {
-      e.preventDefault();
-      addSkill(skillInput);
-    } else if (e.key === 'Backspace' && !skillInput && skills.length) {
-      removeSkill(skills.length - 1);
-    }
-  }
 
   // Both name languages are shown together. First and last names carry over
   // from the account step (captured on the sign-up form) so they are locked
@@ -207,33 +187,11 @@ export default function ProfileSetupPage({ onNavigate, initialData = {}, onDataC
           className="ps__bio"
         />
 
-        <div className="ps__skills">
-          <Input
-            label={t('profile.skills')}
-            value={skillInput}
-            onChange={e => setSkillInput(e.target.value)}
-            onKeyDown={handleSkillKey}
-            onBlur={() => addSkill(skillInput)}
-            className="ps__input"
-          />
-          {skills.length > 0 && (
-            <ul className="ps__chips">
-              {skills.map((skill, i) => (
-                <li key={skill} className="ps__chip">
-                  <span className="ps__chip-label">{skill}</span>
-                  <button
-                    type="button"
-                    className="ps__chip-x"
-                    onClick={() => removeSkill(i)}
-                    aria-label={t('profile.removeSkill', { skill })}
-                  >
-                    <X width={14} height={14} aria-hidden="true" />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+        <SkillsInput
+          label={t('profile.skills')}
+          value={skills}
+          onChange={setSkills}
+        />
 
         <div className="ps__action-row">
           <Button type="submit" variant="primary" size="lg" trailingIcon className="ps__submit">

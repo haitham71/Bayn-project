@@ -1,0 +1,94 @@
+.skills {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+}
+
+/* Field + autocomplete anchor. */
+.skills__field {
+  position: relative;
+}
+
+.skills__input.bayn-input {
+  width: 100%;
+}
+
+.skills__hint {
+  margin: -6px 16px 0;
+  font-size: 12px;
+  line-height: 1.3;
+  color: var(--text-supporting, #786c57);
+}
+
+/* Suggestions menu (mirrors the Select menu). */
+.skills__menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  inset-inline: 0;
+  z-index: 20;
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border: 1px solid var(--input-border-hover, #bca98a);
+  border-radius: 8px;
+  background: var(--bg-surface-primary, #ebe5dc);
+  box-shadow: 0 8px 20px -8px rgba(4, 18, 14, 0.35);
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.skills__option {
+  padding: 10px 12px;
+  border-radius: 4px;
+  color: var(--text-title, #0f3d2e);
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.skills__option--active {
+  background: var(--input-bg-hover, #c9baa1);
+}
+
+/* Chips */
+.skills__chips {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.skills__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 6px;
+  border-radius: 33px;
+  background: rgba(119, 181, 160, 0.21);
+  color: var(--text-title, #0f3d2e);
+  font-size: 12px;
+}
+
+.skills__chip-x {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-supporting, #786c57);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.skills__chip-x:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: var(--text-title, #0f3d2e);
+}
