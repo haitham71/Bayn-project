@@ -167,3 +167,11 @@ def mock_r2():
         # real image on R2 — visible to anyone running the tests
         mock.get_avatar_url.return_value = "https://pub-e7461587069f419e8cadac646b04ce3b.r2.dev/avatars/test.png"
         yield mock
+
+
+@pytest_asyncio.fixture
+def mock_daily():
+    # patch the singleton so tests never hit the real Daily.co API
+    with patch("bayn.features.meetings.service.daily_client") as mock:
+        mock.create_room = AsyncMock(return_value={"url": "https://bayn.daily.co/test-room"})
+        yield mock
