@@ -7,7 +7,12 @@ import Radio from '@/shared/components/Radio';
 import Button from '@/shared/components/Button';
 import Check from '@/assets/icons/check.svg?react';
 import useCountdown from '../hooks/useCountdown';
-import { confirmEmailOtp, confirmPhoneOtp } from '../services/authService';
+import {
+  signupVerifyEmail,
+  signupVerifyPhone,
+  signupResendEmail,
+  signupResendPhone,
+} from '../services/authService';
 import { getApiErrorMessage } from '@/shared/lib/apiError';
 import './VerificationPage.css';
 
@@ -18,6 +23,7 @@ const OTP_LENGTH = 4;
 export default function VerificationPage({
   email = 'user@email.com',
   phone = '+966 5X XXX XXXX',
+  pendingToken = '',
   onEditInfo,
   onNext,
 }) {
@@ -27,6 +33,9 @@ export default function VerificationPage({
   const [verified, setVerified] = useState({ email: false, phone: false });
   const [phase, setPhase] = useState('input'); // input | loading | success | error
   const [errorMsg, setErrorMsg] = useState('');
+  // The pending signup is tracked by this token; the backend may rotate it on
+  // each step, so we keep the latest one it returns.
+  const [token, setToken] = useState(pendingToken);
   const { formatted, isDone, reset } = useCountdown(32);
 
   const steps = [
@@ -37,16 +46,22 @@ export default function VerificationPage({
 
   const destination = active === 'email' ? email : phone;
 
-  // The backend sends every OTP itself — the email one on signup, the phone one
-  // the moment the email is confirmed. The frontend never triggers a send, it
-  // only confirms the codes the user enters.
+  // The backend sends every OTP itself — the email one on /signup, the phone one
+  // the moment the email is confirmed. The frontend never triggers a send; it
+  // only verifies the codes the user enters (and asks for a resend on request).
 
   async function handleComplete(entered) {
     setPhase('loading');
     setErrorMsg('');
     try {
-      if (active === 'email') await confirmEmailOtp(entered);
-      else await confirmPhoneOtp(entered);
+      if (active === 'email') {
+        // Confirms the email; the backend then sends the phone OTP.
+        const res = await signupVerifyEmail(token, entered);
+        if (res?.pending_token) setToken(res.pending_token);
+      } else {
+        // Confirms the phone, which creates the account and logs the user in.
+        await signupVerifyPhone(token, entered);
+      }
 
       setPhase('success');
       setVerified((prev) => ({ ...prev, [active]: true }));
@@ -67,6 +82,20 @@ export default function VerificationPage({
         setCode('');
         setPhase('input');
       }, 1500);
+    }
+  }
+
+  // Ask the backend to resend the current channel's OTP (user-initiated only).
+  async function handleResend() {
+    setErrorMsg('');
+    try {
+      const res = active === 'email'
+        ? await signupResendEmail(token)
+        : await signupResendPhone(token);
+      if (res?.pending_token) setToken(res.pending_token);
+      reset();
+    } catch (err) {
+      setErrorMsg(getApiErrorMessage(err, t('verification.sendFailed')));
     }
   }
 
@@ -106,7 +135,7 @@ export default function VerificationPage({
 
         <div className="verify__resend">
           <span>{t('verification.didntReceive')}</span>
-          <Button variant="tertiary" size="sm" disabled={!isDone || verified.phone} onClick={() => reset()}>
+          <Button variant="tertiary" size="sm" disabled={!isDone || verified[active]} onClick={handleResend}>
             {t('verification.resend')}
           </Button>
           {!isDone && <span className="verify__timer">({formatted})</span>}

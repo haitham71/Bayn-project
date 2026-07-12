@@ -4,6 +4,10 @@
 export const API = {
   auth: {
     signup: '/auth/signup',
+    signupVerifyEmail: '/auth/signup/verify-email',
+    signupVerifyPhone: '/auth/signup/verify-phone',
+    signupResendEmail: '/auth/signup/resend-email',
+    signupResendPhone: '/auth/signup/resend-phone',
     login: '/auth/login',
     refresh: '/auth/refresh',
     profile: '/auth/profile',

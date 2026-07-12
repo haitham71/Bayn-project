@@ -71,13 +71,31 @@ export function toSignupPayload(form, phoneCountryId) {
 
 // ── Auth ────────────────────────────────────────────────────────────────────
 
-// Signup logs the user straight in — the response carries the tokens + user.
+// Starts a pending signup: the backend stores the data, sends the email OTP and
+// returns a pending_token (no account/tokens yet — those come after the phone
+// step). All OTP sending is done by the backend; the frontend only verifies.
 export async function signup(form) {
   const phoneCountryId = await getSaudiCountryId();
   const { data } = await api.post(API.auth.signup, toSignupPayload(form, phoneCountryId));
-  setTokens(data);
-  return data;
+  return data; // PendingSignupResponse { pending_token, message, email_verified, phone_verified }
 }
+
+// Confirms the email OTP during signup; the backend then sends the phone OTP.
+export const signupVerifyEmail = (pending_token, otp_code) =>
+  api.post(API.auth.signupVerifyEmail, { pending_token, otp_code }).then((r) => r.data);
+
+// Confirms the phone OTP, which creates the account and logs the user in.
+export const signupVerifyPhone = (pending_token, otp_code) =>
+  api.post(API.auth.signupVerifyPhone, { pending_token, otp_code }).then((r) => {
+    setTokens(r.data);
+    return r.data;
+  });
+
+export const signupResendEmail = (pending_token) =>
+  api.post(API.auth.signupResendEmail, { pending_token }).then((r) => r.data);
+
+export const signupResendPhone = (pending_token) =>
+  api.post(API.auth.signupResendPhone, { pending_token }).then((r) => r.data);
 
 export async function login({ email, password }) {
   const { data } = await api.post(API.auth.login, { email, password });

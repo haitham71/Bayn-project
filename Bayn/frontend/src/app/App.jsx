@@ -44,6 +44,7 @@ export default function App() {
         <VerificationPage
           email={signupData.email}
           phone={signupData.phone}
+          pendingToken={signupData.pendingToken}
           onEditInfo={() => goTo('signup')}
           onNext={() => goTo('profile')}
         />

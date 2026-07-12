@@ -105,13 +105,15 @@ export default function SignUpPage({ onNavigate, initialData = {}, onDataChange 
 
     setSubmitting(true);
     try {
-      // Creates the account and stores the tokens; signup logs the user in.
-      await signup({
+      // Starts the pending signup (backend sends the email OTP) and hands the
+      // pending_token to the verification step; the account is created there.
+      const res = await signup({
         email, username,
         firstNameEn, lastNameEn,
         firstNameAr, lastNameAr,
         password, dob, phone,
       });
+      onDataChange?.({ pendingToken: res.pending_token });
       onNavigate('verification');
     } catch (err) {
       setError(getApiErrorMessage(err, t('signup.errorGeneric')));
