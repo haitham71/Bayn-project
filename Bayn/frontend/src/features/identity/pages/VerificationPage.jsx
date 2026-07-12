@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import IdentityLayout from '@/layouts/IdentityLayout';
 import Stepper from '../components/Stepper';
@@ -7,12 +7,7 @@ import Radio from '@/shared/components/Radio';
 import Button from '@/shared/components/Button';
 import Check from '@/assets/icons/check.svg?react';
 import useCountdown from '../hooks/useCountdown';
-import {
-  sendEmailOtp,
-  confirmEmailOtp,
-  sendPhoneOtp,
-  confirmPhoneOtp,
-} from '../services/authService';
+import { confirmEmailOtp, confirmPhoneOtp } from '../services/authService';
 import { getApiErrorMessage } from '@/shared/lib/apiError';
 import './VerificationPage.css';
 
@@ -34,10 +29,6 @@ export default function VerificationPage({
   const [errorMsg, setErrorMsg] = useState('');
   const { formatted, isDone, reset } = useCountdown(32);
 
-  // Guards against sending an OTP twice for the same channel (React StrictMode
-  // runs effects twice in dev, and SMS sends cost credits).
-  const sentChannels = useRef(new Set());
-
   const steps = [
     { key: 'account', label: t('steps.account') },
     { key: 'verification', label: t('steps.verification') },
@@ -46,25 +37,9 @@ export default function VerificationPage({
 
   const destination = active === 'email' ? email : phone;
 
-  async function sendOtp(channel) {
-    setErrorMsg('');
-    try {
-      if (channel === 'email') await sendEmailOtp();
-      else await sendPhoneOtp();
-      reset();
-    } catch (err) {
-      setErrorMsg(getApiErrorMessage(err, t('verification.sendFailed')));
-    }
-  }
-
-  // Auto-send the OTP the first time each channel becomes active.
-  useEffect(() => {
-    if (verified[active]) return;
-    if (sentChannels.current.has(active)) return;
-    sentChannels.current.add(active);
-    sendOtp(active);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active]);
+  // The backend sends every OTP itself — the email one on signup, the phone one
+  // the moment the email is confirmed. The frontend never triggers a send, it
+  // only confirms the codes the user enters.
 
   async function handleComplete(entered) {
     setPhase('loading');
@@ -81,9 +56,9 @@ export default function VerificationPage({
           setCode('');
           reset();
           setPhase('input');
-        } else {
-          setPhase('input');
         }
+        // Phone was the last step — keep the success state so the check mark
+        // stays and the input boxes don't reappear.
       }, 900);
     } catch (err) {
       setPhase('error');
