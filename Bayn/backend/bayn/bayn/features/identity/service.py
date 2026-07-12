@@ -1,8 +1,10 @@
 """Identity business logic — no HTTP concerns; raises exceptions the router maps to responses."""
 
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
+from typing import Any
 
+import jwt as pyjwt
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -22,14 +24,24 @@ from bayn.core.config import settings
 from bayn.core.security import (
     create_access_token,
     create_refresh_token,
+    create_signup_pending_token,
+    decode_signup_pending_token,
     hash_password,
     verify_password,
 )
 from bayn.core.i18n import DEFAULT_LOCALE, t
 from bayn.features.catalog.models import UserSkill
-from bayn.features.identity.models import AuthenticaOTPLog, OTPChannel, OTPStatus, RefreshToken, User
+from bayn.features.identity.models import (
+    AuthenticaOTPLog,
+    Country,
+    OTPChannel,
+    OTPStatus,
+    RefreshToken,
+    User,
+)
 from bayn.features.identity.schemas import (
     OTPSendResponse,
+    PendingSignupResponse,
     TokenResponse,
     UpdateProfileRequest,
     UserResponse,
@@ -175,30 +187,197 @@ async def get_user_by_id(db: AsyncSession, user_id: uuid.UUID, locale: str = DEF
     return user
 
 
-# ── Auth ──────────────────────────────────────────────────────────────────────
+# ── Signup (pending — no DB write until both OTPs are confirmed) ──────────────
 
-async def create_user(db: AsyncSession, payload: UserSignup, locale: str = DEFAULT_LOCALE) -> TokenResponse:
-    # check uniqueness up front for clear errors instead of a raw IntegrityError
+# overall lifetime of a pending signup attempt; after this the client must
+# call /auth/signup again (which sends a fresh OTP and mints a fresh token)
+PENDING_SIGNUP_TOKEN_TTL = timedelta(minutes=30)
+
+# max OTP sends per pending signup attempt, tracked in the token itself since
+# there's no DB row yet to attach a rate-limit window to (contrast with
+# _OTP_RATE_LIMIT below, which is a 24h window for already-created accounts)
+_PENDING_SIGNUP_OTP_LIMIT = 3
+
+
+async def _get_country(db: AsyncSession, country_id: uuid.UUID, locale: str) -> Country:
+    result = await db.execute(select(Country).where(Country.id == country_id))
+    country = result.scalar_one_or_none()
+    if country is None:
+        raise ValidationError(t("identity", "otp.phone_country_not_found", locale))
+    return country
+
+
+def _pending_signup_payload(payload: UserSignup) -> dict[str, Any]:
+    return {
+        "first_name_ar": payload.first_name_ar,
+        "second_name_ar": payload.second_name_ar,
+        "third_name_ar": payload.third_name_ar,
+        "last_name_ar": payload.last_name_ar,
+        "first_name_en": payload.first_name_en,
+        "second_name_en": payload.second_name_en,
+        "third_name_en": payload.third_name_en,
+        "last_name_en": payload.last_name_en,
+        "birth_date": payload.birth_date.isoformat() if payload.birth_date else None,
+        "email": payload.email,
+        "username": payload.username,
+        # hashed immediately — the raw password never round-trips in the token
+        "password_hash": hash_password(payload.password),
+        "phone_country_id": str(payload.phone_country_id),
+        "phone_number": payload.phone_number,
+        "email_verified": False,
+        "phone_verified": False,
+        "email_otp_count": 0,
+        "phone_otp_count": 0,
+    }
+
+
+def _decode_pending_signup(pending_token: str, locale: str) -> dict[str, Any]:
+    try:
+        return decode_signup_pending_token(pending_token)
+    except pyjwt.PyJWTError:
+        raise InvalidTokenError(t("identity", "auth.invalid_token", locale))
+
+
+def _mint_pending_response(data: dict[str, Any], message: str) -> PendingSignupResponse:
+    token = create_signup_pending_token(data, PENDING_SIGNUP_TOKEN_TTL)
+    return PendingSignupResponse(
+        pending_token=token,
+        message=message,
+        email_verified=data["email_verified"],
+        phone_verified=data["phone_verified"],
+    )
+
+
+async def start_signup(db: AsyncSession, payload: UserSignup, locale: str = DEFAULT_LOCALE) -> PendingSignupResponse:
+    # check uniqueness up front for clear errors instead of a raw IntegrityError later
     if await get_user_by_email(db, payload.email):
         raise UserAlreadyExistsError(t("identity", "auth.email_already_in_use", locale))
     if await get_user_by_username(db, payload.username):
         raise UserAlreadyExistsError(t("identity", "auth.username_already_in_use", locale))
 
+    data = _pending_signup_payload(payload)
+
+    try:
+        await authentica_client.send_email_otp(data["email"])
+    except AuthenticaError:
+        raise ValidationError(t("identity", "otp.send_failed", locale))
+    data["email_otp_count"] = 1
+
+    return _mint_pending_response(data, t("identity", "otp.sent_email", locale))
+
+
+async def confirm_signup_email(
+    db: AsyncSession, pending_token: str, otp_code: str, locale: str = DEFAULT_LOCALE
+) -> PendingSignupResponse:
+    data = _decode_pending_signup(pending_token, locale)
+    if data["email_verified"]:
+        raise ValidationError(t("identity", "otp.email_already_verified", locale))
+
+    try:
+        await authentica_client.verify_email_otp(data["email"], otp_code)
+    except AuthenticaOTPInvalid:
+        raise ValidationError(t("identity", "otp.invalid_code", locale))
+    except AuthenticaError:
+        raise ValidationError(t("identity", "otp.verification_failed", locale))
+
+    data["email_verified"] = True
+
+    # chain straight into phone verification, same as the authenticated flow does;
+    # a failed send here doesn't undo the email confirmation — the client can
+    # fall back to /auth/signup/resend-phone
+    message = t("identity", "otp.sent_phone", locale)
+    try:
+        country = await _get_country(db, uuid.UUID(data["phone_country_id"]), locale)
+        await authentica_client.send_sms_otp(dial_code=country.dial_code, phone_number=data["phone_number"])
+        data["phone_otp_count"] = 1
+    except (AuthenticaError, ValidationError):
+        message = t("identity", "otp.send_failed", locale)
+
+    return _mint_pending_response(data, message)
+
+
+async def resend_signup_email_otp(
+    db: AsyncSession, pending_token: str, locale: str = DEFAULT_LOCALE
+) -> PendingSignupResponse:
+    data = _decode_pending_signup(pending_token, locale)
+    if data["email_verified"]:
+        raise ValidationError(t("identity", "otp.email_already_verified", locale))
+    if data["email_otp_count"] >= _PENDING_SIGNUP_OTP_LIMIT:
+        raise ValidationError(t("identity", "otp.rate_limit_exceeded", locale))
+
+    try:
+        await authentica_client.send_email_otp(data["email"])
+    except AuthenticaError:
+        raise ValidationError(t("identity", "otp.send_failed", locale))
+    data["email_otp_count"] += 1
+
+    return _mint_pending_response(data, t("identity", "otp.sent_email", locale))
+
+
+async def resend_signup_phone_otp(
+    db: AsyncSession, pending_token: str, locale: str = DEFAULT_LOCALE
+) -> PendingSignupResponse:
+    data = _decode_pending_signup(pending_token, locale)
+    if not data["email_verified"]:
+        raise ValidationError(t("identity", "otp.email_must_be_verified_first", locale))
+    if data["phone_verified"]:
+        raise ValidationError(t("identity", "otp.phone_already_verified", locale))
+    if data["phone_otp_count"] >= _PENDING_SIGNUP_OTP_LIMIT:
+        raise ValidationError(t("identity", "otp.rate_limit_exceeded", locale))
+
+    country = await _get_country(db, uuid.UUID(data["phone_country_id"]), locale)
+    try:
+        await authentica_client.send_sms_otp(dial_code=country.dial_code, phone_number=data["phone_number"])
+    except AuthenticaError:
+        raise ValidationError(t("identity", "otp.send_failed", locale))
+    data["phone_otp_count"] += 1
+
+    return _mint_pending_response(data, t("identity", "otp.sent_phone", locale))
+
+
+async def confirm_signup_phone(
+    db: AsyncSession, pending_token: str, otp_code: str, locale: str = DEFAULT_LOCALE
+) -> TokenResponse:
+    data = _decode_pending_signup(pending_token, locale)
+    if not data["email_verified"]:
+        raise ValidationError(t("identity", "otp.email_must_be_verified_first", locale))
+    if data["phone_verified"]:
+        raise ValidationError(t("identity", "otp.phone_already_verified", locale))
+
+    country = await _get_country(db, uuid.UUID(data["phone_country_id"]), locale)
+    try:
+        await authentica_client.verify_sms_otp(
+            dial_code=country.dial_code, phone_number=data["phone_number"], otp_code=otp_code,
+        )
+    except AuthenticaOTPInvalid:
+        raise ValidationError(t("identity", "otp.invalid_code", locale))
+    except AuthenticaError:
+        raise ValidationError(t("identity", "otp.verification_failed", locale))
+
+    # re-check uniqueness right before writing the row — the email/username may
+    # have been taken by another signup that finished while this one was pending
+    if await get_user_by_email(db, data["email"]):
+        raise UserAlreadyExistsError(t("identity", "auth.email_already_in_use", locale))
+    if await get_user_by_username(db, data["username"]):
+        raise UserAlreadyExistsError(t("identity", "auth.username_already_in_use", locale))
+
     user = User(
-        first_name_ar=payload.first_name_ar,
-        second_name_ar=payload.second_name_ar,
-        third_name_ar=payload.third_name_ar,
-        last_name_ar=payload.last_name_ar,
-        first_name_en=payload.first_name_en,
-        second_name_en=payload.second_name_en,
-        third_name_en=payload.third_name_en,
-        last_name_en=payload.last_name_en,
-        email=payload.email,
-        birth_date=payload.birth_date,
-        username=payload.username,
-        password_hash=hash_password(payload.password),
-        phone_country_id=payload.phone_country_id,
-        phone_number=payload.phone_number,
+        first_name_ar=data["first_name_ar"],
+        second_name_ar=data["second_name_ar"],
+        third_name_ar=data["third_name_ar"],
+        last_name_ar=data["last_name_ar"],
+        first_name_en=data["first_name_en"],
+        second_name_en=data["second_name_en"],
+        third_name_en=data["third_name_en"],
+        last_name_en=data["last_name_en"],
+        email=data["email"],
+        birth_date=date.fromisoformat(data["birth_date"]) if data["birth_date"] else None,
+        username=data["username"],
+        password_hash=data["password_hash"],
+        phone_country_id=uuid.UUID(data["phone_country_id"]),
+        phone_number=data["phone_number"],
+        is_email_verified=True,
+        is_number_verified=True,
     )
 
     db.add(user)
@@ -210,15 +389,12 @@ async def create_user(db: AsyncSession, payload: UserSignup, locale: str = DEFAU
         raise UserAlreadyExistsError(t("identity", "auth.email_or_username_already_in_use", locale))
     await db.refresh(user)
 
-    # kick off email verification automatically; signup still succeeds if the send fails
-    # for any reason (rejected by Authentica, network error, timeout, ...)
-    try:
-        await send_email_otp(db, user, locale)
-    except Exception:
-        pass
-
-    # signup logs the user straight in
+    # this is the only point in the signup flow where a User row is created —
+    # both email and phone are verified by the time we get here
     return await _issue_tokens(db, user)
+
+
+# ── Auth ──────────────────────────────────────────────────────────────────────
 
 
 async def authenticate_user(db: AsyncSession, payload: UserLogin, locale: str = DEFAULT_LOCALE) -> TokenResponse:

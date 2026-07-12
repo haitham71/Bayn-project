@@ -129,6 +129,17 @@ class OTPVerifyRequest(BaseModel):
     otp_code: str
 
 
+class PendingOTPVerifyRequest(BaseModel):
+    # pending_token carries the not-yet-persisted signup data — there's no
+    # authenticated user yet for the target email/phone to come from.
+    pending_token: str
+    otp_code: str
+
+
+class PendingResendRequest(BaseModel):
+    pending_token: str
+
+
 
 # Response Schemas
 
@@ -196,6 +207,13 @@ class TokenResponse(BaseModel):
 
 class OTPSendResponse(BaseModel):
     message: str
+
+
+class PendingSignupResponse(BaseModel):
+    pending_token: str
+    message: str
+    email_verified: bool
+    phone_verified: bool
 
 
 class MessageResponse(BaseModel):

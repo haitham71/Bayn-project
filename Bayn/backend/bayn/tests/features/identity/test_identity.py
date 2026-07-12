@@ -18,7 +18,7 @@ import pytest_asyncio
 from httpx import AsyncClient
 
 from bayn.common.exceptions import IncompleteProfileError, UserAlreadyExistsError
-from bayn.core.security import hash_password
+from bayn.core.security import create_signup_pending_token, hash_password
 from bayn.features.catalog.models import Skill, UserSkill
 from bayn.features.identity import service
 from bayn.features.identity.dependencies import require_complete_profile
@@ -48,23 +48,60 @@ class TestSignup:
         return {**self.BASE_PAYLOAD, "phone_country_id": str(test_country.id), **overrides}
 
     @pytest.mark.asyncio
-    async def test_signup_success(self, client: AsyncClient, test_country: Country, mock_authentica):
+    async def test_signup_returns_pending_token(self, client: AsyncClient, test_country: Country, mock_authentica):
+        """POST /auth/signup only sends the email OTP and hands back a pending
+        token — no account exists yet, so no tokens are issued."""
 
         response = await client.post("/auth/signup", json=self._payload(test_country))
 
-        assert response.status_code == 201
+        assert response.status_code == 200
         data = response.json()
-        assert "access_token" in data
-        assert "refresh_token" in data
-        assert data["token_type"] == "bearer"
-        assert data["user"]["email"] == "new@example.com"
-        assert data["user"]["username"] == "new_user"
-        # Password must never round-trip in the response, in any form
-        assert "password" not in data["user"]
-        assert "password_hash" not in data["user"]
+        assert "pending_token" in data
+        assert data["email_verified"] is False
+        assert data["phone_verified"] is False
+        assert "access_token" not in data
 
         # signup fires the email OTP automatically, without a separate /verify-email/send call
         mock_authentica.send_email_otp.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_signup_full_flow_creates_verified_user(
+        self, client: AsyncClient, db, test_country: Country, mock_authentica
+    ):
+        """The User row is only written once both email and phone OTPs are
+        confirmed — this drives the whole pending flow end to end."""
+
+        signup_resp = await client.post("/auth/signup", json=self._payload(test_country))
+        assert signup_resp.status_code == 200
+        pending_token = signup_resp.json()["pending_token"]
+
+        # no row exists yet — the whole point of the pending flow
+        assert await service.get_user_by_email(db, "new@example.com") is None
+
+        email_resp = await client.post(
+            "/auth/signup/verify-email", json={"pending_token": pending_token, "otp_code": "1234"}
+        )
+        assert email_resp.status_code == 200
+        email_data = email_resp.json()
+        assert email_data["email_verified"] is True
+        assert email_data["phone_verified"] is False
+        assert await service.get_user_by_email(db, "new@example.com") is None
+
+        phone_resp = await client.post(
+            "/auth/signup/verify-phone",
+            json={"pending_token": email_data["pending_token"], "otp_code": "1234"},
+        )
+        assert phone_resp.status_code == 201
+        phone_data = phone_resp.json()
+        assert "access_token" in phone_data
+        assert phone_data["user"]["email"] == "new@example.com"
+        assert phone_data["user"]["is_email_verified"] is True
+        assert phone_data["user"]["is_number_verified"] is True
+        assert "password" not in phone_data["user"]
+        assert "password_hash" not in phone_data["user"]
+
+        user = await service.get_user_by_email(db, "new@example.com")
+        assert user is not None
 
     @pytest.mark.asyncio
     async def test_signup_duplicate_email(
@@ -104,13 +141,24 @@ class TestSignup:
         assert response.status_code == 422
 
     @pytest.mark.asyncio
-    async def test_signup_username_lowercase(self, client: AsyncClient, test_country: Country, mock_authentica):
-
+    async def test_signup_username_lowercase(
+        self, client: AsyncClient, db, test_country: Country, mock_authentica
+    ):
         payload = self._payload(test_country, email="lower@example.com", username="UPPERCASE_USER")
-        response = await client.post("/auth/signup", json=payload)
+        signup_resp = await client.post("/auth/signup", json=payload)
+        assert signup_resp.status_code == 200
 
-        assert response.status_code == 201
-        assert response.json()["user"]["username"] == "uppercase_user"
+        email_resp = await client.post(
+            "/auth/signup/verify-email",
+            json={"pending_token": signup_resp.json()["pending_token"], "otp_code": "1234"},
+        )
+        phone_resp = await client.post(
+            "/auth/signup/verify-phone",
+            json={"pending_token": email_resp.json()["pending_token"], "otp_code": "1234"},
+        )
+
+        assert phone_resp.status_code == 201
+        assert phone_resp.json()["user"]["username"] == "uppercase_user"
 
     @pytest.mark.asyncio
     async def test_signup_without_phone_rejected(self, client: AsyncClient, test_country: Country):
@@ -127,11 +175,9 @@ class TestSignup:
         self, db, test_user: User, monkeypatch: pytest.MonkeyPatch, mock_authentica
     ):
         """If a duplicate slips past the pre-checks (e.g. a concurrent signup
-        landed between the check and the commit), create_user must still
-        surface a clean UserAlreadyExistsError instead of a raw IntegrityError."""
-        monkeypatch.setattr(service, "get_user_by_email", AsyncMock(return_value=None))
-        monkeypatch.setattr(service, "get_user_by_username", AsyncMock(return_value=None))
-
+        landed between the check and the final confirm), confirm_signup_phone
+        must still surface a clean UserAlreadyExistsError instead of a raw
+        IntegrityError."""
         payload = UserSignup(
             first_name_ar="خالد", last_name_ar="سالم",
             first_name_en="Khaled", last_name_en="Salem",
@@ -141,9 +187,15 @@ class TestSignup:
             phone_country_id=test_user.phone_country_id,
             phone_number=512345679,
         )
+        data = service._pending_signup_payload(payload)
+        data["email_verified"] = True
+        pending_token = create_signup_pending_token(data, service.PENDING_SIGNUP_TOKEN_TTL)
+
+        monkeypatch.setattr(service, "get_user_by_email", AsyncMock(return_value=None))
+        monkeypatch.setattr(service, "get_user_by_username", AsyncMock(return_value=None))
 
         with pytest.raises(UserAlreadyExistsError):
-            await service.create_user(db, payload)
+            await service.confirm_signup_phone(db, pending_token, "1234")
 
 
 # ═══════════════════════════════════════════════════════
