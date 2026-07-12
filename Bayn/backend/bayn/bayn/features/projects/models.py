@@ -4,7 +4,7 @@ import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, String, Text, UniqueConstraint, func
+from sqlalchemy import Boolean, CheckConstraint, DateTime, Enum, ForeignKey, Integer, String, Text, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -18,6 +18,12 @@ class ProjectMembershipRole(str, enum.Enum):
     """
     OWNER = "owner"
     MEMBER = "member"
+
+
+class ProjectStage(str, enum.Enum):
+    planning = "planning"
+    development = "development"
+    launching = "launching"
 
 
 class Project(Base):
