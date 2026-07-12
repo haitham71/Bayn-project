@@ -5,6 +5,9 @@ import Stepper from '../components/Stepper';
 import Button from '@/shared/components/Button';
 import Input from '@/shared/components/Input';
 import Checkbox from '@/shared/components/Checkbox';
+import Eye from '@/assets/icons/eye.svg?react';
+import EyeOff from '@/assets/icons/eye-off.svg?react';
+import PasswordStrength from '@/shared/components/PasswordStrength';
 import {
   validateEmail,
   validateName,
@@ -19,65 +22,6 @@ import { signup } from '../services/authService';
 import { getApiErrorMessage } from '@/shared/lib/apiError';
 import './SignUpPage.css';
 
-const EyeOpen = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-    <circle cx="12" cy="12" r="3" />
-  </svg>
-);
-
-const EyeOff = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-    <line x1="1" y1="1" x2="23" y2="23" />
-  </svg>
-);
-
-function passwordScore(pw) {
-  return [
-    pw.length >= 8,
-    /[A-Z]/.test(pw),
-    /[a-z]/.test(pw),
-    /[0-9]/.test(pw),
-    /[#$@]/.test(pw),
-  ].filter(Boolean).length;
-}
-
-function PasswordStrength({ password, t }) {
-  const score = passwordScore(password);
-  const checks = [
-    password.length >= 8,
-    /[A-Z]/.test(password),
-    /[a-z]/.test(password),
-    /[0-9]/.test(password),
-    /[#$@]/.test(password),
-  ];
-  const rules = t('signup.rules', { returnObjects: true });
-
-  return (
-    <div className="pw-str">
-      <div className="pw-str__header">
-        <span className="pw-str__title">{t('signup.strengthLabel')}</span>
-        <div className="pw-str__bars">
-          {[0, 1, 2, 3, 4].map(i => (
-            <div
-              key={i}
-              className={`pw-str__bar${i < score ? ' pw-str__bar--on' : ''}`}
-            />
-          ))}
-        </div>
-      </div>
-      <ul className="pw-str__list">
-        {rules.map((rule, i) => (
-          <li key={i} className={`pw-str__rule${checks[i] ? ' pw-str__rule--ok' : ''}`}>
-            {rule}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
 export default function SignUpPage({ onNavigate, initialData = {}, onDataChange }) {
   const { t } = useTranslation();
 
@@ -88,17 +32,11 @@ export default function SignUpPage({ onNavigate, initialData = {}, onDataChange 
   ];
 
   const [email, setEmail] = useState(initialData.email || '');
-  const [username, setUsername] = useState(initialData.username || '');
-  // Names are captured in both languages; a toggle switches which set is shown.
-  const [nameLang, setNameLang] = useState(initialData.nameLang || 'en');
-  const [firstNameEn, setFirstNameEn] = useState(initialData.firstNameEn || '');
-  const [secondNameEn, setSecondNameEn] = useState(initialData.secondNameEn || '');
-  const [thirdNameEn, setThirdNameEn] = useState(initialData.thirdNameEn || '');
-  const [lastNameEn, setLastNameEn] = useState(initialData.lastNameEn || '');
   const [firstNameAr, setFirstNameAr] = useState(initialData.firstNameAr || '');
-  const [secondNameAr, setSecondNameAr] = useState(initialData.secondNameAr || '');
-  const [thirdNameAr, setThirdNameAr] = useState(initialData.thirdNameAr || '');
   const [lastNameAr, setLastNameAr] = useState(initialData.lastNameAr || '');
+  const [firstNameEn, setFirstNameEn] = useState(initialData.firstNameEn || '');
+  const [lastNameEn, setLastNameEn] = useState(initialData.lastNameEn || '');
+  const [username, setUsername] = useState(initialData.username || '');
   const [password, setPassword] = useState(initialData.password || '');
   const [confirmPassword, setConfirmPassword] = useState(initialData.confirmPassword || '');
   const [dob, setDob] = useState(initialData.dob || '');
@@ -114,46 +52,26 @@ export default function SignUpPage({ onNavigate, initialData = {}, onDataChange 
   // back (the page itself unmounts, but App keeps the data).
   useEffect(() => {
     onDataChange?.({
-      email, username, nameLang,
-      firstNameEn, secondNameEn, thirdNameEn, lastNameEn,
-      firstNameAr, secondNameAr, thirdNameAr, lastNameAr,
+      email, firstNameAr, lastNameAr, firstNameEn, lastNameEn, username,
       password, confirmPassword, dob, phone, agreed,
     });
-  }, [email, username, nameLang, firstNameEn, secondNameEn, thirdNameEn, lastNameEn, firstNameAr, secondNameAr, thirdNameAr, lastNameAr, password, confirmPassword, dob, phone, agreed]);
-
-  // The name fields for the language the toggle is currently showing.
-  // The third name maps to third_name on the backend.
-  const nameSet = nameLang === 'en'
-    ? [
-        { key: 'firstNameEn', label: 'firstName', value: firstNameEn, set: setFirstNameEn },
-        { key: 'secondNameEn', label: 'secondName', value: secondNameEn, set: setSecondNameEn },
-        { key: 'thirdNameEn', label: 'thirdName', value: thirdNameEn, set: setThirdNameEn },
-        { key: 'lastNameEn', label: 'lastName', value: lastNameEn, set: setLastNameEn },
-      ]
-    : [
-        { key: 'firstNameAr', label: 'firstName', value: firstNameAr, set: setFirstNameAr },
-        { key: 'secondNameAr', label: 'secondName', value: secondNameAr, set: setSecondNameAr },
-        { key: 'thirdNameAr', label: 'thirdName', value: thirdNameAr, set: setThirdNameAr },
-        { key: 'lastNameAr', label: 'lastName', value: lastNameAr, set: setLastNameAr },
-      ];
+  }, [email, firstNameAr, lastNameAr, firstNameEn, lastNameEn, username, password, confirmPassword, dob, phone, agreed]);
 
   // Turns the validators' error codes into a field -> localized message map.
   function collectErrors() {
     const next = {};
     const email_ = validateEmail(email);
     if (email_) next.email = email_;
+    const fnAr = validateName(firstNameAr, { lang: 'ar' });
+    if (fnAr) next.firstNameAr = fnAr;
+    const lnAr = validateName(lastNameAr, { lang: 'ar' });
+    if (lnAr) next.lastNameAr = lnAr;
+    const fnEn = validateName(firstNameEn, { lang: 'en' });
+    if (fnEn) next.firstNameEn = fnEn;
+    const lnEn = validateName(lastNameEn, { lang: 'en' });
+    if (lnEn) next.lastNameEn = lnEn;
     const user = validateUsername(username);
     if (user) next.username = user;
-
-    [
-      ['firstNameEn', 'en', firstNameEn, true], ['secondNameEn', 'en', secondNameEn, true],
-      ['thirdNameEn', 'en', thirdNameEn, true], ['lastNameEn', 'en', lastNameEn, true],
-      ['firstNameAr', 'ar', firstNameAr, true], ['secondNameAr', 'ar', secondNameAr, true],
-      ['thirdNameAr', 'ar', thirdNameAr, true], ['lastNameAr', 'ar', lastNameAr, true],
-    ].forEach(([key, lang, value, required]) => {
-      const err = validateName(value, { lang, required });
-      if (err) next[key] = err;
-    });
 
     const birth = validateDob(dob);
     if (birth) next.dob = birth;
@@ -175,12 +93,6 @@ export default function SignUpPage({ onNavigate, initialData = {}, onDataChange 
     setError('');
     const found = collectErrors();
     setErrors(found);
-
-    // Surface hidden-language name errors by switching the toggle to them.
-    const enNameErr = found.firstNameEn || found.secondNameEn || found.thirdNameEn || found.lastNameEn;
-    const arNameErr = found.firstNameAr || found.secondNameAr || found.thirdNameAr || found.lastNameAr;
-    if (nameLang === 'en' && !enNameErr && arNameErr) setNameLang('ar');
-    else if (nameLang === 'ar' && !arNameErr && enNameErr) setNameLang('en');
 
     if (Object.values(found).some(Boolean)) return;
     if (!agreed) {
@@ -218,6 +130,7 @@ export default function SignUpPage({ onNavigate, initialData = {}, onDataChange 
       </div>
 
       <form className="su__form" onSubmit={handleSubmit} noValidate>
+
         <div className="su__row">
           <Input
             label={t('signup.email')}
@@ -236,37 +149,41 @@ export default function SignUpPage({ onNavigate, initialData = {}, onDataChange 
           />
         </div>
 
-        <div className="su__names">
-          <div className="su__lang-toggle" role="group" aria-label="Name language">
-            <button
-              type="button"
-              className={`su__lang-opt${nameLang === 'en' ? ' su__lang-opt--active' : ''}`}
-              onClick={() => setNameLang('en')}
-            >
-              English
-            </button>
-            <button
-              type="button"
-              className={`su__lang-opt${nameLang === 'ar' ? ' su__lang-opt--active' : ''}`}
-              onClick={() => setNameLang('ar')}
-            >
-              العربية
-            </button>
-          </div>
 
-          <div className="su__names-grid">
-            {nameSet.map(f => (
-              <Input
-                key={f.key}
-                label={t(`signup.${f.label}`, { lng: nameLang })}
-                value={f.value}
-                onChange={e => { f.set(e.target.value); clearError(f.key); }}
-                className="su__input"
-                {...fieldError(f.key)}
-              />
-            ))}
-          </div>
+        <div className="su__row">
+          <Input
+            label={t('signup.firstNameAr')}
+            value={firstNameAr}
+            onChange={e => { setFirstNameAr(e.target.value); clearError('firstNameAr'); }}
+            className="su__input"
+            {...fieldError('firstNameAr')}
+          />
+          <Input
+            label={t('signup.lastNameAr')}
+            value={lastNameAr}
+            onChange={e => { setLastNameAr(e.target.value); clearError('lastNameAr'); }}
+            className="su__input"
+            {...fieldError('lastNameAr')}
+          />
         </div>
+
+        <div className="su__row">
+          <Input
+            label={t('signup.firstNameEn')}
+            value={firstNameEn}
+            onChange={e => { setFirstNameEn(e.target.value); clearError('firstNameEn'); }}
+            className="su__input"
+            {...fieldError('firstNameEn')}
+          />
+          <Input
+            label={t('signup.lastNameEn')}
+            value={lastNameEn}
+            onChange={e => { setLastNameEn(e.target.value); clearError('lastNameEn'); }}
+            className="su__input"
+            {...fieldError('lastNameEn')}
+          />
+        </div>
+
 
         <div className="su__row">
           <Input
@@ -295,7 +212,7 @@ export default function SignUpPage({ onNavigate, initialData = {}, onDataChange 
             type={showPassword ? 'text' : 'password'}
             value={password}
             onChange={e => { setPassword(e.target.value); clearError('password'); }}
-            trailingIcon={showPassword ? <EyeOpen /> : <EyeOff />}
+            trailingIcon={showPassword ? <Eye width={20} height={20} aria-hidden="true" /> : <EyeOff width={20} height={20} aria-hidden="true" />}
             onTrailingClick={() => setShowPassword(p => !p)}
             className="su__input"
             {...fieldError('password')}
@@ -305,14 +222,14 @@ export default function SignUpPage({ onNavigate, initialData = {}, onDataChange 
             type={showConfirm ? 'text' : 'password'}
             value={confirmPassword}
             onChange={e => { setConfirmPassword(e.target.value); clearError('confirmPassword'); }}
-            trailingIcon={showConfirm ? <EyeOpen /> : <EyeOff />}
+            trailingIcon={showConfirm ? <Eye width={20} height={20} aria-hidden="true" /> : <EyeOff width={20} height={20} aria-hidden="true" />}
             onTrailingClick={() => setShowConfirm(p => !p)}
             className="su__input"
             {...fieldError('confirmPassword')}
           />
         </div>
 
-        <PasswordStrength password={password} t={t} />
+        <PasswordStrength password={password} />
 
         {error && <p className="su__error">{error}</p>}
 
