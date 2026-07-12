@@ -6,10 +6,11 @@ import ProfileSetupPage from '@/features/identity/pages/ProfileSetupPage';
 import HomePage         from '@/features/home/pages/Homepage';
 import MyProfilePage    from '@/features/profile/pages/MyProfilePage';
 import MyProjectsPage   from '@/features/projects/pages/MyProjectsPage';
+import JoinRequestsPage from '@/features/projects/pages/JoinRequestsPage';
 import CreateIdeaPage   from '@/features/ideas/pages/CreateIdeaPage';
 
 const PAGE_KEY = 'bayn-page';
-const PAGES = ['login', 'signup', 'verification', 'profile', 'home', 'myprofile', 'myprojects', 'createidea'];
+const PAGES = ['login', 'signup', 'verification', 'profile', 'home', 'myprofile', 'myprojects', 'joinrequests', 'createidea'];
 
 function readPage() {
   try {
@@ -21,7 +22,7 @@ function readPage() {
 }
 
 export default function App() {
-  const [page, setPage] = useState('login');
+  const [page, setPage] = useState('home');
   const [signupData, setSignupData] = useState({});
 
   const goTo = (next) => {
@@ -51,6 +52,7 @@ export default function App() {
       {page === 'home'         && <HomePage onNavigate={goTo} />}
       {page === 'myprofile'    && <MyProfilePage onNavigate={goTo} />}
       {page === 'myprojects'   && <MyProjectsPage onNavigate={goTo} />}
+      {page === 'joinrequests' && <JoinRequestsPage onNavigate={goTo} />}
       {page === 'createidea'   && <CreateIdeaPage onNavigate={goTo} />}
     </>
   );

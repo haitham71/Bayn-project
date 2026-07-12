@@ -23,8 +23,6 @@ function greetingKey() {
   return 'greetEvening';
 }
 
-const SIDEBAR_ROUTES = { home: 'home', projects: 'myprojects', profile: 'myprofile' };
-
 export default function HomePage({ onNavigate }) {
   const { t, i18n } = useTranslation();
   const { fullName } = useCurrentUser();
@@ -50,10 +48,7 @@ export default function HomePage({ onNavigate }) {
 
   return (
     <div className="home">
-      <Sidebar
-        activeKey="home"
-        onNavigate={(key) => SIDEBAR_ROUTES[key] && onNavigate?.(SIDEBAR_ROUTES[key])}
-      />
+      <Sidebar activeKey="home" onNavigate={onNavigate} />
 
       <div className="home__main">
         <Navbar userName={fullName || t('home.profileName')} />
@@ -73,7 +68,11 @@ export default function HomePage({ onNavigate }) {
                   {pill.label}
                 </button>
               ))}
-              <button type="button" className="home__pill home__pill--primary">
+              <button
+                type="button"
+                className="home__pill home__pill--primary"
+                onClick={() => onNavigate?.('createidea')}
+              >
                 {t('home.createIdea')}
               </button>
             </div>
