@@ -75,6 +75,15 @@
     "month": "الشهر",
     "year": "السنة"
   },
+  "scheduler": {
+    "noDates": "اختر تواريخ من التقويم لتحديد أوقات الاجتماعات.",
+    "addTime": "أضف وقتاً",
+    "from": "من",
+    "to": "إلى",
+    "conflict": "الأوقات متداخلة — يرجى تعديلها.",
+    "removeTime": "إزالة الوقت",
+    "removeDate": "إزالة {{date}}"
+  },
   "myProjects": {
     "youOwn": "المشاريع التي تملكها",
     "youWorkOn": "المشاريع التي تعمل عليها",
@@ -113,10 +122,10 @@
     "summaryHint": "املأ التفاصيل وانشر فكرتك لتبدأ باستقبال طلبات الانضمام.",
     "visibility": "الظهور",
     "visibilityValue": "عام",
+    "visibilityPrivate": "خاص",
     "joinRequest": "طلبات الانضمام",
     "joinRequestValue": "مُفعّل",
-    "meetingsTime": "أوقات الاجتماعات",
-    "showCalendar": "عرض التقويم",
+    "joinRequestOff": "معطّل",
     "publish": "نشر الفكرة",
     "saveDraft": "حفظ كمسودة"
   },

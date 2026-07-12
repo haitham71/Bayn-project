@@ -66,7 +66,11 @@ export default function HomePage({ onNavigate }) {
                   {pill.label}
                 </button>
               ))}
-              <button type="button" className="home__pill home__pill--primary">
+              <button
+                type="button"
+                className="home__pill home__pill--primary"
+                onClick={() => onNavigate?.('createidea')}
+              >
                 {t('home.createIdea')}
               </button>
             </div>

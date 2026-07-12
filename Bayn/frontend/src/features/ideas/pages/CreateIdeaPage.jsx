@@ -5,11 +5,11 @@ import Navbar from '@/shared/components/Navbar';
 import Input from '@/shared/components/Input';
 import Select from '@/shared/components/Select';
 import SkillsInput from '@/shared/components/SkillsInput';
+import RichTextEditor from '@/shared/components/RichTextEditor';
 import Button from '@/shared/components/Button';
-import Calendar from '@/shared/components/Calendar';
+import MeetingScheduler from '@/shared/components/MeetingScheduler';
 import Eye from '@/assets/icons/eye.svg?react';
 import UserPlus from '@/assets/icons/user-plus.svg?react';
-import CalendarIcon from '@/assets/icons/calendar.svg?react';
 import './CreateIdeaPage.css';
 
 const TITLE_MAX = 100;
@@ -43,12 +43,10 @@ export default function CreateIdeaPage({ onNavigate }) {
   const [roles, setRoles] = useState('');
   const [category, setCategory] = useState('');
   const [stage, setStage] = useState('');
+  const [meetings, setMeetings] = useState([]);
+  const [visibility, setVisibility] = useState('public');
+  const [joinOpen, setJoinOpen] = useState(true);
 
-  const summaryRows = [
-    { icon: Eye, label: t('createIdea.visibility'), value: t('createIdea.visibilityValue') },
-    { icon: UserPlus, label: t('createIdea.joinRequest'), value: t('createIdea.joinRequestValue') },
-    { icon: CalendarIcon, label: t('createIdea.meetingsTime'), value: t('createIdea.showCalendar') },
-  ];
 
   return (
     <div className="ci">
@@ -80,14 +78,12 @@ export default function CreateIdeaPage({ onNavigate }) {
                 </>
               }
             >
-              <Input
-                label={t('createIdea.step2Placeholder')}
-                multiline
-                rows={4}
+              <RichTextEditor
+                placeholder={t('createIdea.step2Placeholder')}
                 value={description}
-                onChange={(e) => setDescription(e.target.value.slice(0, DESC_MAX))}
-                supportingText={`${description.length}/${DESC_MAX}`}
-                className="ci__input ci__input--counter"
+                onChange={setDescription}
+                maxLength={DESC_MAX}
+                className="ci__input"
               />
             </Step>
 
@@ -145,19 +141,50 @@ export default function CreateIdeaPage({ onNavigate }) {
             <p className="ci__summary-hint">{t('createIdea.summaryHint')}</p>
 
             <ul className="ci__summary-rows">
-              {summaryRows.map((row) => {
-                const Icon = row.icon;
-                return (
-                  <li key={row.label} className="ci__summary-row">
-                    <Icon width={22} height={22} aria-hidden="true" />
-                    <span className="ci__summary-label">{row.label}</span>
-                    <span className="ci__summary-value">{row.value}</span>
-                  </li>
-                );
-              })}
+              <li className="ci__summary-row">
+                <Eye width={22} height={22} aria-hidden="true" />
+                <span className="ci__summary-label">{t('createIdea.visibility')}</span>
+                <div className="ci__toggle" role="group" aria-label={t('createIdea.visibility')}>
+                  <button
+                    type="button"
+                    className={`ci__toggle-opt${visibility === 'public' ? ' ci__toggle-opt--active' : ''}`}
+                    onClick={() => setVisibility('public')}
+                  >
+                    {t('createIdea.visibilityValue')}
+                  </button>
+                  <button
+                    type="button"
+                    className={`ci__toggle-opt${visibility === 'private' ? ' ci__toggle-opt--active' : ''}`}
+                    onClick={() => setVisibility('private')}
+                  >
+                    {t('createIdea.visibilityPrivate')}
+                  </button>
+                </div>
+              </li>
+
+              <li className="ci__summary-row">
+                <UserPlus width={22} height={22} aria-hidden="true" />
+                <span className="ci__summary-label">{t('createIdea.joinRequest')}</span>
+                <div className="ci__toggle" role="group" aria-label={t('createIdea.joinRequest')}>
+                  <button
+                    type="button"
+                    className={`ci__toggle-opt${joinOpen ? ' ci__toggle-opt--active' : ''}`}
+                    onClick={() => setJoinOpen(true)}
+                  >
+                    {t('createIdea.joinRequestValue')}
+                  </button>
+                  <button
+                    type="button"
+                    className={`ci__toggle-opt${!joinOpen ? ' ci__toggle-opt--active' : ''}`}
+                    onClick={() => setJoinOpen(false)}
+                  >
+                    {t('createIdea.joinRequestOff')}
+                  </button>
+                </div>
+              </li>
             </ul>
 
-            <Calendar />
+            <MeetingScheduler onChange={setMeetings} />
 
             <div className="ci__actions">
               <Button variant="primary" size="sm" className="ci__publish">
