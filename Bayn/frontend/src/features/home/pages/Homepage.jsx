@@ -25,7 +25,7 @@ function greetingKey() {
 
 export default function HomePage({ onNavigate }) {
   const { t, i18n } = useTranslation();
-  const { fullName } = useCurrentUser();
+  const { firstName, fullName } = useCurrentUser();
 
   const greeting = t(`home.${greetingKey()}`);
   const dateLabel = new Intl.DateTimeFormat(i18n.language === 'ar' ? 'ar' : 'en', {
@@ -57,7 +57,7 @@ export default function HomePage({ onNavigate }) {
           <header className="home__header">
             <div className="home__greeting">
               <h1 className="home__title">
-                {greeting} {t('home.greetName')}!
+                {greeting} {firstName || t('home.greetName')}!
               </h1>
               <p className="home__subtitle">{t('home.sub')}</p>
             </div>

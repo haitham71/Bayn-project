@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import LoginPage        from '@/features/identity/pages/LoginPage';
 import SignUpPage       from '@/features/identity/pages/SignUpPage';
 import VerificationPage from '@/features/identity/pages/VerificationPage';
@@ -9,52 +10,61 @@ import MyProjectsPage   from '@/features/projects/pages/MyProjectsPage';
 import JoinRequestsPage from '@/features/projects/pages/JoinRequestsPage';
 import CreateIdeaPage   from '@/features/ideas/pages/CreateIdeaPage';
 
-const PAGE_KEY = 'bayn-page';
-const PAGES = ['login', 'signup', 'verification', 'profile', 'home', 'myprofile', 'myprojects', 'joinrequests', 'createidea'];
-
-function readPage() {
-  try {
-    const saved = localStorage.getItem(PAGE_KEY);
-    return PAGES.includes(saved) ? saved : 'login';
-  } catch {
-    return 'home';
-  }
-}
+// Pages navigate with short keys (onNavigate('home')); this maps each key to its
+// URL so the page components don't need to know about routing.
+const PATHS = {
+  login: '/login',
+  signup: '/signup',
+  verification: '/verification',
+  profile: '/profile-setup',
+  home: '/home',
+  myprofile: '/my-profile',
+  myprojects: '/my-projects',
+  joinrequests: '/join-requests',
+  createidea: '/create-idea',
+};
 
 export default function App() {
-  const [page, setPage] = useState('login');
+  const navigate = useNavigate();
   const [signupData, setSignupData] = useState({});
 
-  const goTo = (next) => {
-    setPage(next);
-    try {
-      localStorage.setItem(PAGE_KEY, next);
-    } catch {}
-  };
+  // Same onNavigate(key) API the pages already use, now backed by the router.
+  const goTo = (key) => navigate(PATHS[key] || '/login');
 
   // Merge each step's slice so pages only touch their own fields and never
   // clobber values captured on the other steps.
   const patchData = (patch) => setSignupData((prev) => ({ ...prev, ...patch }));
 
   return (
-    <>
-      {page === 'login'        && <LoginPage onNavigate={goTo} />}
-      {page === 'signup'       && <SignUpPage onNavigate={goTo} initialData={signupData} onDataChange={patchData} />}
-      {page === 'verification' && (
-        <VerificationPage
-          email={signupData.email}
-          phone={signupData.phone}
-          pendingToken={signupData.pendingToken}
-          onEditInfo={() => goTo('signup')}
-          onNext={() => goTo('profile')}
-        />
-      )}
-      {page === 'profile'      && <ProfileSetupPage onNavigate={goTo} initialData={signupData} onDataChange={patchData} />}
-      {page === 'home'         && <HomePage onNavigate={goTo} />}
-      {page === 'myprofile'    && <MyProfilePage onNavigate={goTo} />}
-      {page === 'myprojects'   && <MyProjectsPage onNavigate={goTo} />}
-      {page === 'joinrequests' && <JoinRequestsPage onNavigate={goTo} />}
-      {page === 'createidea'   && <CreateIdeaPage onNavigate={goTo} />}
-    </>
+    <Routes>
+      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route path="/login" element={<LoginPage onNavigate={goTo} />} />
+      <Route
+        path="/signup"
+        element={<SignUpPage onNavigate={goTo} initialData={signupData} onDataChange={patchData} />}
+      />
+      <Route
+        path="/verification"
+        element={(
+          <VerificationPage
+            email={signupData.email}
+            phone={signupData.phone}
+            pendingToken={signupData.pendingToken}
+            onEditInfo={() => goTo('signup')}
+            onNext={() => goTo('profile')}
+          />
+        )}
+      />
+      <Route
+        path="/profile-setup"
+        element={<ProfileSetupPage onNavigate={goTo} initialData={signupData} onDataChange={patchData} />}
+      />
+      <Route path="/home" element={<HomePage onNavigate={goTo} />} />
+      <Route path="/my-profile" element={<MyProfilePage onNavigate={goTo} />} />
+      <Route path="/my-projects" element={<MyProjectsPage onNavigate={goTo} />} />
+      <Route path="/join-requests" element={<JoinRequestsPage onNavigate={goTo} />} />
+      <Route path="/create-idea" element={<CreateIdeaPage onNavigate={goTo} />} />
+      <Route path="*" element={<Navigate to="/login" replace />} />
+    </Routes>
   );
 }

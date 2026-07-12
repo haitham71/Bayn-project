@@ -2,11 +2,13 @@ import { useTranslation } from 'react-i18next';
 import './PasswordStrength.css';
 
 // Same rule set the sign-up validator enforces: 8+ chars, an uppercase letter,
-// a digit, and one of the allowed special characters.
+// a lowercase letter, a digit, and one of the allowed special characters.
+// Order must match the `signup.rules` labels one-to-one.
 export function passwordChecks(pw) {
   return [
     pw.length >= 8,
     /[A-Z]/.test(pw),
+    /[a-z]/.test(pw),
     /[0-9]/.test(pw),
     /[#$@]/.test(pw),
   ];

@@ -67,10 +67,10 @@ export default function MyProfilePage({ onNavigate }) {
   const { t, i18n } = useTranslation();
   const [activeTab, setActiveTab] = useState('account');
 
-  // --- Account information ---
-  const [username, setUsername] = useState(SEED.username);
-  const [email] = useState('user@email.com');
-  const [phone] = useState('+966 501 34567');
+  // --- Account information (loaded from the backend on mount) ---
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [accountErrors, setAccountErrors] = useState({});
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -124,6 +124,9 @@ export default function MyProfilePage({ onNavigate }) {
   // and mirrors them into the preview snapshot.
   useEffect(() => {
     getProfile().then((u) => {
+      setUsername(u.username || '');
+      setEmail(u.email || '');
+      setPhone(u.phone_number ? `+966 ${u.phone_number}` : '');
       setFirstNameEn(u.first_name_en || '');
       setSecondNameEn(u.second_name_en || '');
       setThirdNameEn(u.third_name_en || '');
@@ -136,6 +139,7 @@ export default function MyProfilePage({ onNavigate }) {
       setLocation(u.city_id || '');
       setCommitted((c) => ({
         ...c,
+        username: u.username || '',
         firstNameEn: u.first_name_en || '',
         lastNameEn: u.last_name_en || '',
         firstNameAr: u.first_name_ar || '',

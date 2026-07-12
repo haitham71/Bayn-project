@@ -12,6 +12,7 @@ import LogOut from '@/assets/icons/log-out.svg?react';
 import Pin from '@/assets/icons/pin.svg?react';
 import PinOff from '@/assets/icons/pin-off.svg?react';
 import logoUrl from '@/assets/logo/Bayn-svg.svg?url';
+import { logout } from '@/features/identity/services/authService';
 import './Sidebar.css';
 
 // `page` is the app page an item navigates to. Items without a page yet are
@@ -28,7 +29,7 @@ const defaultItems = [
 const defaultFooter = [
     { key: 'settings', labelKey: 'sidebar.settings', icon: Settings },
 	{ key: 'language', labelKey: 'app.switchLanguage', icon: Languages, action: 'toggleLanguage' },
-	{ key: 'logout', labelKey: 'sidebar.logout', icon: LogOut },
+	{ key: 'logout', labelKey: 'sidebar.logout', icon: LogOut, action: 'logout' },
 ];
 
 export default function Sidebar({
@@ -52,6 +53,18 @@ export default function Sidebar({
     i18n.changeLanguage(i18n.language === 'ar' ? 'en' : 'ar');
   }
 
+  // Clears the stored tokens and sends the user back to the login page.
+  function handleLogout() {
+    logout();
+    onNavigate?.('login');
+  }
+
+  function handleItemClick(item) {
+    if (item.action === 'toggleLanguage') return toggleLanguage();
+    if (item.action === 'logout') return handleLogout();
+    return handleNavigate(item);
+  }
+
   function renderItem(item) {
     const Icon = item.icon;
     const isAction = Boolean(item.action);
@@ -63,7 +76,7 @@ export default function Sidebar({
           type="button"
           className={`bayn-sidebar__item${isActive ? ' bayn-sidebar__item--active' : ''}`}
           aria-current={isActive ? 'page' : undefined}
-          onClick={item.action === 'toggleLanguage' ? toggleLanguage : () => handleNavigate(item)}
+          onClick={() => handleItemClick(item)}
         >
           <span className="bayn-sidebar__icon">
             <span className="bayn-sidebar__icon-tile">

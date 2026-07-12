@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import IdentityLayout from '@/layouts/IdentityLayout';
 import Stepper from '../components/Stepper';
@@ -37,6 +37,13 @@ export default function VerificationPage({
   // each step, so we keep the latest one it returns.
   const [token, setToken] = useState(pendingToken);
   const { formatted, isDone, reset } = useCountdown(32);
+
+  // Everything confirmed — nothing left to resend. Stop the timer so it doesn't
+  // keep ticking in the background and keep the resend action disabled.
+  const allVerified = verified.email && verified.phone;
+  useEffect(() => {
+    if (allVerified) reset(0);
+  }, [allVerified, reset]);
 
   const steps = [
     { key: 'account', label: t('steps.account') },
@@ -135,10 +142,10 @@ export default function VerificationPage({
 
         <div className="verify__resend">
           <span>{t('verification.didntReceive')}</span>
-          <Button variant="tertiary" size="sm" disabled={!isDone || verified[active]} onClick={handleResend}>
+          <Button variant="tertiary" size="sm" disabled={!isDone || verified[active] || allVerified} onClick={handleResend}>
             {t('verification.resend')}
           </Button>
-          {!isDone && <span className="verify__timer">({formatted})</span>}
+          {!isDone && !allVerified && <span className="verify__timer">({formatted})</span>}
         </div>
 
         <div className="verify__methods">
