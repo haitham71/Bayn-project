@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { getProfile, getSaudiCountryId, getCities, searchSkills } from '@/features/identity/services/authService';
+import { getSaudiCountryId, getCities, searchSkills } from '@/features/identity/services/authService';
+import { useProfile } from '@/shared/hooks/useProfile';
 import Sidebar from '@/shared/components/Sidebar';
 import Navbar from '@/shared/components/Navbar';
 import Input from '@/shared/components/Input';
@@ -65,6 +66,7 @@ function eyeToggle(shown) {
 
 export default function MyProfilePage({ onNavigate }) {
   const { t, i18n } = useTranslation();
+  const { data: profile } = useProfile();
   const [activeTab, setActiveTab] = useState('account');
 
   // --- Account information (loaded from the backend on mount) ---
@@ -120,35 +122,38 @@ export default function MyProfilePage({ onNavigate }) {
     return results.map((r) => r.name);
   }
 
-  // Loads the signed-in user's real name, experience and city once, on mount —
-  // and mirrors them into the preview snapshot.
+  // Seeds the form from the cached profile — the fields stay locally editable,
+  // so we mirror the server values in once the query resolves.
   useEffect(() => {
-    getProfile().then((u) => {
-      setUsername(u.username || '');
-      setEmail(u.email || '');
-      setPhone(u.phone_number ? `+966 ${u.phone_number}` : '');
-      setFirstNameEn(u.first_name_en || '');
-      setSecondNameEn(u.second_name_en || '');
-      setThirdNameEn(u.third_name_en || '');
-      setLastNameEn(u.last_name_en || '');
-      setFirstNameAr(u.first_name_ar || '');
-      setSecondNameAr(u.second_name_ar || '');
-      setThirdNameAr(u.third_name_ar || '');
-      setLastNameAr(u.last_name_ar || '');
-      setExperience(u.years_of_experience || '');
-      setLocation(u.city_id || '');
-      setCommitted((c) => ({
-        ...c,
-        username: u.username || '',
-        firstNameEn: u.first_name_en || '',
-        lastNameEn: u.last_name_en || '',
-        firstNameAr: u.first_name_ar || '',
-        lastNameAr: u.last_name_ar || '',
-        experience: u.years_of_experience || '',
-        location: u.city_id || '',
-      }));
-    }).catch(() => {});
+    if (!profile) return;
+    const u = profile;
+    setUsername(u.username || '');
+    setEmail(u.email || '');
+    setPhone(u.phone_number ? `+966 ${u.phone_number}` : '');
+    setFirstNameEn(u.first_name_en || '');
+    setSecondNameEn(u.second_name_en || '');
+    setThirdNameEn(u.third_name_en || '');
+    setLastNameEn(u.last_name_en || '');
+    setFirstNameAr(u.first_name_ar || '');
+    setSecondNameAr(u.second_name_ar || '');
+    setThirdNameAr(u.third_name_ar || '');
+    setLastNameAr(u.last_name_ar || '');
+    setExperience(u.years_of_experience || '');
+    setLocation(u.city_id || '');
+    setCommitted((c) => ({
+      ...c,
+      username: u.username || '',
+      firstNameEn: u.first_name_en || '',
+      lastNameEn: u.last_name_en || '',
+      firstNameAr: u.first_name_ar || '',
+      lastNameAr: u.last_name_ar || '',
+      experience: u.years_of_experience || '',
+      location: u.city_id || '',
+    }));
+  }, [profile]);
 
+  // The city dropdown options are looked up once for the form.
+  useEffect(() => {
     getSaudiCountryId()
       .then((saId) => (saId ? getCities(saId) : []))
       .then((cities) => setCityOptions(cities.map((c) => ({ value: c.id, label: c.name_en }))))
