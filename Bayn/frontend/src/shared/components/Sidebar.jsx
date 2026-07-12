@@ -11,7 +11,7 @@ import Languages from '@/assets/icons/languages.svg?react';
 import LogOut from '@/assets/icons/log-out.svg?react';
 import Pin from '@/assets/icons/pin.svg?react';
 import PinOff from '@/assets/icons/pin-off.svg?react';
-import logoUrl from '@/assets/logo/Bayn-svg.svg?url';
+import BaynLogo from '@/assets/logo/Bayn-svg.svg?react';
 import { logout } from '@/features/identity/services/authService';
 import './Sidebar.css';
 
@@ -95,11 +95,7 @@ export default function Sidebar({
       aria-label={t('sidebar.primaryNav')}
     >
       <div className="bayn-sidebar__brand">
-        <span
-          className="bayn-sidebar__logo"
-          style={{ '--logo-src': `url(${logoUrl})` }}
-          aria-hidden="true"
-        />
+        <BaynLogo className="bayn-sidebar__logo" aria-hidden="true" />
       </div>
 
       <div className="bayn-sidebar__head">

@@ -9,6 +9,7 @@ import MyProfilePage    from '@/features/profile/pages/MyProfilePage';
 import MyProjectsPage   from '@/features/projects/pages/MyProjectsPage';
 import JoinRequestsPage from '@/features/projects/pages/JoinRequestsPage';
 import CreateIdeaPage   from '@/features/ideas/pages/CreateIdeaPage';
+import ProtectedRoute    from '@/shared/components/ProtectedRoute';
 
 // Pages navigate with short keys (onNavigate('home')); this maps each key to its
 // URL so the page components don't need to know about routing.
@@ -59,11 +60,11 @@ export default function App() {
         path="/profile-setup"
         element={<ProfileSetupPage onNavigate={goTo} initialData={signupData} onDataChange={patchData} />}
       />
-      <Route path="/home" element={<HomePage onNavigate={goTo} />} />
-      <Route path="/my-profile" element={<MyProfilePage onNavigate={goTo} />} />
-      <Route path="/my-projects" element={<MyProjectsPage onNavigate={goTo} />} />
-      <Route path="/join-requests" element={<JoinRequestsPage onNavigate={goTo} />} />
-      <Route path="/create-idea" element={<CreateIdeaPage onNavigate={goTo} />} />
+      <Route path="/home" element={<ProtectedRoute><HomePage onNavigate={goTo} /></ProtectedRoute>} />
+      <Route path="/my-profile" element={<ProtectedRoute><MyProfilePage onNavigate={goTo} /></ProtectedRoute>} />
+      <Route path="/my-projects" element={<ProtectedRoute><MyProjectsPage onNavigate={goTo} /></ProtectedRoute>} />
+      <Route path="/join-requests" element={<ProtectedRoute><JoinRequestsPage onNavigate={goTo} /></ProtectedRoute>} />
+      <Route path="/create-idea" element={<ProtectedRoute><CreateIdeaPage onNavigate={goTo} /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
