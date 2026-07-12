@@ -34,6 +34,21 @@ function toPhoneNumber(phone) {
   return local ? Number(local) : null;
 }
 
+export async function getCities(countryId) {
+  const { data } = await api.get(API.catalog.cities, { params: { country_id: countryId } });
+  return data;
+}
+
+export async function getIndustries() {
+  const { data } = await api.get(API.catalog.industries);
+  return data;
+}
+
+export async function searchSkills(query) {
+  const { data } = await api.get(API.catalog.skillsSearch, { params: { q: query } });
+  return data;
+}
+
 export function toSignupPayload(form, phoneCountryId) {
   const opt = (v) => (v && v.trim() ? v.trim() : null);
   return {
@@ -82,3 +97,12 @@ export const confirmEmailOtp = (otp_code) =>
 export const sendPhoneOtp = () => api.post(API.auth.sendPhoneOtp).then((r) => r.data);
 export const confirmPhoneOtp = (otp_code) =>
   api.post(API.auth.confirmPhoneOtp, { otp_code }).then((r) => r.data);
+
+// ── Profile ─────────────────────────────────────────────────────────────────
+
+export const getProfile = () => api.get(API.auth.profile).then((r) => r.data);
+export const updateProfile = (payload) => api.patch(API.auth.profile, payload).then((r) => r.data);
+export const addSkillToProfile = (skill_id) =>
+  api.post(API.profile.skills, { skill_id }).then((r) => r.data);
+export const addSpecializationToProfile = (specialization_id) =>
+  api.post(API.profile.specializations, { specialization_id }).then((r) => r.data);

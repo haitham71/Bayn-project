@@ -53,7 +53,7 @@ class Project(Base):
     )
 
     # when the owner is next available to meet about this project
-    availibility: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    availability: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # hidden projects are excluded from public listings but still directly accessible by id
     is_hidden: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)

@@ -10,6 +10,7 @@ import Calendar from '@/shared/components/Calendar';
 import Eye from '@/assets/icons/eye.svg?react';
 import UserPlus from '@/assets/icons/user-plus.svg?react';
 import CalendarIcon from '@/assets/icons/calendar.svg?react';
+import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
 import './CreateIdeaPage.css';
 
 const TITLE_MAX = 100;
@@ -37,6 +38,7 @@ function Step({ n, title, note, children }) {
 
 export default function CreateIdeaPage({ onNavigate }) {
   const { t } = useTranslation();
+  const { fullName } = useCurrentUser();
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -60,7 +62,7 @@ export default function CreateIdeaPage({ onNavigate }) {
       />
 
       <div className="ci__main">
-        <Navbar userName="Assad Al-saeed" />
+        <Navbar userName={fullName} />
 
         <main className="ci__body">
           {/* Numbered form */}

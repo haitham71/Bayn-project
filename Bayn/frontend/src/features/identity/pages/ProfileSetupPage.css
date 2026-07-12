@@ -8,6 +8,12 @@
   margin-top: -30px;
 }
 
+.ps__error {
+  margin: 0;
+  font-size: 13px;
+  color: #900000;
+}
+
 .ps__title {
   margin: 0 0 15px;
   font-family: var(--font-sans);

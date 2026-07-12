@@ -5,6 +5,8 @@ import Button from '@/shared/components/Button';
 import Input from '@/shared/components/Input';
 import Eye from '@/assets/icons/eye.svg?react';
 import EyeOff from '@/assets/icons/eye-off.svg?react';
+import { login } from '../services/authService';
+import { getApiErrorMessage } from '@/shared/lib/apiError';
 import './LoginPage.css';
 
 const ArrowRight = () => (
@@ -22,7 +24,7 @@ export default function LoginPage({ onNavigate }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     setError('');
     if (!email || !password) {
@@ -30,7 +32,15 @@ export default function LoginPage({ onNavigate }) {
       return;
     }
     setLoading(true);
-    setTimeout(() => setLoading(false), 1500);
+    try {
+      // login() stores the access/refresh tokens on success.
+      await login({ email, password });
+      onNavigate('home');
+    } catch (err) {
+      setError(getApiErrorMessage(err, t('login.errorGeneric')));
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (

@@ -33,6 +33,13 @@ async def get_all_industries(db: AsyncSession) -> list[Industry]:
     return result.scalars().all()
 
 
+async def get_all_specializations(db: AsyncSession) -> list[Specialization]:
+    result = await db.execute(
+        select(Specialization).where(Specialization.is_approved == True).order_by(Specialization.name)
+    )
+    return result.scalars().all()
+
+
 async def search_skills(db: AsyncSession, query: str) -> list[Skill]:
     # is_approved filter hides unvetted user submissions; limit feeds a dropdown
     result = await db.execute(

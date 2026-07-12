@@ -22,6 +22,11 @@ export default function SkillsInput({
   value = [],
   onChange,
   options = DEFAULT_SUGGESTIONS,
+  // Optional async(query) -> string[]. When given, suggestions come from this
+  // (debounced) instead of filtering the static `options` list locally.
+  onQuery,
+  // Optional cap on how many skills may be selected at once.
+  max,
   className = '',
 }) {
   const { t } = useTranslation();
@@ -30,11 +35,29 @@ export default function SkillsInput({
   const [input, setInput] = useState('');
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
+  const [remoteOptions, setRemoteOptions] = useState([]);
 
   const selected = new Set(value.map((v) => v.toLowerCase()));
   const query = input.trim().toLowerCase();
-  const filtered = options.filter(
-    (o) => !selected.has(o.toLowerCase()) && o.toLowerCase().includes(query),
+
+  useEffect(() => {
+    if (!onQuery || !query) {
+      setRemoteOptions([]);
+      return undefined;
+    }
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      const results = await onQuery(query).catch(() => []);
+      if (!cancelled) setRemoteOptions(results || []);
+    }, 250);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [query, onQuery]);
+
+  const filtered = (onQuery ? remoteOptions : options).filter(
+    (o) => !selected.has(o.toLowerCase()) && (onQuery || o.toLowerCase().includes(query)),
   );
 
   useEffect(() => {
@@ -48,14 +71,15 @@ export default function SkillsInput({
 
   // Only a known option may be added — free text is rejected.
   function addOption(option) {
-    if (!selected.has(option.toLowerCase())) onChange?.([...value, option]);
+    const atLimit = max != null && value.length >= max;
+    if (!atLimit && !selected.has(option.toLowerCase())) onChange?.([...value, option]);
     setInput('');
     setActive(-1);
   }
 
   // Adds the typed value only if it matches an available option.
   function commitInput() {
-    const match = options.find(
+    const match = (onQuery ? remoteOptions : options).find(
       (o) => o.toLowerCase() === input.trim().toLowerCase() && !selected.has(o.toLowerCase()),
     );
     if (match) addOption(match);

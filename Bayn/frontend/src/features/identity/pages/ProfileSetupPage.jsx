@@ -7,19 +7,27 @@ import Input from '@/shared/components/Input';
 import Select from '@/shared/components/Select';
 import SkillsInput from '@/shared/components/SkillsInput';
 import { validateName } from '../utils/validation';
+import {
+  getSaudiCountryId,
+  getCities,
+  searchSkills,
+  updateProfile,
+  addSkillToProfile,
+} from '../services/authService';
+import { getApiErrorMessage } from '@/shared/lib/apiError';
 import './ProfileSetupPage.css';
 
 const BIO_MAX = 200;
 
-const EXPERIENCE_OPTIONS = ['0-1 Years', '1-2 Years', '2-3 Years', '3-5 Years', '5+ Years']
-  .map((v) => ({ value: v, label: v }));
-const LOCATION_OPTIONS = [
-  'Riyadh, Saudi Arabia',
-  'Jeddah, Saudi Arabia',
-  'Dammam, Saudi Arabia',
-  'Mecca, Saudi Arabia',
-  'Medina, Saudi Arabia',
-].map((v) => ({ value: v, label: v }));
+// Values match the backend's ExperienceRange enum exactly.
+const EXPERIENCE_OPTIONS = [
+  { value: 'less_than_1', label: 'Less than 1 Year' },
+  { value: '1-2', label: '1-2 Years' },
+  { value: '2-3', label: '2-3 Years' },
+  { value: '3-4', label: '3-4 Years' },
+  { value: '5-10', label: '5-10 Years' },
+  { value: '10+', label: '10+ Years' },
+];
 
 // Final step of account creation. The full name is captured here in both
 // languages (a toggle switches which set is shown), moved off the account step.
@@ -50,6 +58,40 @@ export default function ProfileSetupPage({ onNavigate, initialData = {}, onDataC
   const [skills, setSkills] = useState(initialData.skills || []);
 
   const [errors, setErrors] = useState({});
+  const [submitError, setSubmitError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const [countryId, setCountryId] = useState(null);
+  const [cityOptions, setCityOptions] = useState([]);
+  // Built up as skill search results come in — resolves a chosen skill name
+  // back to the skill_id the backend needs.
+  const [skillIdByName, setSkillIdByName] = useState({});
+
+  // Load the city list once (only Saudi Arabia is seeded today).
+  useEffect(() => {
+    (async () => {
+      try {
+        const saId = await getSaudiCountryId();
+        setCountryId(saId);
+        if (saId) {
+          const cities = await getCities(saId);
+          setCityOptions(cities.map((c) => ({ value: c.id, label: c.name_en })));
+        }
+      } catch {
+        // Location becomes a plain disabled field if the catalog call fails.
+      }
+    })();
+  }, []);
+
+  async function handleSkillQuery(q) {
+    const results = await searchSkills(q);
+    setSkillIdByName((prev) => {
+      const next = { ...prev };
+      results.forEach((r) => { next[r.name] = r.id; });
+      return next;
+    });
+    return results.map((r) => r.name);
+  }
 
   // Persist everything up so it survives navigating back to earlier steps.
   useEffect(() => {
@@ -105,13 +147,43 @@ export default function ProfileSetupPage({ onNavigate, initialData = {}, onDataC
     setErrors(prev => (prev[field] ? { ...prev, [field]: undefined } : prev));
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
+    setSubmitError('');
     const found = collectErrors();
     setErrors(found);
 
     if (Object.values(found).some(Boolean)) return;
-    onNavigate('home');
+
+    setSubmitting(true);
+    try {
+      await updateProfile({
+        second_name_ar: secondNameAr || null,
+        third_name_ar: thirdNameAr || null,
+        second_name_en: secondNameEn || null,
+        third_name_en: thirdNameEn || null,
+        job_title: title || null,
+        years_of_experience: experience || null,
+        country_id: countryId || null,
+        city_id: location || null,
+        bio: bio || null,
+      });
+
+      // Best-effort: attach each chosen skill. One failure shouldn't block
+      // the rest or stop the user from reaching the app.
+      await Promise.all(
+        skills
+          .map((name) => skillIdByName[name])
+          .filter(Boolean)
+          .map((skillId) => addSkillToProfile(skillId).catch(() => {})),
+      );
+
+      onNavigate('home');
+    } catch (err) {
+      setSubmitError(getApiErrorMessage(err, t('signup.errorGeneric')));
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   const fieldError = field =>
@@ -171,7 +243,7 @@ export default function ProfileSetupPage({ onNavigate, initialData = {}, onDataC
             label={t('profile.location')}
             value={location}
             onChange={setLocation}
-            options={LOCATION_OPTIONS}
+            options={cityOptions}
             className="ps__input"
           />
         </div>
@@ -191,11 +263,15 @@ export default function ProfileSetupPage({ onNavigate, initialData = {}, onDataC
           label={t('profile.skills')}
           value={skills}
           onChange={setSkills}
+          onQuery={handleSkillQuery}
+          max={7}
         />
 
+        {submitError && <p className="ps__error">{submitError}</p>}
+
         <div className="ps__action-row">
-          <Button type="submit" variant="primary" size="lg" trailingIcon className="ps__submit">
-            {t('profile.finish')}
+          <Button type="submit" variant="primary" size="lg" trailingIcon className="ps__submit" disabled={submitting}>
+            {submitting ? t('login.loading') : t('profile.finish')}
           </Button>
         </div>
       </form>

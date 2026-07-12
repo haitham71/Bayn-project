@@ -23,7 +23,10 @@ import { getApiErrorMessage } from '@/shared/lib/apiError';
 import './SignUpPage.css';
 
 export default function SignUpPage({ onNavigate, initialData = {}, onDataChange }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  // Only the name matching the page's current language is mandatory; the
+  // other script is optional (still sent to the backend, blank if unfilled).
+  const isArabicUI = i18n.language?.startsWith('ar');
 
   const steps = [
     { key: 'account', label: t('steps.account') },
@@ -62,13 +65,13 @@ export default function SignUpPage({ onNavigate, initialData = {}, onDataChange 
     const next = {};
     const email_ = validateEmail(email);
     if (email_) next.email = email_;
-    const fnAr = validateName(firstNameAr, { lang: 'ar' });
+    const fnAr = validateName(firstNameAr, { lang: 'ar', required: isArabicUI });
     if (fnAr) next.firstNameAr = fnAr;
-    const lnAr = validateName(lastNameAr, { lang: 'ar' });
+    const lnAr = validateName(lastNameAr, { lang: 'ar', required: isArabicUI });
     if (lnAr) next.lastNameAr = lnAr;
-    const fnEn = validateName(firstNameEn, { lang: 'en' });
+    const fnEn = validateName(firstNameEn, { lang: 'en', required: !isArabicUI });
     if (fnEn) next.firstNameEn = fnEn;
-    const lnEn = validateName(lastNameEn, { lang: 'en' });
+    const lnEn = validateName(lastNameEn, { lang: 'en', required: !isArabicUI });
     if (lnEn) next.lastNameEn = lnEn;
     const user = validateUsername(username);
     if (user) next.username = user;
@@ -105,8 +108,8 @@ export default function SignUpPage({ onNavigate, initialData = {}, onDataChange 
       // Creates the account and stores the tokens; signup logs the user in.
       await signup({
         email, username,
-        firstNameEn, secondNameEn, thirdNameEn, lastNameEn,
-        firstNameAr, secondNameAr, thirdNameAr, lastNameAr,
+        firstNameEn, lastNameEn,
+        firstNameAr, lastNameAr,
         password, dob, phone,
       });
       onNavigate('verification');

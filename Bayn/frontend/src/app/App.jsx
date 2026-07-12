@@ -3,7 +3,7 @@ import LoginPage        from '@/features/identity/pages/LoginPage';
 import SignUpPage       from '@/features/identity/pages/SignUpPage';
 import VerificationPage from '@/features/identity/pages/VerificationPage';
 import ProfileSetupPage from '@/features/identity/pages/ProfileSetupPage';
-import HomePage         from '@/features/home/pages/HomePage';
+import HomePage         from '@/features/home/pages/Homepage';
 import MyProfilePage    from '@/features/profile/pages/MyProfilePage';
 import MyProjectsPage   from '@/features/projects/pages/MyProjectsPage';
 import CreateIdeaPage   from '@/features/ideas/pages/CreateIdeaPage';

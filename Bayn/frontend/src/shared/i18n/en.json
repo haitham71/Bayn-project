@@ -145,7 +145,8 @@
     "noAccount": "Don't have an account?",
     "signUp": "Sign Up",
     "loading": "Loading...",
-    "error": "Please fill in all fields."
+    "error": "Please fill in all fields.",
+    "errorGeneric": "Invalid email or password."
   },
   "signup": {
     "title": "Create your account",

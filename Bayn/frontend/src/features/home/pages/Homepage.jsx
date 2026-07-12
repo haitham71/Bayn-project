@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import Sidebar from '@/shared/components/Sidebar';
 import Navbar from '@/shared/components/Navbar';
 import Headset from '@/assets/icons/headset.svg?react';
+import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
 import './Homepage.css';
 
 // Per-meeting presentation data (colours + attendee initials) that sits on top
@@ -26,6 +27,7 @@ const SIDEBAR_ROUTES = { home: 'home', projects: 'myprojects', profile: 'myprofi
 
 export default function HomePage({ onNavigate }) {
   const { t, i18n } = useTranslation();
+  const { fullName } = useCurrentUser();
 
   const greeting = t(`home.${greetingKey()}`);
   const dateLabel = new Intl.DateTimeFormat(i18n.language === 'ar' ? 'ar' : 'en', {
@@ -54,7 +56,7 @@ export default function HomePage({ onNavigate }) {
       />
 
       <div className="home__main">
-        <Navbar userName={t('home.profileName')} />
+        <Navbar userName={fullName || t('home.profileName')} />
 
         <main className="home__body">
           <header className="home__header">

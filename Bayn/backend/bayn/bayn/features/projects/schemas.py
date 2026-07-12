@@ -14,7 +14,7 @@ class ProjectCreateRequest(BaseModel):
     more_info: str | None = None
     specialization_id: uuid.UUID | None = None
     industry_id: uuid.UUID | None = None
-    availibility: datetime | None = None
+    availability: datetime | None = None
     is_hidden: bool = False
     stage: ProjectStage
     team_members_needed: int = Field(ge=1, le=12)
@@ -26,7 +26,7 @@ class ProjectUpdateRequest(BaseModel):
     more_info: str | None = None
     specialization_id: uuid.UUID | None = None
     industry_id: uuid.UUID | None = None
-    availibility: datetime | None = None
+    availability: datetime | None = None
     is_hidden: bool | None = None
     stage: ProjectStage | None = None
     team_members_needed: int | None = Field(default=None, ge=1, le=12)
@@ -40,7 +40,7 @@ class ProjectResponse(BaseModel):
     more_info: str | None
     specialization_id: uuid.UUID | None
     industry_id: uuid.UUID | None
-    availibility: datetime | None
+    availability: datetime | None
     is_hidden: bool
     stage: ProjectStage
     team_members_needed: int

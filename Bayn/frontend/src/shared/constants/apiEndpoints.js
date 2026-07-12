@@ -14,5 +14,12 @@ export const API = {
   },
   catalog: {
     countries: '/catalog/countries',
+    cities: '/catalog/cities',
+    industries: '/catalog/industries',
+    skillsSearch: '/catalog/skills/search',
+  },
+  profile: {
+    skills: '/profile/skills',
+    specializations: '/profile/specializations',
   },
 };

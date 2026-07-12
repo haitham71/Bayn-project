@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { getProfile, getSaudiCountryId, getCities, searchSkills } from '@/features/identity/services/authService';
 import Sidebar from '@/shared/components/Sidebar';
 import Navbar from '@/shared/components/Navbar';
 import Input from '@/shared/components/Input';
@@ -25,15 +26,15 @@ const TABS = [
   { key: 'profile', labelKey: 'myProfile.tabProfile' },
 ];
 
-const EXPERIENCE_OPTIONS = ['0-1 Years', '1-2 Years', '2-3 Years', '3-5 Years', '5+ Years']
-  .map((v) => ({ value: v, label: v }));
-const LOCATION_OPTIONS = [
-  'Riyadh, Saudi Arabia',
-  'Jeddah, Saudi Arabia',
-  'Dammam, Saudi Arabia',
-  'Mecca, Saudi Arabia',
-  'Medina, Saudi Arabia',
-].map((v) => ({ value: v, label: v }));
+// Values match the backend's ExperienceRange enum exactly.
+const EXPERIENCE_OPTIONS = [
+  { value: 'less_than_1', label: 'Less than 1 Year' },
+  { value: '1-2', label: '1-2 Years' },
+  { value: '2-3', label: '2-3 Years' },
+  { value: '3-4', label: '3-4 Years' },
+  { value: '5-10', label: '5-10 Years' },
+  { value: '10+', label: '10+ Years' },
+];
 
 // Small trailing eye toggle shared by the password fields.
 function eyeToggle(shown) {
@@ -59,20 +60,55 @@ export default function MyProfilePage({ onNavigate }) {
   const [pwErrors, setPwErrors] = useState({});
 
   // --- Profile information (four-part name in both languages) ---
-  const [firstNameEn, setFirstNameEn] = useState('Assad');
-  const [secondNameEn, setSecondNameEn] = useState('Saad');
+  const [firstNameEn, setFirstNameEn] = useState('');
+  const [secondNameEn, setSecondNameEn] = useState('');
   const [thirdNameEn, setThirdNameEn] = useState('');
-  const [lastNameEn, setLastNameEn] = useState('Al-saeed');
-  const [firstNameAr, setFirstNameAr] = useState('أسعد');
-  const [secondNameAr, setSecondNameAr] = useState('سعد');
+  const [lastNameEn, setLastNameEn] = useState('');
+  const [firstNameAr, setFirstNameAr] = useState('');
+  const [secondNameAr, setSecondNameAr] = useState('');
   const [thirdNameAr, setThirdNameAr] = useState('');
-  const [lastNameAr, setLastNameAr] = useState('السعيد');
+  const [lastNameAr, setLastNameAr] = useState('');
   const [shortTitle, setShortTitle] = useState('Software Engineer');
+  const [cityOptions, setCityOptions] = useState([]);
+  // Built up as skill search results come in — resolves a chosen skill name
+  // back to the skill_id the backend needs when it's actually saved.
+  const [skillIdByName, setSkillIdByName] = useState({});
+
+  async function handleSkillQuery(q) {
+    const results = await searchSkills(q);
+    setSkillIdByName((prev) => {
+      const next = { ...prev };
+      results.forEach((r) => { next[r.name] = r.id; });
+      return next;
+    });
+    return results.map((r) => r.name);
+  }
+
+  // Loads the signed-in user's real name, experience and city once, on mount.
+  useEffect(() => {
+    getProfile().then((u) => {
+      setFirstNameEn(u.first_name_en || '');
+      setSecondNameEn(u.second_name_en || '');
+      setThirdNameEn(u.third_name_en || '');
+      setLastNameEn(u.last_name_en || '');
+      setFirstNameAr(u.first_name_ar || '');
+      setSecondNameAr(u.second_name_ar || '');
+      setThirdNameAr(u.third_name_ar || '');
+      setLastNameAr(u.last_name_ar || '');
+      setExperience(u.years_of_experience || '');
+      setLocation(u.city_id || '');
+    }).catch(() => {});
+
+    getSaudiCountryId()
+      .then((saId) => (saId ? getCities(saId) : []))
+      .then((cities) => setCityOptions(cities.map((c) => ({ value: c.id, label: c.name_en }))))
+      .catch(() => {});
+  }, []);
   const [bio, setBio] = useState(
     'Experienced in software development and passionate about building innovative solutions. I enjoy collaborating with ambitious teams to create impactful products.',
   );
-  const [experience, setExperience] = useState('2-3 Years');
-  const [location, setLocation] = useState('Riyadh, Saudi Arabia');
+  const [experience, setExperience] = useState('');
+  const [location, setLocation] = useState('');
   const [skills, setSkills] = useState(['React', 'Node js', 'Python', 'Mysql', 'Java Script']);
 
   const nameGroups = [
@@ -130,6 +166,10 @@ export default function MyProfilePage({ onNavigate }) {
   }
 
   const fullName = [firstNameEn, lastNameEn].filter(Boolean).join(' ');
+  // The Selects store raw value codes (a city id, an enum code) — resolve
+  // them back to display labels for the read-only preview panel.
+  const locationLabel = cityOptions.find((o) => o.value === location)?.label || '';
+  const experienceLabel = EXPERIENCE_OPTIONS.find((o) => o.value === experience)?.label || '';
 
   return (
     <div className="myp bayn-scroll">
@@ -294,7 +334,7 @@ export default function MyProfilePage({ onNavigate }) {
                     label={t('profile.location')}
                     value={location}
                     onChange={setLocation}
-                    options={LOCATION_OPTIONS}
+                    options={cityOptions}
                     className="myp__input"
                   />
                 </div>
@@ -303,6 +343,8 @@ export default function MyProfilePage({ onNavigate }) {
                   label={t('profile.skills')}
                   value={skills}
                   onChange={setSkills}
+                  onQuery={handleSkillQuery}
+                  max={7}
                   className="myp__input--full"
                 />
 
@@ -337,7 +379,7 @@ export default function MyProfilePage({ onNavigate }) {
             <p className="myp__preview-role">{shortTitle}</p>
             <p className="myp__preview-location">
               <MapPin width={18} height={18} aria-hidden="true" />
-              {location}
+              {locationLabel}
             </p>
 
             <hr className="myp__preview-divider" />
@@ -346,7 +388,7 @@ export default function MyProfilePage({ onNavigate }) {
             <p className="myp__preview-bio">{bio}</p>
 
             <h3 className="myp__preview-heading">{t('myProfile.sectionExperience')}</h3>
-            <p className="myp__preview-exp">{experience}</p>
+            <p className="myp__preview-exp">{experienceLabel}</p>
 
             <h3 className="myp__preview-heading">{t('myProfile.sectionSkills')}</h3>
             <ul className="myp__preview-skills">

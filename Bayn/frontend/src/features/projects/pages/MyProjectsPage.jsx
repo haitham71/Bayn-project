@@ -9,6 +9,7 @@ import UserCheck from '@/assets/icons/user-check.svg?react';
 import List from '@/assets/icons/list.svg?react';
 import LayoutDashboard from '@/assets/icons/layout-dashboard.svg?react';
 import Plus from '@/assets/icons/plus.svg?react';
+import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
 import './MyProjectsPage.css';
 
 const SIDEBAR_ROUTES = { home: 'home', projects: 'myprojects', profile: 'myprofile' };
@@ -29,6 +30,7 @@ const MEETINGS = [
 export default function MyProjectsPage({ onNavigate }) {
   const { t } = useTranslation();
   const [activeMeeting, setActiveMeeting] = useState('m1');
+  const { fullName } = useCurrentUser();
 
   return (
     <div className="mp">
@@ -38,7 +40,7 @@ export default function MyProjectsPage({ onNavigate }) {
       />
 
       <div className="mp__main">
-        <Navbar userName="Assad Al-saeed" />
+        <Navbar userName={fullName} />
 
         <main className="mp__body">
           <div className="mp__content">

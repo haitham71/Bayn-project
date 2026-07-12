@@ -35,12 +35,14 @@ def upgrade() -> None:
         'team_members_needed BETWEEN 1 AND 12',
     )
 
+    # Not pre-created here (unlike project_stage above): each is only ever used
+    # as a column type in the create_table() calls below, and create_table()
+    # creates its enum types itself. Pre-creating them too caused a duplicate-
+    # type error when create_table tried to create them a second time.
     meeting_request_status = sa.Enum(
         'pending', 'accepted', 'rejected', 'cancelled', 'expired', name='meetingrequeststatus'
     )
-    meeting_request_status.create(op.get_bind(), checkfirst=True)
     attendance_status = sa.Enum('present', 'absent', 'late', name='attendancestatus')
-    attendance_status.create(op.get_bind(), checkfirst=True)
 
     op.create_table(
         'meetings',
@@ -63,11 +65,10 @@ def upgrade() -> None:
     )
 
     # the earlier "add contracts table with meetings" migration was left as a
-    # no-op stub, so the contracts table has never actually been created
+    # no-op stub, so the contracts table has never actually been created.
+    # Same as above: not pre-created, create_table() below creates the types.
     contract_type = sa.Enum('nda', 'service_agreement', name='contracttype')
-    contract_type.create(op.get_bind(), checkfirst=True)
     contract_status = sa.Enum('pending_party_one', 'pending_party_two', 'signed', name='contractstatus')
-    contract_status.create(op.get_bind(), checkfirst=True)
 
     op.create_table(
         'contracts',
