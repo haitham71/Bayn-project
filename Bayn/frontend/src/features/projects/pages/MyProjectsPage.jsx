@@ -59,7 +59,7 @@ export default function MyProjectsPage({ onNavigate }) {
                       <span className="mp__posted">
                         {t('myProjects.postedDaysAgo', { count: p.postedDays })}
                       </span>
-                      <button type="button" className="mp__link">
+                      <button type="button" className="mp__link" onClick={() => onNavigate?.('joinrequests')}>
                         {t('myProjects.viewDetails')}
                         <List width={20} height={20} aria-hidden="true" />
                       </button>

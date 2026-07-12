@@ -20,12 +20,34 @@ function keyOf(d) {
   return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
 }
 
+// Turn the `value` prop (previously-saved meetings) into our internal shape.
+// Days that have already passed are dropped, so they free up a slot and can be
+// picked again — we only ever hold onto upcoming days, capped at maxDays.
+function initDays(value, maxDays) {
+  if (!Array.isArray(value)) return [];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return value
+    .map((d) => ({
+      date: d.date instanceof Date ? d.date : new Date(d.date),
+      slots: Array.isArray(d.slots) ? d.slots : [],
+    }))
+    .filter((d) => !Number.isNaN(d.date.getTime()) && d.date >= today)
+    .slice(0, maxDays)
+    .map((d) => ({
+      key: keyOf(d.date),
+      date: d.date,
+      slots: d.slots.map((s, i) => ({ id: `init-${keyOf(d.date)}-${i}`, start: s.start, end: s.end })),
+    }));
+}
+
 // A calendar you can pick several days on, and under each picked day you set the
 // meeting times. I kept every limit as a prop instead of hard-coding it, because
 // each page needs something a bit different (e.g. one day only, or longer meetings).
 export default function MeetingScheduler({
   title,
   onChange,
+  value,                   // previously-saved meetings to start from (optional)
   maxDays = 3,             // how many days can be picked
   maxSlots = 3,            // how many time ranges per day
   maxDurationMinutes = 90, // longest a single meeting can be
@@ -36,7 +58,7 @@ export default function MeetingScheduler({
   const { t, i18n } = useTranslation();
   const locale = i18n.language === 'ar' ? 'ar' : 'en';
 
-  const [days, setDays] = useState([]);
+  const [days, setDays] = useState(() => initDays(value, maxDays));
   const counter = useRef(0); // just to give each slot a stable unique id
 
   // All the start times to show (dayStartHour → dayEndHour, every stepMinutes).
