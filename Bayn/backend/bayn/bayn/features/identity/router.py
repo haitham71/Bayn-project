@@ -15,6 +15,9 @@ from bayn.features.identity.schemas import (
     MessageResponse,
     OTPSendResponse,
     OTPVerifyRequest,
+    PendingOTPVerifyRequest,
+    PendingResendRequest,
+    PendingSignupResponse,
     RefreshTokenRequest,
     TokenResponse,
     UpdateProfileRequest,
@@ -34,13 +37,49 @@ router = APIRouter(prefix="/auth", tags=["Identity"])
 
 # ── Auth ──────────────────────────────────────────────────────────────────────
 
-@router.post("/signup", response_model=TokenResponse, status_code=201, summary="إنشاء حساب جديد")
+@router.post("/signup", response_model=PendingSignupResponse, summary="بدء إنشاء حساب جديد (يرسل رمز تحقق للإيميل)")
 async def signup(
     payload: UserSignup,
     db: AsyncSession = Depends(get_db),
     locale: str = Depends(get_locale),
+) -> PendingSignupResponse:
+    return await service.start_signup(db, payload, locale)
+
+
+@router.post("/signup/verify-email", response_model=PendingSignupResponse, summary="تأكيد رمز الإيميل أثناء التسجيل")
+async def signup_verify_email(
+    payload: PendingOTPVerifyRequest,
+    db: AsyncSession = Depends(get_db),
+    locale: str = Depends(get_locale),
+) -> PendingSignupResponse:
+    return await service.confirm_signup_email(db, payload.pending_token, payload.otp_code, locale)
+
+
+@router.post("/signup/verify-phone", response_model=TokenResponse, status_code=201, summary="تأكيد رمز الجوال وإنشاء الحساب")
+async def signup_verify_phone(
+    payload: PendingOTPVerifyRequest,
+    db: AsyncSession = Depends(get_db),
+    locale: str = Depends(get_locale),
 ) -> TokenResponse:
-    return await service.create_user(db, payload, locale)
+    return await service.confirm_signup_phone(db, payload.pending_token, payload.otp_code, locale)
+
+
+@router.post("/signup/resend-email", response_model=PendingSignupResponse, summary="إعادة إرسال رمز الإيميل أثناء التسجيل")
+async def signup_resend_email(
+    payload: PendingResendRequest,
+    db: AsyncSession = Depends(get_db),
+    locale: str = Depends(get_locale),
+) -> PendingSignupResponse:
+    return await service.resend_signup_email_otp(db, payload.pending_token, locale)
+
+
+@router.post("/signup/resend-phone", response_model=PendingSignupResponse, summary="إعادة إرسال رمز الجوال أثناء التسجيل")
+async def signup_resend_phone(
+    payload: PendingResendRequest,
+    db: AsyncSession = Depends(get_db),
+    locale: str = Depends(get_locale),
+) -> PendingSignupResponse:
+    return await service.resend_signup_phone_otp(db, payload.pending_token, locale)
 
 
 @router.post("/login", response_model=TokenResponse, summary="تسجيل الدخول")

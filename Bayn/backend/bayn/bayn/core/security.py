@@ -84,3 +84,30 @@ def decode_refresh_token(token: str) -> tuple[uuid.UUID, str]:
         raise jwt.InvalidTokenError("Refresh token missing jti")
 
     return uuid.UUID(payload["sub"]), jti
+
+
+# self-contained pending-signup token: carries the not-yet-persisted signup
+# data (plus OTP verification progress) so nothing needs to be written to the
+# database until both email and phone are confirmed. Unlike access/refresh
+# tokens, there's no "sub" user id — the account doesn't exist yet.
+SIGNUP_PENDING_TOKEN_TYPE = "signup_pending"
+
+
+def create_signup_pending_token(data: dict[str, Any], expires_delta: timedelta) -> str:
+    now = datetime.now(timezone.utc)
+    payload: dict[str, Any] = {
+        "type": SIGNUP_PENDING_TOKEN_TYPE,
+        "iat": now,
+        "exp": now + expires_delta,
+        "data": data,
+    }
+    return jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
+
+
+def decode_signup_pending_token(token: str) -> dict[str, Any]:
+    payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
+
+    if payload.get("type") != SIGNUP_PENDING_TOKEN_TYPE:
+        raise jwt.InvalidTokenError(f"Expected {SIGNUP_PENDING_TOKEN_TYPE} token, got {payload.get('type')}")
+
+    return payload["data"]
