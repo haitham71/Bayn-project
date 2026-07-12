@@ -74,6 +74,7 @@
     "email_button": "Confirm Change",
     "email_plain_text": "Confirm your password change using this link: {link}. If you didn't request this, ignore this email.",
     "request_sent": "A confirmation link has been sent to your email.",
+    "send_failed": "Failed to send the confirmation email. Please try again.",
     "current_password_incorrect": "Current password is incorrect.",
     "invalid_or_expired": "Invalid or expired confirmation link.",
     "expired": "This confirmation link has expired. Please request the change again.",

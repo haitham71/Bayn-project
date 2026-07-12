@@ -152,6 +152,14 @@ def mock_authentica():
 
 
 @pytest_asyncio.fixture
+def mock_email():
+    # patch the singleton so tests never hit a real SMTP server
+    with patch("bayn.features.identity.password_service.email_client") as mock:
+        mock.send_email = AsyncMock(return_value=None)
+        yield mock
+
+
+@pytest_asyncio.fixture
 def mock_r2():
     with patch("bayn.integrations.storage.cloudflare.r2_client") as mock:
         mock.upload_avatar.return_value = "avatars/test.png"

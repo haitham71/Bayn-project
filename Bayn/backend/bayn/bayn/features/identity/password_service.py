@@ -18,6 +18,7 @@ hardcoded directly in this file.
 
 import hashlib
 import hmac
+import logging
 import secrets
 from datetime import datetime, timedelta, timezone
 
@@ -30,11 +31,14 @@ from bayn.core.i18n import t
 from bayn.core.security import hash_password, verify_password
 from bayn.features.identity.models import User, PasswordActionType
 from bayn.features.identity.schemas import PasswordActionMessageResponse
+from bayn.features.identity.service import revoke_all_refresh_tokens_for_user
 from bayn.integrations.smtp import email_client
 
 
 RESET_TOKEN_TTL_MINUTES = 30
 CHANGE_TOKEN_TTL_MINUTES = 15  # shorter - user is already authenticated, less exposure needed
+
+logger = logging.getLogger(__name__)
 
 
 def _generate_raw_token() -> str:
@@ -93,12 +97,16 @@ async def request_password_reset(
 
     reset_link = f"{settings.FRONTEND_URL}/reset-password?token={raw_token}"
 
-    await email_client.send_email(
-        to=user.email,
-        subject=t("identity", "password_reset.email_subject", locale=locale),
-        body=t("identity", "password_reset.email_plain_text", locale=locale, link=reset_link),
-        html_body=_build_reset_email_html(reset_link, locale),
-    )
+    # a delivery failure shouldn't 500 or change this response's contents
+    try:
+        await email_client.send_email(
+            to=user.email,
+            subject=t("identity", "password_reset.email_subject", locale=locale),
+            body=t("identity", "password_reset.email_plain_text", locale=locale, link=reset_link),
+            html_body=_build_reset_email_html(reset_link, locale),
+        )
+    except Exception:
+        logger.exception("Failed to send password reset email to %s", user.email)
 
     return PasswordActionMessageResponse(message=generic_message)
 
@@ -185,12 +193,19 @@ async def request_password_change(
 
     confirm_link = f"{settings.FRONTEND_URL}/confirm-password-change?token={raw_token}"
 
-    await email_client.send_email(
-        to=user.email,
-        subject=t("identity", "password_change.email_subject", locale=locale),
-        body=t("identity", "password_change.email_plain_text", locale=locale, link=confirm_link),
-        html_body=_build_change_email_html(confirm_link, locale),
-    )
+    try:
+        await email_client.send_email(
+            to=user.email,
+            subject=t("identity", "password_change.email_subject", locale=locale),
+            body=t("identity", "password_change.email_plain_text", locale=locale, link=confirm_link),
+            html_body=_build_change_email_html(confirm_link, locale),
+        )
+    except Exception:
+        logger.exception("Failed to send password change email to %s", user.email)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=t("identity", "password_change.send_failed", locale=locale),
+        )
 
     return PasswordActionMessageResponse(
         message=t("identity", "password_change.request_sent", locale=locale)

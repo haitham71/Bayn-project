@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from bayn.common.exceptions import InvalidTokenError
 from bayn.core.database import get_db
 from bayn.core.i18n import get_locale
-from bayn.core.security import decode_token
+from bayn.core.security import decode_refresh_token
 from bayn.features.identity import service
 from bayn.features.identity.dependencies import get_current_active_user
 from bayn.features.identity.models import User
@@ -60,11 +60,11 @@ async def refresh_token(
 ) -> TokenResponse:
     # decoded here, not in a dependency, because the deps expect an access token
     try:
-        user_id = decode_token(payload.refresh_token, expected_type="refresh")
+        user_id, jti = decode_refresh_token(payload.refresh_token)
     except jwt.PyJWTError:
         raise InvalidTokenError()
 
-    return await service.refresh_access_token(db, user_id, locale)
+    return await service.refresh_access_token(db, user_id, jti, locale)
 
 
 # ── Profile ───────────────────────────────────────────────────────────────────

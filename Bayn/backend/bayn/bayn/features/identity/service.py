@@ -12,11 +12,13 @@ from bayn.common.exceptions import (
     ConflictError,
     EmailNotVerifiedError,
     InvalidCredentialsError,
+    InvalidTokenError,
     NotFoundError,
     PhoneNotVerifiedError,
     UserAlreadyExistsError,
     ValidationError,
 )
+from bayn.core.config import settings
 from bayn.core.security import (
     create_access_token,
     create_refresh_token,
@@ -25,7 +27,7 @@ from bayn.core.security import (
 )
 from bayn.core.i18n import DEFAULT_LOCALE, t
 from bayn.features.catalog.models import UserSkill
-from bayn.features.identity.models import AuthenticaOTPLog, OTPChannel, OTPStatus, User
+from bayn.features.identity.models import AuthenticaOTPLog, OTPChannel, OTPStatus, RefreshToken, User
 from bayn.features.identity.schemas import (
     OTPSendResponse,
     TokenResponse,
@@ -113,11 +115,32 @@ async def _build_user_response(db: AsyncSession, user: User) -> UserResponse:
 
 
 async def _issue_tokens(db: AsyncSession, user: User) -> TokenResponse:
+    jti = uuid.uuid4().hex
+    db.add(RefreshToken(
+        user_id=user.id,
+        jti=jti,
+        expires_at=datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
+    ))
+    await db.commit()
+
     return TokenResponse(
         access_token=create_access_token(user.id),
-        refresh_token=create_refresh_token(user.id),
+        refresh_token=create_refresh_token(user.id, jti=jti),
         user=await _build_user_response(db, user),
     )
+
+
+async def revoke_all_refresh_tokens_for_user(db: AsyncSession, user_id: uuid.UUID) -> None:
+    # doesn't commit — the caller decides the transaction boundary (e.g. it's
+    # bundled into the same commit as the password change that triggered it)
+    result = await db.execute(
+        select(RefreshToken).where(
+            RefreshToken.user_id == user_id, RefreshToken.revoked_at.is_(None)
+        )
+    )
+    now = datetime.now(timezone.utc)
+    for token in result.scalars().all():
+        token.revoked_at = now
 
 
 # ── Queries ───────────────────────────────────────────────────────────────────
@@ -222,12 +245,31 @@ async def authenticate_user(db: AsyncSession, payload: UserLogin, locale: str = 
     return await _issue_tokens(db, user)
 
 
-async def refresh_access_token(db: AsyncSession, user_id: uuid.UUID, locale: str = DEFAULT_LOCALE) -> TokenResponse:
+async def refresh_access_token(
+    db: AsyncSession, user_id: uuid.UUID, jti: str, locale: str = DEFAULT_LOCALE
+) -> TokenResponse:
     # re-check the account: it may have been deleted/deactivated since the refresh token was issued
     user = await get_user_by_id(db, user_id, locale)
 
     if not user.is_active:
         raise InvalidCredentialsError(t("identity", "auth.invalid_credentials", locale))
+
+    token_row = await db.scalar(
+        select(RefreshToken).where(RefreshToken.jti == jti, RefreshToken.user_id == user_id)
+    )
+    if token_row is None or token_row.revoked_at is not None:
+        raise InvalidTokenError(t("identity", "auth.invalid_token", locale))
+
+    # SQLite (used in tests) drops tzinfo on round-trip; Postgres preserves it
+    expires_at = token_row.expires_at
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    if expires_at < datetime.now(timezone.utc):
+        raise InvalidTokenError(t("identity", "auth.invalid_token", locale))
+
+    # rotate: this jti is single-use, a fresh pair (with a fresh jti) replaces it
+    token_row.revoked_at = datetime.now(timezone.utc)
+    await db.commit()
 
     return await _issue_tokens(db, user)
 

@@ -9,6 +9,7 @@ Run:
     pytest tests/features/identity/test_identity.py::TestSignup -v
 """
 
+import re
 from datetime import date
 from unittest.mock import AsyncMock
 
@@ -570,3 +571,172 @@ class TestOTP:
 
         assert response.status_code == 200
         mock_authentica.send_sms_otp.assert_called_once()
+
+
+def _extract_token(mock_email) -> str:
+    body = mock_email.send_email.call_args.kwargs["body"]
+    return re.search(r"token=([^\s).]+)", body).group(1)
+
+
+# ═══════════════════════════════════════════════════════
+# Password Reset Tests (forgot password — unauthenticated)
+# ═══════════════════════════════════════════════════════
+
+class TestPasswordReset:
+    """POST /auth/password/forgot, POST /auth/password/reset"""
+
+    @pytest.mark.asyncio
+    async def test_forgot_password_unknown_email_sends_nothing(
+        self, client: AsyncClient, mock_email
+    ):
+        response = await client.post(
+            "/auth/password/forgot", json={"email": "ghost@example.com"}
+        )
+
+        assert response.status_code == 200
+        mock_email.send_email.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_reset_password_full_flow_and_login(
+        self, client: AsyncClient, db, test_user: User, mock_email
+    ):
+        # this is the exact path that used to crash with
+        # NameError: name 'revoke_all_refresh_tokens_for_user' is not defined
+        test_user.is_email_verified = True
+        test_user.is_number_verified = True
+        await db.commit()
+
+        forgot = await client.post("/auth/password/forgot", json={"email": test_user.email})
+        assert forgot.status_code == 200
+        mock_email.send_email.assert_called_once()
+
+        raw_token = _extract_token(mock_email)
+        reset = await client.post(
+            "/auth/password/reset",
+            json={"token": raw_token, "new_password": "NewPass123@"},
+        )
+        assert reset.status_code == 200
+
+        old_login = await client.post(
+            "/auth/login", json={"email": test_user.email, "password": "TestPass123"}
+        )
+        assert old_login.status_code == 401
+
+        new_login = await client.post(
+            "/auth/login", json={"email": test_user.email, "password": "NewPass123@"}
+        )
+        assert new_login.status_code == 200
+
+    @pytest.mark.asyncio
+    async def test_forgot_password_email_failure_does_not_500(
+        self, client: AsyncClient, test_user: User, mock_email
+    ):
+        mock_email.send_email.side_effect = Exception("smtp unavailable")
+
+        response = await client.post("/auth/password/forgot", json={"email": test_user.email})
+
+        assert response.status_code == 200
+        assert "message" in response.json()
+
+    @pytest.mark.asyncio
+    async def test_reset_password_invalid_token_rejected(self, client: AsyncClient):
+        response = await client.post(
+            "/auth/password/reset",
+            json={"token": "not-a-real-token", "new_password": "NewPass123@"},
+        )
+        assert response.status_code == 400
+
+    @pytest.mark.asyncio
+    async def test_reset_password_revokes_existing_refresh_tokens(
+        self, client: AsyncClient, db, test_user: User, mock_email
+    ):
+        test_user.is_email_verified = True
+        test_user.is_number_verified = True
+        await db.commit()
+
+        login = await client.post(
+            "/auth/login", json={"email": test_user.email, "password": "TestPass123"}
+        )
+        old_refresh_token = login.json()["refresh_token"]
+
+        await client.post("/auth/password/forgot", json={"email": test_user.email})
+        raw_token = _extract_token(mock_email)
+        await client.post(
+            "/auth/password/reset",
+            json={"token": raw_token, "new_password": "NewPass123@"},
+        )
+
+        # the refresh token issued before the reset must no longer work
+        response = await client.post(
+            "/auth/refresh", json={"refresh_token": old_refresh_token}
+        )
+        assert response.status_code == 401
+
+
+# ═══════════════════════════════════════════════════════
+# Password Change Tests (authenticated, requires email confirmation)
+# ═══════════════════════════════════════════════════════
+
+class TestPasswordChange:
+    """POST /auth/password/change/request, POST /auth/password/change/confirm"""
+
+    @pytest.mark.asyncio
+    async def test_change_password_wrong_current_password(
+        self, client: AsyncClient, auth_headers: dict, mock_email
+    ):
+        response = await client.post(
+            "/auth/password/change/request",
+            headers=auth_headers,
+            json={"current_password": "WrongPass999", "new_password": "NewPass123@"},
+        )
+        assert response.status_code == 400
+        mock_email.send_email.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_change_password_full_flow_and_login(
+        self, client: AsyncClient, db, test_user: User, auth_headers: dict, mock_email
+    ):
+        # same crash point as password reset — confirm must not 500
+        test_user.is_email_verified = True
+        test_user.is_number_verified = True
+        await db.commit()
+
+        request = await client.post(
+            "/auth/password/change/request",
+            headers=auth_headers,
+            json={"current_password": "TestPass123", "new_password": "NewPass123@"},
+        )
+        assert request.status_code == 200
+        mock_email.send_email.assert_called_once()
+
+        raw_token = _extract_token(mock_email)
+        confirm = await client.post(
+            "/auth/password/change/confirm", params={"token": raw_token}
+        )
+        assert confirm.status_code == 200
+
+        new_login = await client.post(
+            "/auth/login", json={"email": test_user.email, "password": "NewPass123@"}
+        )
+        assert new_login.status_code == 200
+
+    @pytest.mark.asyncio
+    async def test_change_password_confirm_invalid_token_rejected(self, client: AsyncClient):
+        response = await client.post(
+            "/auth/password/change/confirm", params={"token": "not-a-real-token"}
+        )
+        assert response.status_code == 400
+
+    @pytest.mark.asyncio
+    async def test_change_password_request_email_failure_returns_clean_error(
+        self, client: AsyncClient, auth_headers: dict, mock_email
+    ):
+        mock_email.send_email.side_effect = Exception("smtp unavailable")
+
+        response = await client.post(
+            "/auth/password/change/request",
+            headers=auth_headers,
+            json={"current_password": "TestPass123", "new_password": "NewPass123@"},
+        )
+
+        assert response.status_code == 502

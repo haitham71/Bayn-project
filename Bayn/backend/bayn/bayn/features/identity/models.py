@@ -184,6 +184,22 @@ class User(Base):
         return f"<User {self.username} ({self.email})>"
 
 
+class RefreshToken(Base):
+    """Tracks issued refresh tokens by jti so they can be revoked server-side
+    (e.g. after a password reset/change) despite JWTs being self-verifying."""
+    __tablename__ = "refresh_tokens"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
+    jti: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    revoked_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    def __repr__(self) -> str:
+        return f"<RefreshToken user={self.user_id} revoked={self.revoked_at is not None}>"
+
+
 class AuthenticaOTPLog(Base):
     __tablename__ = "authentica_otp_logs"
 
