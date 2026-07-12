@@ -136,6 +136,14 @@
   }
 }
 
+/* Error shown when an OTP is rejected or fails to send */
+.verify__error {
+  margin: -4px 0 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--input-error, #900000);
+}
+
 .verify__sent {
   margin: 6px 0 0;
   font-size: 12px;

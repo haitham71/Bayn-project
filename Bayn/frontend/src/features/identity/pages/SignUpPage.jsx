@@ -18,6 +18,8 @@ import {
   formatDob,
   formatPhone,
 } from '../utils/validation';
+import { signup } from '../services/authService';
+import { getApiErrorMessage } from '@/shared/lib/apiError';
 import './SignUpPage.css';
 
 export default function SignUpPage({ onNavigate, initialData = {}, onDataChange }) {
@@ -44,6 +46,7 @@ export default function SignUpPage({ onNavigate, initialData = {}, onDataChange 
   const [agreed, setAgreed] = useState(initialData.agreed || false);
   const [errors, setErrors] = useState({});
   const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   // Lift the current values up so they survive navigating to verification and
   // back (the page itself unmounts, but App keeps the data).
@@ -85,7 +88,7 @@ export default function SignUpPage({ onNavigate, initialData = {}, onDataChange 
     setErrors(prev => (prev[field] ? { ...prev, [field]: undefined } : prev));
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     setError('');
     const found = collectErrors();
@@ -96,7 +99,22 @@ export default function SignUpPage({ onNavigate, initialData = {}, onDataChange 
       setError(t('signup.errorTerms'));
       return;
     }
-    onNavigate('verification');
+
+    setSubmitting(true);
+    try {
+      // Creates the account and stores the tokens; signup logs the user in.
+      await signup({
+        email, username,
+        firstNameEn, secondNameEn, thirdNameEn, lastNameEn,
+        firstNameAr, secondNameAr, thirdNameAr, lastNameAr,
+        password, dob, phone,
+      });
+      onNavigate('verification');
+    } catch (err) {
+      setError(getApiErrorMessage(err, t('signup.errorGeneric')));
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   // Shared props that light up a field's error state + message.
@@ -234,8 +252,8 @@ export default function SignUpPage({ onNavigate, initialData = {}, onDataChange 
           </div>
 
           <div className="su__action-row">
-            <Button type="submit" variant="primary" size="lg" trailingIcon className="su__submit">
-              {t('signup.nextStep')}
+            <Button type="submit" variant="primary" size="lg" trailingIcon className="su__submit" disabled={submitting}>
+              {submitting ? t('signup.submitting') : t('signup.nextStep')}
             </Button>
             <p className="su__login-text">
               {t('signup.haveAccount')}{' '}

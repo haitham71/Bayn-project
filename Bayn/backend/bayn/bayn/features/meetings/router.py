@@ -1,0 +1,2 @@
+
+from bayn.features.identity.dependencies import get_current_active_user
