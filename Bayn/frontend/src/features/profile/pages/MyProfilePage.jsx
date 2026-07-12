@@ -16,10 +16,6 @@ import './MyProfilePage.css';
 
 const BIO_MAX = 200;
 
-// Maps a sidebar item key to an app page so the shared Sidebar can drive
-// top-level navigation from this screen.
-const SIDEBAR_ROUTES = { home: 'home', projects: 'myprojects', profile: 'myprofile' };
-
 const TABS = [
   { key: 'account', labelKey: 'myProfile.tabAccount' },
   { key: 'profile', labelKey: 'myProfile.tabProfile' },
@@ -191,10 +187,7 @@ export default function MyProfilePage({ onNavigate }) {
 
   return (
     <div className="myp bayn-scroll">
-      <Sidebar
-        activeKey="profile"
-        onNavigate={(key) => SIDEBAR_ROUTES[key] && onNavigate?.(SIDEBAR_ROUTES[key])}
-      />
+      <Sidebar activeKey="profile" onNavigate={onNavigate} />
 
       <div className="myp__main">
         <Navbar userName={previewName} />

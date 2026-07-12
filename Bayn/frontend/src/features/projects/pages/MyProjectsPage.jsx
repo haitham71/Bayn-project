@@ -11,8 +11,6 @@ import LayoutDashboard from '@/assets/icons/layout-dashboard.svg?react';
 import Plus from '@/assets/icons/plus.svg?react';
 import './MyProjectsPage.css';
 
-const SIDEBAR_ROUTES = { home: 'home', projects: 'myprojects', profile: 'myprofile' };
-
 // Mock data — replaced by the projects API later.
 const OWNED = [
   { id: 1, title: 'AI-Powered Personal Finance Assistant', openings: 4, postedDays: 3 },
@@ -32,10 +30,7 @@ export default function MyProjectsPage({ onNavigate }) {
 
   return (
     <div className="mp">
-      <Sidebar
-        activeKey="projects"
-        onNavigate={(key) => SIDEBAR_ROUTES[key] && onNavigate?.(SIDEBAR_ROUTES[key])}
-      />
+      <Sidebar activeKey="projects" onNavigate={onNavigate} />
 
       <div className="mp__main">
         <Navbar userName="Assad Al-saeed" />

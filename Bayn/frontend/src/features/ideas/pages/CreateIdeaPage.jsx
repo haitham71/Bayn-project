@@ -15,8 +15,6 @@ import './CreateIdeaPage.css';
 const TITLE_MAX = 100;
 const DESC_MAX = 2000;
 
-const SIDEBAR_ROUTES = { home: 'home', projects: 'myprojects', profile: 'myprofile' };
-
 const TEAM_OPTIONS = Array.from({ length: 8 }, (_, i) => ({ value: String(i + 1), label: String(i + 1) }));
 const CATEGORY_OPTIONS = ['FinTech', 'HealthTech', 'EdTech', 'E-commerce', 'AI / ML', 'Other'].map((c) => ({ value: c, label: c }));
 const STAGE_OPTIONS = ['Idea', 'Planning', 'Development', 'Launched'].map((s) => ({ value: s, label: s }));
@@ -54,10 +52,7 @@ export default function CreateIdeaPage({ onNavigate }) {
 
   return (
     <div className="ci">
-      <Sidebar
-        activeKey="projects"
-        onNavigate={(key) => SIDEBAR_ROUTES[key] && onNavigate?.(SIDEBAR_ROUTES[key])}
-      />
+      <Sidebar activeKey="projects" onNavigate={onNavigate} />
 
       <div className="ci__main">
         <Navbar userName="Assad Al-saeed" />
