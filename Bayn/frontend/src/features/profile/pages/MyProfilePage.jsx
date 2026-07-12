@@ -318,6 +318,7 @@ export default function MyProfilePage({ onNavigate }) {
                           label={t(`signup.${f.label}`)}
                           value={f.value}
                           onChange={(e) => { f.set(e.target.value); clearNameError(f.key); }}
+                          disabled
                           className="myp__input"
                           {...nameFieldError(f.key)}
                         />
