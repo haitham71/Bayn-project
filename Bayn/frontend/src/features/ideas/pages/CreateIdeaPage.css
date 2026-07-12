@@ -209,6 +209,33 @@
   color: var(--text-body, var(--btn-primary-default, #295e4d));
 }
 
+/* Segmented Public/Private and On/Off toggles. */
+.ci__toggle {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 8px;
+  background: var(--input-bg-default, rgba(215, 203, 185, 0.7));
+  border: 1px solid var(--bg-surface-secondary, #d7cbb9);
+}
+
+.ci__toggle-opt {
+  padding: 5px 12px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-supporting, #786c57);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.ci__toggle-opt--active {
+  background: var(--btn-primary-default, #295e4d);
+  color: var(--btn-text, #ebe5dc);
+}
+
 .ci__actions {
   display: flex;
   gap: 16px;

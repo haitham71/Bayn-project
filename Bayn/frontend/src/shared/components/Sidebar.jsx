@@ -14,13 +14,15 @@ import PinOff from '@/assets/icons/pin-off.svg?react';
 import logoUrl from '@/assets/logo/Bayn-svg.svg?url';
 import './Sidebar.css';
 
+// `page` is the app page an item navigates to. Items without a page yet are
+// inert until their destination exists.
 const defaultItems = [
-  { key: 'home', labelKey: 'sidebar.home', icon: House },
+  { key: 'home', page: 'home', labelKey: 'sidebar.home', icon: House },
   { key: 'ideas', labelKey: 'sidebar.ideas', icon: Lightbulb },
-  { key: 'projects', labelKey: 'sidebar.projects', icon: Presentation },
+  { key: 'projects', page: 'myprojects', labelKey: 'sidebar.projects', icon: Presentation },
   { key: 'meetings', labelKey: 'sidebar.meetings', icon: Video },
   { key: 'profiles', labelKey: 'sidebar.profiles', icon: UserPlus },
-  { key: 'profile', labelKey: 'sidebar.profile', icon: UserRound },
+  { key: 'profile', page: 'myprofile', labelKey: 'sidebar.profile', icon: UserRound },
 ];
 
 const defaultFooter = [
@@ -41,9 +43,9 @@ export default function Sidebar({
   const active = activeKey ?? internalActive;
   const [pinned, setPinned] = useState(false);
 
-  function handleNavigate(key) {
-    if (activeKey === undefined) setInternalActive(key);
-    onNavigate?.(key);
+  function handleNavigate(item) {
+    if (activeKey === undefined) setInternalActive(item.key);
+    if (item.page) onNavigate?.(item.page);
   }
 
   function toggleLanguage() {
@@ -61,7 +63,7 @@ export default function Sidebar({
           type="button"
           className={`bayn-sidebar__item${isActive ? ' bayn-sidebar__item--active' : ''}`}
           aria-current={isActive ? 'page' : undefined}
-          onClick={item.action === 'toggleLanguage' ? toggleLanguage : () => handleNavigate(item.key)}
+          onClick={item.action === 'toggleLanguage' ? toggleLanguage : () => handleNavigate(item)}
         >
           <span className="bayn-sidebar__icon">
             <span className="bayn-sidebar__icon-tile">

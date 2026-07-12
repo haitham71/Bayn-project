@@ -12,8 +12,6 @@ import Plus from '@/assets/icons/plus.svg?react';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
 import './MyProjectsPage.css';
 
-const SIDEBAR_ROUTES = { home: 'home', projects: 'myprojects', profile: 'myprofile' };
-
 // Mock data — replaced by the projects API later.
 const OWNED = [
   { id: 1, title: 'AI-Powered Personal Finance Assistant', openings: 4, postedDays: 3 },
@@ -34,10 +32,7 @@ export default function MyProjectsPage({ onNavigate }) {
 
   return (
     <div className="mp">
-      <Sidebar
-        activeKey="projects"
-        onNavigate={(key) => SIDEBAR_ROUTES[key] && onNavigate?.(SIDEBAR_ROUTES[key])}
-      />
+      <Sidebar activeKey="projects" onNavigate={onNavigate} />
 
       <div className="mp__main">
         <Navbar userName={fullName} />
@@ -66,7 +61,7 @@ export default function MyProjectsPage({ onNavigate }) {
                       <span className="mp__posted">
                         {t('myProjects.postedDaysAgo', { count: p.postedDays })}
                       </span>
-                      <button type="button" className="mp__link">
+                      <button type="button" className="mp__link" onClick={() => onNavigate?.('joinrequests')}>
                         {t('myProjects.viewDetails')}
                         <List width={20} height={20} aria-hidden="true" />
                       </button>
