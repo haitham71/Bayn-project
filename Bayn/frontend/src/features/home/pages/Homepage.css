@@ -1,0 +1,283 @@
+.home {
+  min-height: 100vh;
+  background: var(--bg-surface-primary);
+}
+
+/* Clears the fixed floating sidebar rail (16px offset + 76px collapsed width). */
+.home__main {
+  padding-block: 22px 40px;
+  padding-inline: 108px 40px;
+}
+
+.home__body {
+  margin-top: 26px;
+}
+
+/* Greeting + quick actions */
+.home__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.home__title {
+  margin: 0;
+  font-size: 40px;
+  font-weight: 600;
+  letter-spacing: -0.8px;
+  color: var(--text-title);
+}
+
+.home__subtitle {
+  margin: 8px 0 0;
+  font-size: 20px;
+  color: var(--text-body-2);
+}
+
+.home__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding-top: 6px;
+}
+
+.home__pill {
+  height: 34px;
+  padding: 0 16px;
+  border: 1px solid #d9d9d9;
+  border-radius: 17px;
+  background: var(--color-neutral-100);
+  color: #1a1a1a;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+[dir='rtl'] .home__pill {
+  font-family: var(--font-ar);
+}
+
+.home__pill:hover {
+  background: var(--bg-surface-secondary);
+  border-color: var(--bg-surface-thirdary);
+}
+
+.home__pill--primary {
+  background: var(--color-primary-600);
+  border-color: var(--color-primary-600);
+  color: var(--color-neutral-100);
+}
+
+.home__pill--primary:hover {
+  background: var(--color-primary-700);
+  color: var(--color-neutral-100);
+}
+
+/* Main / side split */
+.home__grid {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  margin-top: 30px;
+}
+
+.home__col-main {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.home__col-side {
+  flex: 0 0 346px;
+}
+
+/* Cards */
+.home__cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 17px;
+}
+
+.home__card {
+  display: flex;
+  flex-direction: column;
+  min-height: 262px;
+  padding: 20px;
+  border: 1px solid var(--bg-surface-thirdary);
+  border-radius: 30px;
+  background: var(--bg-surface-primary);
+  box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.25);
+}
+
+.home__card--calendar {
+  margin-top: 17px;
+}
+
+/* Leading-edge aligned title: top-left in LTR, top-right in RTL. */
+.home__card-title {
+  margin: 0;
+  text-align: start;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-title);
+}
+
+.home__card-body {
+  flex: 1 1 auto;
+}
+
+/* Schedule card */
+.home__schedule {
+  padding: 15px;
+  border: 1px solid var(--bg-surface-thirdary);
+  border-radius: 16px;
+  background: var(--bg-surface-primary);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
+}
+
+.home__schedule-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #ebebed;
+}
+
+.home__schedule-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.home__schedule-date {
+  font-size: 11px;
+  color: #737373;
+}
+
+.home__schedule-list {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.home__meeting {
+  position: relative;
+  padding: 8px 12px 10px;
+  padding-inline-start: 16px;
+  border-radius: 10px;
+  background: var(--tint);
+}
+
+.home__meeting::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 4px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+.home__meeting-time {
+  font-size: 10px;
+  color: #737373;
+}
+
+.home__meeting-name {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.home__meeting-people {
+  display: flex;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.home__meeting-avatar {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  color: var(--color-neutral-100);
+  font-size: 8px;
+  font-weight: 700;
+  border: 1.5px solid var(--color-neutral-100);
+  margin-inline-start: -6px;
+}
+
+.home__meeting-avatar:first-child {
+  margin-inline-start: 0;
+}
+
+.home__meeting-extra {
+  margin-inline-start: 6px;
+  font-size: 9px;
+  font-weight: 500;
+  color: #737373;
+}
+
+/* Floating support button */
+.home__support {
+  position: fixed;
+  inset-inline-end: 32px;
+  bottom: 32px;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border: none;
+  border-radius: 50%;
+  background: var(--color-primary-600);
+  color: var(--color-neutral-100);
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(4, 18, 14, 0.35);
+  transition: background-color 0.15s ease, transform 0.15s ease;
+  z-index: 90;
+}
+
+.home__support:hover {
+  background: var(--color-primary-700);
+  transform: translateY(-2px);
+}
+
+/* Responsive: stack the schedule under the main content on narrow viewports. */
+@media (max-width: 1080px) {
+  .home__grid {
+    flex-direction: column;
+  }
+
+  .home__col-side {
+    flex: 1 1 auto;
+    width: 100%;
+    max-width: 420px;
+  }
+}
+
+@media (max-width: 680px) {
+  .home__main {
+    padding-inline: 96px 20px;
+  }
+
+  .home__cards {
+    grid-template-columns: 1fr;
+  }
+
+  .home__title {
+    font-size: 32px;
+  }
+}

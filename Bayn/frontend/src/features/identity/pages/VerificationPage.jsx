@@ -24,6 +24,7 @@ export default function VerificationPage({
   email = 'user@email.com',
   phone = '+966 5X XXX XXXX',
   onEditInfo,
+  onNext,
 }) {
   const { t } = useTranslation();
   const [code, setCode] = useState('');
@@ -130,7 +131,7 @@ export default function VerificationPage({
 
         <div className="verify__resend">
           <span>{t('verification.didntReceive')}</span>
-          <Button variant="tertiary" size="sm" disabled={!isDone} onClick={() => sendOtp(active)}>
+          <Button variant="tertiary" size="sm" disabled={!isDone || verified.phone} onClick={() => reset()}>
             {t('verification.resend')}
           </Button>
           {!isDone && <span className="verify__timer">({formatted})</span>}
@@ -165,13 +166,14 @@ export default function VerificationPage({
           trailingIcon
           className="verify__next"
           disabled={!verified.email || !verified.phone}
+          onClick={onNext}
         >
           {t('verification.nextStep')}
         </Button>
 
         <p className="verify__edit">
           <span>{t('verification.wrongInfo')}</span>
-          <Button variant="tertiary" size="sm" onClick={onEditInfo}>
+          <Button variant="tertiary" size="sm" onClick={onEditInfo} disabled={verified.phone}>
             {t('verification.editInfo')}
           </Button>
         </p>

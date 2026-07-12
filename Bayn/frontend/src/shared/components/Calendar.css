@@ -1,0 +1,153 @@
+.cal {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cal__title {
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-title, #0f3d2e);
+}
+
+/* Boxed calendar body with an inset shadow (title sits above it). */
+.cal__box {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--bg-surface-primary, #ebe5dc);
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.25);
+}
+
+.cal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cal__selects {
+  display: flex;
+  gap: 10px;
+}
+
+/* Month / year dropdowns: native select with a custom chevron. */
+.cal__select {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.cal__select select {
+  appearance: none;
+  -webkit-appearance: none;
+  min-width: 92px;
+  padding-block: 8px;
+  padding-inline: 14px 34px;
+  border: none;
+  border-radius: 8px;
+  background: var(--bg-surface-secondary, #d7cbb9);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-title, #0f3d2e);
+  cursor: pointer;
+}
+
+.cal__select svg {
+  position: absolute;
+  inset-inline-end: 10px;
+  pointer-events: none;
+  color: var(--text-title, #0f3d2e);
+}
+
+.cal__nav {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-title, #0f3d2e);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.cal__nav:hover {
+  background: var(--bg-surface-secondary, #d7cbb9);
+}
+
+[dir='rtl'] .cal__nav svg {
+  transform: scaleX(-1);
+}
+
+.cal__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.cal__weekday {
+  display: grid;
+  place-items: center;
+  height: 28px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-supporting, #786c57);
+}
+
+.cal__cell {
+  display: grid;
+  place-items: center;
+  height: 40px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  color: var(--text-title, #0f3d2e);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.cal__cell--empty {
+  cursor: default;
+}
+
+.cal__cell:not(.cal__cell--empty):not(.cal__cell--muted):hover {
+  background: var(--bg-surface-secondary, #d7cbb9);
+}
+
+/* Green marks upcoming days that have meetings/appointments. */
+.cal__cell--marked,
+.cal__cell--marked:hover {
+  background: var(--btn-primary-default, #295e4d);
+  color: var(--color-neutral-100, #fff);
+  font-weight: 600;
+}
+
+/* Current day. */
+.cal__cell--today,
+.cal__cell--today:hover {
+  background: var(--color-secondary-800, #9a8a71);
+  color: var(--color-neutral-100, #fff);
+  font-weight: 600;
+}
+
+/* Past days are dimmed and not selectable. */
+.cal__cell--past {
+  color: var(--color-secondary-700, #bca98a);
+  opacity: 0.6;
+  cursor: default;
+}
+
+.cal__cell--muted {
+  color: var(--bg-surface-thirdary, #c9baa1);
+  cursor: default;
+}
