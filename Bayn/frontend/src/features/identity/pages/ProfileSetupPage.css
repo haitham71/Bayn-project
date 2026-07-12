@@ -66,7 +66,8 @@
   row-gap: 24px;
 }
 
-.ps__input.bayn-input {
+.ps__input.bayn-input,
+.ps__input.bayn-select {
   width: 100%;
   position: relative;
 }
@@ -92,6 +93,11 @@
 /* Bio: character counter sits at the trailing end below the field. */
 .ps__bio.bayn-input {
   width: 100%;
+}
+
+/* Lock the bio field to a fixed height — no user resizing. */
+.ps__bio .bayn-input__native {
+  resize: none;
 }
 
 .ps__bio .bayn-input__support {

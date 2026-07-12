@@ -4,9 +4,9 @@ import Sidebar from '@/shared/components/Sidebar';
 import Navbar from '@/shared/components/Navbar';
 import Input from '@/shared/components/Input';
 import Button from '@/shared/components/Button';
+import Select from '@/shared/components/Select';
 import PasswordStrength from '@/shared/components/PasswordStrength';
 import { validatePassword } from '@/features/identity/utils/validation';
-import ChevronDown from '@/assets/icons/chevron-down.svg?react';
 import Camera from '@/assets/icons/camera.svg?react';
 import MapPin from '@/assets/icons/map-pin.svg?react';
 import Eye from '@/assets/icons/eye.svg?react';
@@ -24,6 +24,16 @@ const TABS = [
   { key: 'account', labelKey: 'myProfile.tabAccount' },
   { key: 'profile', labelKey: 'myProfile.tabProfile' },
 ];
+
+const EXPERIENCE_OPTIONS = ['0-1 Years', '1-2 Years', '2-3 Years', '3-5 Years', '5+ Years']
+  .map((v) => ({ value: v, label: v }));
+const LOCATION_OPTIONS = [
+  'Riyadh, Saudi Arabia',
+  'Jeddah, Saudi Arabia',
+  'Dammam, Saudi Arabia',
+  'Mecca, Saudi Arabia',
+  'Medina, Saudi Arabia',
+].map((v) => ({ value: v, label: v }));
 
 // Small trailing eye toggle shared by the password fields.
 function eyeToggle(shown) {
@@ -142,7 +152,7 @@ export default function MyProfilePage({ onNavigate }) {
   const fullName = [firstNameEn, lastNameEn].filter(Boolean).join(' ');
 
   return (
-    <div className="myp">
+    <div className="myp bayn-scroll">
       <Sidebar
         activeKey="profile"
         onNavigate={(key) => SIDEBAR_ROUTES[key] && onNavigate?.(SIDEBAR_ROUTES[key])}
@@ -293,18 +303,18 @@ export default function MyProfilePage({ onNavigate }) {
                 />
 
                 <div className="myp__grid">
-                  <Input
+                  <Select
                     label={t('profile.experience')}
                     value={experience}
-                    onChange={(e) => setExperience(e.target.value)}
-                    trailingIcon={<ChevronDown width={20} height={20} aria-hidden="true" />}
+                    onChange={setExperience}
+                    options={EXPERIENCE_OPTIONS}
                     className="myp__input"
                   />
-                  <Input
+                  <Select
                     label={t('profile.location')}
                     value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    trailingIcon={<ChevronDown width={20} height={20} aria-hidden="true" />}
+                    onChange={setLocation}
+                    options={LOCATION_OPTIONS}
                     className="myp__input"
                   />
                 </div>

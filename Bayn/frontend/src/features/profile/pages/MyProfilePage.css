@@ -1,7 +1,8 @@
 /* My profile — dashboard screen: editable form card + live read-only preview.
    Shares the fixed floating sidebar rail with the home page. */
 .myp {
-  min-height: 100vh;
+  height: 100vh;
+  overflow-y: auto;
   background: var(--bg-surface-primary);
 }
 
@@ -124,7 +125,8 @@
   gap: 24px 24px;
 }
 
-.myp__input.bayn-input {
+.myp__input.bayn-input,
+.myp__input.bayn-select {
   width: 100%;
 }
 
@@ -134,6 +136,11 @@
 
 .myp__bio .bayn-input__support {
   text-align: end;
+}
+
+/* Lock the bio field to a fixed height — no user resizing. */
+.myp__bio .bayn-input__native {
+  resize: none;
 }
 
 /* Skills input + entered chips */

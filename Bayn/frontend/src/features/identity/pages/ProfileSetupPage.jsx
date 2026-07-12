@@ -4,12 +4,22 @@ import IdentityLayout from '@/layouts/IdentityLayout';
 import Stepper from '../components/Stepper';
 import Button from '@/shared/components/Button';
 import Input from '@/shared/components/Input';
-import ChevronDown from '@/assets/icons/chevron-down.svg?react';
+import Select from '@/shared/components/Select';
 import X from '@/assets/icons/x.svg?react';
 import { validateName } from '../utils/validation';
 import './ProfileSetupPage.css';
 
 const BIO_MAX = 200;
+
+const EXPERIENCE_OPTIONS = ['0-1 Years', '1-2 Years', '2-3 Years', '3-5 Years', '5+ Years']
+  .map((v) => ({ value: v, label: v }));
+const LOCATION_OPTIONS = [
+  'Riyadh, Saudi Arabia',
+  'Jeddah, Saudi Arabia',
+  'Dammam, Saudi Arabia',
+  'Mecca, Saudi Arabia',
+  'Medina, Saudi Arabia',
+].map((v) => ({ value: v, label: v }));
 
 // Final step of account creation. The full name is captured here in both
 // languages (a toggle switches which set is shown), moved off the account step.
@@ -170,18 +180,18 @@ export default function ProfileSetupPage({ onNavigate, initialData = {}, onDataC
         />
 
         <div className="ps__names-grid">
-          <Input
+          <Select
             label={t('profile.experience')}
             value={experience}
-            onChange={e => setExperience(e.target.value)}
-            trailingIcon={<ChevronDown width={20} height={20} aria-hidden="true" />}
+            onChange={setExperience}
+            options={EXPERIENCE_OPTIONS}
             className="ps__input"
           />
-          <Input
+          <Select
             label={t('profile.location')}
             value={location}
-            onChange={e => setLocation(e.target.value)}
-            trailingIcon={<ChevronDown width={20} height={20} aria-hidden="true" />}
+            onChange={setLocation}
+            options={LOCATION_OPTIONS}
             className="ps__input"
           />
         </div>

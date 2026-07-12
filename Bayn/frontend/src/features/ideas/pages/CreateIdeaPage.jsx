@@ -3,9 +3,9 @@ import { useTranslation } from 'react-i18next';
 import Sidebar from '@/shared/components/Sidebar';
 import Navbar from '@/shared/components/Navbar';
 import Input from '@/shared/components/Input';
+import Select from '@/shared/components/Select';
 import Button from '@/shared/components/Button';
 import Calendar from '@/shared/components/Calendar';
-import ChevronDown from '@/assets/icons/chevron-down.svg?react';
 import Eye from '@/assets/icons/eye.svg?react';
 import UserPlus from '@/assets/icons/user-plus.svg?react';
 import CalendarIcon from '@/assets/icons/calendar.svg?react';
@@ -17,7 +17,9 @@ const DESC_MAX = 2000;
 
 const SIDEBAR_ROUTES = { home: 'home', projects: 'myprojects', profile: 'myprofile' };
 
-const chevron = <ChevronDown width={20} height={20} aria-hidden="true" />;
+const TEAM_OPTIONS = Array.from({ length: 8 }, (_, i) => ({ value: String(i + 1), label: String(i + 1) }));
+const CATEGORY_OPTIONS = ['FinTech', 'HealthTech', 'EdTech', 'E-commerce', 'AI / ML', 'Other'].map((c) => ({ value: c, label: c }));
+const STAGE_OPTIONS = ['Idea', 'Planning', 'Development', 'Launched'].map((s) => ({ value: s, label: s }));
 
 // One numbered form step: circled index + title + note, then its field(s).
 function Step({ n, title, note, children }) {
@@ -146,11 +148,11 @@ export default function CreateIdeaPage({ onNavigate }) {
 
             <Step n={4} title={t('createIdea.step4Title')}>
               <div className="ci__row">
-                <Input
+                <Select
                   label={t('createIdea.teamMembers')}
                   value={teamSize}
-                  onChange={(e) => setTeamSize(e.target.value)}
-                  trailingIcon={chevron}
+                  onChange={setTeamSize}
+                  options={TEAM_OPTIONS}
                   className="ci__input ci__input--sm"
                 />
                 <Input
@@ -164,18 +166,18 @@ export default function CreateIdeaPage({ onNavigate }) {
 
             <Step n={5} title={t('createIdea.step5Title')}>
               <div className="ci__row">
-                <Input
+                <Select
                   label={t('createIdea.category')}
                   value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  trailingIcon={chevron}
+                  onChange={setCategory}
+                  options={CATEGORY_OPTIONS}
                   className="ci__input ci__input--sm"
                 />
-                <Input
+                <Select
                   label={t('createIdea.currentStage')}
                   value={stage}
-                  onChange={(e) => setStage(e.target.value)}
-                  trailingIcon={chevron}
+                  onChange={setStage}
+                  options={STAGE_OPTIONS}
                   className="ci__input ci__input--sm"
                 />
               </div>

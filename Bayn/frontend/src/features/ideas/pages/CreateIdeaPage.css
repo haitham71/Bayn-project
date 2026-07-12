@@ -95,7 +95,8 @@
   gap: 20px;
 }
 
-.ci__input--sm.bayn-input {
+.ci__input--sm.bayn-input,
+.ci__input--sm.bayn-select {
   width: 250px;
   flex: 0 0 auto;
 }

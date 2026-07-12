@@ -21,7 +21,7 @@ function readPage() {
 }
 
 export default function App() {
-  const [page, setPage] = useState('myprojects');
+  const [page, setPage] = useState('profile');
   const [signupData, setSignupData] = useState({});
 
   const goTo = (next) => {
