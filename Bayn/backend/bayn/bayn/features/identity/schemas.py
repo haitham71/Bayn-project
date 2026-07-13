@@ -100,6 +100,7 @@ class RefreshTokenRequest(BaseModel):
 
 class UpdateProfileRequest(BaseModel):
     """Partial update — only fields present in the request are changed."""
+    username: Optional[str] = None
     second_name_ar: Optional[str] = None
     third_name_ar: Optional[str] = None
     second_name_en: Optional[str] = None
@@ -114,6 +115,16 @@ class UpdateProfileRequest(BaseModel):
     phone_number: Optional[int] = None
     national_id: Optional[str] = None
     bio: Optional[str] = Field(default=None, max_length=500)
+
+    @field_validator("username")
+    @classmethod
+    def validate_username(cls, value: str | None, info: ValidationInfo) -> str | None:
+        if value is None:
+            return None
+        if not re.match(r"^[a-zA-Z0-9_]{3,30}$", value):
+            locale = _locale_from(info)
+            raise ValueError(t("validation", "username_format", locale))
+        return value.lower()
 
     @field_validator("phone_number")
     @classmethod

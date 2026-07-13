@@ -464,6 +464,10 @@ async def update_profile(
         for field in ("phone_number", "phone_country_id")
     )
 
+    if "username" in updates and updates["username"] != user.username:
+        if await get_user_by_username(db, updates["username"]):
+            raise UserAlreadyExistsError(t("identity", "auth.username_already_in_use", locale))
+
     for field, value in updates.items():
         setattr(user, field, value)
     if phone_changed:
@@ -473,6 +477,8 @@ async def update_profile(
         await db.commit()
     except IntegrityError:
         await db.rollback()
+        if "username" in updates:
+            raise ConflictError(t("identity", "auth.username_already_in_use", locale))
         raise ConflictError(t("identity", "profile.national_id_already_in_use", locale))
     await db.refresh(user)
     return await _build_user_response(db, user)
