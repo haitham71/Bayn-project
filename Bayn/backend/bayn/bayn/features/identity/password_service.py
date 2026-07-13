@@ -140,6 +140,14 @@ async def confirm_password_reset(
             detail=t("identity", "password_reset.expired", locale=locale),
         )
 
+    # Don't let the reset re-use the current password. Checked before the token
+    # is cleared so the same link can be retried with a different password.
+    if verify_password(new_password, user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=t("identity", "password_reset.same_as_current", locale=locale),
+        )
+
     user.password_hash = hash_password(new_password)
 
     # Single-use only: clear the token immediately to prevent replay.
@@ -173,6 +181,13 @@ async def request_password_change(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=t("identity", "password_change.current_password_incorrect", locale=locale),
+        )
+
+    # The new password must actually be a change.
+    if verify_password(new_password, user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=t("identity", "password_change.same_as_current", locale=locale),
         )
 
     raw_token = _generate_raw_token()

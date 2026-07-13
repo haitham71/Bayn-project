@@ -64,11 +64,53 @@
     "confirmAccountUpdate": "Confirm account update",
     "updateErrorGeneric": "Something went wrong. Please try again.",
     "confirmProfileUpdate": "Confirm profile update",
+    "passwordEmailSent": "A confirmation link has been sent to your email.",
     "sectionBio": "Bio",
     "sectionExperience": "Years of Experience",
     "sectionSkills": "Skills",
     "changePhoto": "Change photo",
+    "avatarTypeError": "Unsupported format. Use JPG, PNG, or WebP.",
+    "avatarSizeError": "Image exceeds the 5MB limit.",
+    "avatarUploadError": "Couldn't upload the photo, please try again.",
+    "confirmTitle": "Are you sure?",
+    "confirmAccountMsg": "Your username will be updated.",
+    "confirmProfileMsg": "Your profile changes will be saved.",
+    "confirmPasswordMsg": "Your password will be changed.",
+    "confirmYes": "Confirm",
+    "confirmCancel": "Cancel",
+    "noChanges": "No changes to save.",
     "save": "Save changes"
+  },
+  "forgotPassword": {
+    "title": "Forgot your password?",
+    "prompt": "Enter your email and we'll send you a link to reset your password.",
+    "submit": "Send reset link",
+    "sending": "Sending…",
+    "sent": "If that email is registered, a reset link has been sent to it.",
+    "backToLogin": "Back to login"
+  },
+  "resetPassword": {
+    "title": "Create a new password",
+    "prompt": "Enter your new password.",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm password",
+    "submit": "Set password",
+    "saving": "Saving…",
+    "success": "Your password has been set. You can now log in.",
+    "error": "Couldn't set the password. The link may be expired or invalid.",
+    "invalidLink": "Invalid link — no token.",
+    "mismatch": "Passwords don't match.",
+    "goToLogin": "Log in"
+  },
+  "confirmChange": {
+    "title": "Confirm password change",
+    "prompt": "Click the button below to confirm your password change.",
+    "confirmBtn": "Confirm change",
+    "loading": "Confirming…",
+    "success": "Your password has been changed successfully.",
+    "error": "Couldn't confirm the change. The link may be expired or invalid.",
+    "invalidLink": "Invalid link — no confirmation token.",
+    "goToLogin": "Go to login"
   },
   "calendar": {
     "prevMonth": "Previous month",
@@ -232,7 +274,8 @@
     "errDobFormat": "Enter your date of birth as DD/MM/YYYY.",
     "errAge": "You must be at least 18 years old.",
     "errPhone": "Enter a valid number: +966 followed by 9 digits.",
-    "errPassword": "Password doesn't meet the requirements below."
+    "errPassword": "Password doesn't meet the requirements below.",
+    "errSamePassword": "The new password must be different from the current one."
   },
   "home": {
     "greetMorning":   "Good Morning",

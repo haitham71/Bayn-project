@@ -4,6 +4,9 @@ import LoginPage        from '@/features/identity/pages/LoginPage';
 import SignUpPage       from '@/features/identity/pages/SignUpPage';
 import VerificationPage from '@/features/identity/pages/VerificationPage';
 import ProfileSetupPage from '@/features/identity/pages/ProfileSetupPage';
+import ConfirmPasswordChangePage from '@/features/identity/pages/ConfirmPasswordChangePage';
+import ForgotPasswordPage from '@/features/identity/pages/ForgotPasswordPage';
+import ResetPasswordPage from '@/features/identity/pages/ResetPasswordPage';
 import HomePage         from '@/features/home/pages/Homepage';
 import MyProfilePage    from '@/features/profile/pages/MyProfilePage';
 import MyProjectsPage   from '@/features/projects/pages/MyProjectsPage';
@@ -18,6 +21,7 @@ const PATHS = {
   signup: '/signup',
   verification: '/verification',
   profile: '/profile-setup',
+  forgotPassword: '/forgot-password',
   home: '/home',
   myprofile: '/my-profile',
   myprojects: '/my-projects',
@@ -60,6 +64,9 @@ export default function App() {
         path="/profile-setup"
         element={<ProfileSetupPage onNavigate={goTo} initialData={signupData} onDataChange={patchData} />}
       />
+      <Route path="/confirm-password-change" element={<ConfirmPasswordChangePage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage onNavigate={goTo} />} />
+      <Route path="/reset-password" element={<ResetPasswordPage onNavigate={goTo} />} />
       <Route path="/home" element={<ProtectedRoute><HomePage onNavigate={goTo} /></ProtectedRoute>} />
       <Route path="/my-profile" element={<ProtectedRoute><MyProfilePage onNavigate={goTo} /></ProtectedRoute>} />
       <Route path="/my-projects" element={<ProtectedRoute><MyProjectsPage onNavigate={goTo} /></ProtectedRoute>} />

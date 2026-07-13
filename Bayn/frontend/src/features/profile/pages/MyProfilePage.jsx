@@ -1,6 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { getProfile, updateProfile, getSaudiCountryId, getCities, searchSkills, addSkillToProfile } from '@/features/identity/services/authService';
+import { useQueryClient } from '@tanstack/react-query';
+import { getSaudiCountryId, getCities, searchSkills, uploadAvatar, updateProfile, requestPasswordChange as requestPasswordChangeApi } from '@/features/identity/services/authService';
+import { useProfile, profileQueryKey } from '@/shared/hooks/useProfile';
 import { getApiErrorMessage } from '@/shared/lib/apiError';
 import Sidebar from '@/shared/components/Sidebar';
 import Navbar from '@/shared/components/Navbar';
@@ -9,6 +11,7 @@ import Button from '@/shared/components/Button';
 import Select from '@/shared/components/Select';
 import SkillsInput from '@/shared/components/SkillsInput';
 import PasswordStrength from '@/shared/components/PasswordStrength';
+import ConfirmDialog from '@/shared/components/ConfirmDialog';
 import { validateName, validateUsername, validatePassword } from '@/features/identity/utils/validation';
 import Camera from '@/assets/icons/camera.svg?react';
 import MapPin from '@/assets/icons/map-pin.svg?react';
@@ -33,29 +36,12 @@ const EXPERIENCE_OPTIONS = [
   { value: '10+', label: '10+ Years' },
 ];
 
-// Seed values (stand-in for the account fetched from the API). Both the form
-// fields and the initial preview snapshot start from here.
-const SEED = {
-  username: 'assad.dev',
-  firstNameEn: 'Assad', secondNameEn: 'Saad', thirdNameEn: '', lastNameEn: 'Al-saeed',
-  firstNameAr: 'أسعد', secondNameAr: 'سعد', thirdNameAr: '', lastNameAr: 'السعيد',
-  shortTitle: 'Software Engineer',
-  bio: 'Experienced in software development and passionate about building innovative solutions. I enjoy collaborating with ambitious teams to create impactful products.',
-  experience: '2-3 Years',
-  location: 'Riyadh, Saudi Arabia',
-  skills: ['React', 'Node js', 'Python', 'Mysql', 'Java Script'],
+// The Profile View starts empty and fills in from the loaded profile.
+const EMPTY_PREVIEW = {
+  username: '',
+  firstNameEn: '', lastNameEn: '', firstNameAr: '', lastNameAr: '',
+  shortTitle: '', bio: '', experience: '', location: '', skills: [],
 };
-
-// The subset of fields the Profile View reflects.
-function previewSnapshot(s) {
-  return {
-    username: s.username,
-    firstNameEn: s.firstNameEn, lastNameEn: s.lastNameEn,
-    firstNameAr: s.firstNameAr, lastNameAr: s.lastNameAr,
-    shortTitle: s.shortTitle, bio: s.bio,
-    experience: s.experience, location: s.location, skills: s.skills,
-  };
-}
 
 // Small trailing eye toggle shared by the password fields.
 function eyeToggle(shown) {
@@ -66,15 +52,25 @@ function eyeToggle(shown) {
 
 export default function MyProfilePage({ onNavigate }) {
   const { t, i18n } = useTranslation();
+  const { data: profile } = useProfile();
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('account');
+  // Pending confirm modal: { message, onConfirm } while awaiting a yes/no.
+  const [confirmState, setConfirmState] = useState(null);
+
+  // --- Avatar upload ---
+  const fileInputRef = useRef(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarError, setAvatarError] = useState('');
+  const avatarUrl = profile?.avatar_url || '';
 
   // --- Account information (loaded from the backend on mount) ---
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [accountErrors, setAccountErrors] = useState({});
+  const [accountSaving, setAccountSaving] = useState(false);
   const [accountError, setAccountError] = useState('');
-  const [accountSubmitting, setAccountSubmitting] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
@@ -82,6 +78,9 @@ export default function MyProfilePage({ onNavigate }) {
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [pwErrors, setPwErrors] = useState({});
+  const [pwSaving, setPwSaving] = useState(false);
+  const [pwSubmitError, setPwSubmitError] = useState('');
+  const [pwSuccess, setPwSuccess] = useState('');
 
   // --- Profile information (four-part name in both languages) ---
   // Names, experience and location load from the backend on mount.
@@ -93,15 +92,15 @@ export default function MyProfilePage({ onNavigate }) {
   const [secondNameAr, setSecondNameAr] = useState('');
   const [thirdNameAr, setThirdNameAr] = useState('');
   const [lastNameAr, setLastNameAr] = useState('');
-  const [shortTitle, setShortTitle] = useState('Software Engineer');
-  const [bio, setBio] = useState(SEED.bio);
+  const [shortTitle, setShortTitle] = useState('');
+  const [bio, setBio] = useState('');
   const [experience, setExperience] = useState('');
   const [location, setLocation] = useState('');
-  const [skills, setSkills] = useState(SEED.skills);
+  const [skills, setSkills] = useState([]);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileError, setProfileError] = useState('');
   const [cityOptions, setCityOptions] = useState([]);
   const [nameErrors, setNameErrors] = useState({});
-  const [profileError, setProfileError] = useState('');
-  const [profileSubmitting, setProfileSubmitting] = useState(false);
 
   // Built up as skill search results come in — resolves a chosen skill name
   // back to the skill_id the backend needs when it's actually saved.
@@ -109,11 +108,7 @@ export default function MyProfilePage({ onNavigate }) {
 
   // Values shown in the Profile View — updated only when changes are confirmed
   // (the mount effect below seeds it with the loaded profile).
-  const [committed, setCommitted] = useState(() => previewSnapshot({
-    ...SEED,
-    firstNameEn: '', lastNameEn: '', firstNameAr: '', lastNameAr: '',
-    experience: '', location: '',
-  }));
+  const [committed, setCommitted] = useState(EMPTY_PREVIEW);
 
   async function handleSkillQuery(q) {
     const results = await searchSkills(q);
@@ -125,44 +120,81 @@ export default function MyProfilePage({ onNavigate }) {
     return results.map((r) => r.name);
   }
 
-  // Loads the signed-in user's real name, experience and city once, on mount —
-  // and mirrors them into the preview snapshot.
+  // Seeds the form from the cached profile — the fields stay locally editable,
+  // so we mirror the server values in once the query resolves.
   useEffect(() => {
-    getProfile().then((u) => {
-      setUsername(u.username || '');
-      setEmail(u.email || '');
-      setPhone(u.phone_number ? `+966 ${u.phone_number}` : '');
-      setFirstNameEn(u.first_name_en || '');
-      setSecondNameEn(u.second_name_en || '');
-      setThirdNameEn(u.third_name_en || '');
-      setLastNameEn(u.last_name_en || '');
-      setFirstNameAr(u.first_name_ar || '');
-      setSecondNameAr(u.second_name_ar || '');
-      setThirdNameAr(u.third_name_ar || '');
-      setLastNameAr(u.last_name_ar || '');
-      setExperience(u.years_of_experience || '');
-      setLocation(u.city_id || '');
-      setShortTitle(u.job_title || '');
-      setBio(u.bio || '');
-      setCommitted((c) => ({
-        ...c,
-        username: u.username || '',
-        firstNameEn: u.first_name_en || '',
-        lastNameEn: u.last_name_en || '',
-        firstNameAr: u.first_name_ar || '',
-        lastNameAr: u.last_name_ar || '',
-        experience: u.years_of_experience || '',
-        location: u.city_id || '',
-        shortTitle: u.job_title || '',
-        bio: u.bio || '',
-      }));
-    }).catch(() => {});
+    if (!profile) return;
+    const u = profile;
+    setUsername(u.username || '');
+    setEmail(u.email || '');
+    setPhone(u.phone_number ? `+966 ${u.phone_number}` : '');
+    setFirstNameEn(u.first_name_en || '');
+    setSecondNameEn(u.second_name_en || '');
+    setThirdNameEn(u.third_name_en || '');
+    setLastNameEn(u.last_name_en || '');
+    setFirstNameAr(u.first_name_ar || '');
+    setSecondNameAr(u.second_name_ar || '');
+    setThirdNameAr(u.third_name_ar || '');
+    setLastNameAr(u.last_name_ar || '');
+    setShortTitle(u.job_title || '');
+    setBio(u.bio || '');
+    setExperience(u.years_of_experience || '');
+    setLocation(u.city_id || '');
+    setCommitted((c) => ({
+      ...c,
+      username: u.username || '',
+      firstNameEn: u.first_name_en || '',
+      lastNameEn: u.last_name_en || '',
+      firstNameAr: u.first_name_ar || '',
+      lastNameAr: u.last_name_ar || '',
+      shortTitle: u.job_title || '',
+      bio: u.bio || '',
+      experience: u.years_of_experience || '',
+      location: u.city_id || '',
+    }));
+  }, [profile]);
 
+  // The city dropdown options are looked up once for the form.
+  useEffect(() => {
     getSaudiCountryId()
       .then((saId) => (saId ? getCities(saId) : []))
       .then((cities) => setCityOptions(cities.map((c) => ({ value: c.id, label: c.name_en }))))
       .catch(() => {});
   }, []);
+
+  // Dismiss the "no changes" note as soon as the user edits any profile field.
+  useEffect(() => {
+    setProfileError((e) => (e ? '' : e));
+  }, [shortTitle, bio, experience, location, skills, firstNameEn, lastNameEn, firstNameAr, lastNameAr]);
+
+  // Validates the picked image (matching the backend's rules) then uploads it.
+  // The response is the fresh profile, so we write it straight into the cache —
+  // every page reading ['profile'] shows the new avatar immediately.
+  async function handleAvatarChange(e) {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // let the same file be re-picked after an error
+    if (!file) return;
+    setAvatarError('');
+
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setAvatarError(t('myProfile.avatarTypeError'));
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setAvatarError(t('myProfile.avatarSizeError'));
+      return;
+    }
+
+    setAvatarUploading(true);
+    try {
+      const updated = await uploadAvatar(file);
+      queryClient.setQueryData(profileQueryKey, updated);
+    } catch (err) {
+      setAvatarError(getApiErrorMessage(err, t('myProfile.avatarUploadError')));
+    } finally {
+      setAvatarUploading(false);
+    }
+  }
 
   const nameGroups = [
     {
@@ -189,38 +221,77 @@ export default function MyProfilePage({ onNavigate }) {
   const allNameFields = nameGroups.flatMap((g) => g.fields);
 
 
-  // Confirm actions — validate, then persist via the API and push into the preview snapshot.
-  async function handleAccountUpdate() {
+  // Confirm actions — validate first, then open the confirm modal; the actual
+  // save runs only after the user confirms.
+  function requestAccountUpdate() {
     const err = validateUsername(username);
     setAccountErrors(err ? { username: err } : {});
-    setAccountError('');
     if (err) return;
+    // Nothing to save if the username matches the last saved value.
+    if (username.trim() === committed.username) {
+      setAccountError(t('myProfile.noChanges'));
+      return;
+    }
+    setConfirmState({ message: t('myProfile.confirmAccountMsg'), onConfirm: doAccountUpdate });
+  }
 
-    setAccountSubmitting(true);
+  async function doAccountUpdate() {
+    setAccountSaving(true);
+    setAccountError('');
     try {
-      await updateProfile({ username });
-      setCommitted((c) => ({ ...c, username }));
-    } catch (apiErr) {
-      setAccountError(getApiErrorMessage(apiErr, t('myProfile.updateErrorGeneric')));
+      // The backend lowercases the username and rejects one already taken.
+      const updated = await updateProfile({ username });
+      queryClient.setQueryData(profileQueryKey, updated);
+      setCommitted((c) => ({ ...c, username: updated.username || username }));
+    } catch (e) {
+      setAccountError(getApiErrorMessage(e, t('signup.errorGeneric')));
     } finally {
-      setAccountSubmitting(false);
+      setAccountSaving(false);
     }
   }
 
   const accountFieldError = (field) =>
     accountErrors[field] ? { error: true, errorText: t(`signup.${accountErrors[field]}`) } : {};
 
-  function handlePasswordChange() {
+  function requestPasswordChange() {
     // Same rules the sign-up form enforces, plus a current-password check
     // and a new/confirm match.
     const next = {};
     if (!currentPassword) next.current = 'errRequired';
     const pass = validatePassword(newPassword);
     if (pass) next.new = pass;
-    if (!pass && confirmNewPassword !== newPassword) next.confirm = 'errorPassword';
+    else if (newPassword === currentPassword) next.new = 'errSamePassword';
+    if (!next.new && confirmNewPassword !== newPassword) next.confirm = 'errorPassword';
     setPwErrors(next);
     if (Object.values(next).some(Boolean)) return;
-    // TODO: submit currentPassword/newPassword to the password API.
+    setPwSubmitError('');
+    setPwSuccess('');
+    setConfirmState({ message: t('myProfile.confirmPasswordMsg'), onConfirm: doPasswordChange });
+  }
+
+  // The backend stages the new password and emails a confirmation link; the
+  // change only takes effect once the user clicks that link.
+  async function doPasswordChange() {
+    setPwSaving(true);
+    setPwSubmitError('');
+    try {
+      await requestPasswordChangeApi(currentPassword, newPassword);
+      setPwSuccess(t('myProfile.passwordEmailSent'));
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmNewPassword('');
+    } catch (e) {
+      setPwSubmitError(getApiErrorMessage(e, t('signup.errorGeneric')));
+    } finally {
+      setPwSaving(false);
+    }
+  }
+
+  // Runs the pending action, then closes the modal.
+  function handleConfirm() {
+    const action = confirmState?.onConfirm;
+    setConfirmState(null);
+    action?.();
   }
 
   // Clears a single password field's error once the user edits it.
@@ -238,46 +309,54 @@ export default function MyProfilePage({ onNavigate }) {
   const nameFieldError = (field) =>
     nameErrors[field] ? { error: true, errorText: t(`signup.${nameErrors[field]}`) } : {};
 
-  async function handleProfileUpdate() {
+  function requestProfileUpdate() {
     const next = {};
     allNameFields.forEach((f) => {
       const err = validateName(f.value, { lang: f.lang, required: f.required });
       if (err) next[f.key] = err;
     });
     setNameErrors(next);
-    setProfileError('');
     if (Object.values(next).some(Boolean)) return;
+    // Nothing to save if every field still matches the last saved snapshot.
+    const unchanged =
+      firstNameEn === committed.firstNameEn &&
+      lastNameEn === committed.lastNameEn &&
+      firstNameAr === committed.firstNameAr &&
+      lastNameAr === committed.lastNameAr &&
+      shortTitle === committed.shortTitle &&
+      bio === committed.bio &&
+      experience === committed.experience &&
+      location === committed.location &&
+      skills.length === committed.skills.length &&
+      skills.every((s, i) => s === committed.skills[i]);
+    if (unchanged) {
+      setProfileError(t('myProfile.noChanges'));
+      return;
+    }
+    setConfirmState({ message: t('myProfile.confirmProfileMsg'), onConfirm: doProfileUpdate });
+  }
 
-    setProfileSubmitting(true);
+  async function doProfileUpdate() {
+    setProfileSaving(true);
+    setProfileError('');
     try {
-      // Names are read-only on this tab (set once at signup) — only the
-      // fields the user can actually edit here are sent.
-      await updateProfile({
+      const updated = await updateProfile({
         job_title: shortTitle || null,
-        bio: bio || null,
         years_of_experience: experience || null,
         city_id: location || null,
+        bio: bio || null,
       });
-
-      // Best-effort, same as profile setup: attach newly chosen skills.
-      // Re-adding an already-linked skill is a no-op the backend rejects
-      // harmlessly, so we don't need to diff against the previous list.
-      await Promise.all(
-        skills
-          .map((name) => skillIdByName[name])
-          .filter(Boolean)
-          .map((skillId) => addSkillToProfile(skillId).catch(() => {})),
-      );
-
+      // Refresh the shared cache so the preview and navbar reflect the save.
+      queryClient.setQueryData(profileQueryKey, updated);
       setCommitted((c) => ({
         ...c,
         firstNameEn, lastNameEn, firstNameAr, lastNameAr,
         shortTitle, bio, experience, location, skills,
       }));
-    } catch (apiErr) {
-      setProfileError(getApiErrorMessage(apiErr, t('myProfile.updateErrorGeneric')));
+    } catch (err) {
+      setProfileError(getApiErrorMessage(err, t('signup.errorGeneric')));
     } finally {
-      setProfileSubmitting(false);
+      setProfileSaving(false);
     }
   }
 
@@ -327,6 +406,7 @@ export default function MyProfilePage({ onNavigate }) {
                     onChange={(e) => {
                       setUsername(e.target.value);
                       setAccountErrors((p) => (p.username ? {} : p));
+                      setAccountError('');
                     }}
                     className="myp__input"
                     {...accountFieldError('username')}
@@ -345,15 +425,15 @@ export default function MyProfilePage({ onNavigate }) {
                   />
                 </div>
 
-                {accountError && <p className="myp__error">{accountError}</p>}
+                {accountError && <p className="myp__form-error">{accountError}</p>}
 
                 <Button
                   type="button"
                   variant="primary"
                   size="sm"
                   className="myp__submit"
-                  onClick={handleAccountUpdate}
-                  disabled={accountSubmitting}
+                  onClick={requestAccountUpdate}
+                  disabled={accountSaving}
                 >
                   {t('myProfile.confirmAccountUpdate')}
                 </Button>
@@ -396,12 +476,16 @@ export default function MyProfilePage({ onNavigate }) {
 
                 <PasswordStrength password={newPassword} />
 
+                {pwSubmitError && <p className="myp__form-error">{pwSubmitError}</p>}
+                {pwSuccess && <p className="myp__form-success">{pwSuccess}</p>}
+
                 <Button
                   type="button"
                   variant="primary"
                   size="sm"
                   className="myp__submit"
-                  onClick={handlePasswordChange}
+                  onClick={requestPasswordChange}
+                  disabled={pwSaving}
                 >
                   {t('myProfile.confirmPasswordChange')}
                 </Button>
@@ -474,15 +558,15 @@ export default function MyProfilePage({ onNavigate }) {
                   className="myp__input--full"
                 />
 
-                {profileError && <p className="myp__error">{profileError}</p>}
+                {profileError && <p className="myp__form-error">{profileError}</p>}
 
                 <Button
                   type="button"
                   variant="primary"
                   size="sm"
                   className="myp__submit"
-                  onClick={handleProfileUpdate}
-                  disabled={profileSubmitting}
+                  onClick={requestProfileUpdate}
+                  disabled={profileSaving}
                 >
                   {t('myProfile.confirmProfileUpdate')}
                 </Button>
@@ -495,13 +579,31 @@ export default function MyProfilePage({ onNavigate }) {
             <h2 className="myp__card-title">{t('myProfile.previewTitle')}</h2>
 
             <div className="myp__avatar-wrap">
-              <span className="myp__avatar" aria-hidden="true">
-                {previewName.trim().charAt(0).toUpperCase()}
-              </span>
-              <button type="button" className="myp__avatar-btn" aria-label={t('myProfile.changePhoto')}>
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="" className="myp__avatar myp__avatar--img" />
+              ) : (
+                <span className="myp__avatar" aria-hidden="true">
+                  {previewName.trim().charAt(0).toUpperCase()}
+                </span>
+              )}
+              <button
+                type="button"
+                className="myp__avatar-btn"
+                aria-label={t('myProfile.changePhoto')}
+                onClick={() => fileInputRef.current?.click()}
+                disabled={avatarUploading}
+              >
                 <Camera width={24} height={24} aria-hidden="true" />
               </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                hidden
+                onChange={handleAvatarChange}
+              />
             </div>
+            {avatarError && <p className="myp__avatar-error">{avatarError}</p>}
 
             <p className="myp__preview-name">{previewName}</p>
             <p className="myp__preview-username">{committed.username}</p>
@@ -528,6 +630,16 @@ export default function MyProfilePage({ onNavigate }) {
           </aside>
         </main>
       </div>
+
+      <ConfirmDialog
+        open={!!confirmState}
+        title={t('myProfile.confirmTitle')}
+        message={confirmState?.message}
+        confirmLabel={t('myProfile.confirmYes')}
+        cancelLabel={t('myProfile.confirmCancel')}
+        onConfirm={handleConfirm}
+        onCancel={() => setConfirmState(null)}
+      />
     </div>
   );
 }
