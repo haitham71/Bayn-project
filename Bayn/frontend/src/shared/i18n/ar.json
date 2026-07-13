@@ -67,6 +67,9 @@
     "sectionExperience": "سنوات الخبرة",
     "sectionSkills": "المهارات",
     "changePhoto": "تغيير الصورة",
+    "avatarTypeError": "الصيغة غير مدعومة. استخدم JPG أو PNG أو WebP.",
+    "avatarSizeError": "حجم الصورة يتجاوز 5 ميجابايت.",
+    "avatarUploadError": "تعذّر رفع الصورة، حاول مرة أخرى.",
     "save": "حفظ التغييرات"
   },
   "calendar": {

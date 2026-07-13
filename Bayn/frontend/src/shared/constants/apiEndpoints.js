@@ -11,6 +11,7 @@ export const API = {
     login: '/auth/login',
     refresh: '/auth/refresh',
     profile: '/auth/profile',
+    avatar: '/auth/profile/avatar',
     sendEmailOtp: '/auth/verify-email/send',
     confirmEmailOtp: '/auth/verify-email/confirm',
     sendPhoneOtp: '/auth/verify-phone/send',

@@ -67,6 +67,9 @@
     "sectionExperience": "Years of Experience",
     "sectionSkills": "Skills",
     "changePhoto": "Change photo",
+    "avatarTypeError": "Unsupported format. Use JPG, PNG, or WebP.",
+    "avatarSizeError": "Image exceeds the 5MB limit.",
+    "avatarUploadError": "Couldn't upload the photo, please try again.",
     "save": "Save changes"
   },
   "calendar": {

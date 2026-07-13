@@ -120,6 +120,18 @@ export const confirmPhoneOtp = (otp_code) =>
 
 export const getProfile = () => api.get(API.auth.profile).then((r) => r.data);
 export const updateProfile = (payload) => api.patch(API.auth.profile, payload).then((r) => r.data);
+
+// Uploads the avatar as multipart/form-data and returns the updated profile
+// (which carries the fresh avatar_url). Let the browser set the boundary.
+export const uploadAvatar = (file) => {
+  const form = new FormData();
+  form.append('file', file);
+  return api
+    .post(API.auth.avatar, form, { headers: { 'Content-Type': 'multipart/form-data' } })
+    .then((r) => r.data);
+};
+
+export const deleteAvatar = () => api.delete(API.auth.avatar).then((r) => r.data);
 export const addSkillToProfile = (skill_id) =>
   api.post(API.profile.skills, { skill_id }).then((r) => r.data);
 export const addSpecializationToProfile = (specialization_id) =>

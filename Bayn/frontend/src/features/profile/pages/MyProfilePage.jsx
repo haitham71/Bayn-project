@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { getSaudiCountryId, getCities, searchSkills } from '@/features/identity/services/authService';
-import { useProfile } from '@/shared/hooks/useProfile';
+import { useQueryClient } from '@tanstack/react-query';
+import { getSaudiCountryId, getCities, searchSkills, uploadAvatar, updateProfile } from '@/features/identity/services/authService';
+import { useProfile, profileQueryKey } from '@/shared/hooks/useProfile';
+import { getApiErrorMessage } from '@/shared/lib/apiError';
 import Sidebar from '@/shared/components/Sidebar';
 import Navbar from '@/shared/components/Navbar';
 import Input from '@/shared/components/Input';
@@ -33,29 +35,12 @@ const EXPERIENCE_OPTIONS = [
   { value: '10+', label: '10+ Years' },
 ];
 
-// Seed values (stand-in for the account fetched from the API). Both the form
-// fields and the initial preview snapshot start from here.
-const SEED = {
-  username: 'assad.dev',
-  firstNameEn: 'Assad', secondNameEn: 'Saad', thirdNameEn: '', lastNameEn: 'Al-saeed',
-  firstNameAr: 'أسعد', secondNameAr: 'سعد', thirdNameAr: '', lastNameAr: 'السعيد',
-  shortTitle: 'Software Engineer',
-  bio: 'Experienced in software development and passionate about building innovative solutions. I enjoy collaborating with ambitious teams to create impactful products.',
-  experience: '2-3 Years',
-  location: 'Riyadh, Saudi Arabia',
-  skills: ['React', 'Node js', 'Python', 'Mysql', 'Java Script'],
+// The Profile View starts empty and fills in from the loaded profile.
+const EMPTY_PREVIEW = {
+  username: '',
+  firstNameEn: '', lastNameEn: '', firstNameAr: '', lastNameAr: '',
+  shortTitle: '', bio: '', experience: '', location: '', skills: [],
 };
-
-// The subset of fields the Profile View reflects.
-function previewSnapshot(s) {
-  return {
-    username: s.username,
-    firstNameEn: s.firstNameEn, lastNameEn: s.lastNameEn,
-    firstNameAr: s.firstNameAr, lastNameAr: s.lastNameAr,
-    shortTitle: s.shortTitle, bio: s.bio,
-    experience: s.experience, location: s.location, skills: s.skills,
-  };
-}
 
 // Small trailing eye toggle shared by the password fields.
 function eyeToggle(shown) {
@@ -67,7 +52,14 @@ function eyeToggle(shown) {
 export default function MyProfilePage({ onNavigate }) {
   const { t, i18n } = useTranslation();
   const { data: profile } = useProfile();
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('account');
+
+  // --- Avatar upload ---
+  const fileInputRef = useRef(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarError, setAvatarError] = useState('');
+  const avatarUrl = profile?.avatar_url || '';
 
   // --- Account information (loaded from the backend on mount) ---
   const [username, setUsername] = useState('');
@@ -92,11 +84,13 @@ export default function MyProfilePage({ onNavigate }) {
   const [secondNameAr, setSecondNameAr] = useState('');
   const [thirdNameAr, setThirdNameAr] = useState('');
   const [lastNameAr, setLastNameAr] = useState('');
-  const [shortTitle, setShortTitle] = useState('Software Engineer');
-  const [bio, setBio] = useState(SEED.bio);
+  const [shortTitle, setShortTitle] = useState('');
+  const [bio, setBio] = useState('');
   const [experience, setExperience] = useState('');
   const [location, setLocation] = useState('');
-  const [skills, setSkills] = useState(SEED.skills);
+  const [skills, setSkills] = useState([]);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileError, setProfileError] = useState('');
   const [cityOptions, setCityOptions] = useState([]);
   const [nameErrors, setNameErrors] = useState({});
 
@@ -106,11 +100,7 @@ export default function MyProfilePage({ onNavigate }) {
 
   // Values shown in the Profile View — updated only when changes are confirmed
   // (the mount effect below seeds it with the loaded profile).
-  const [committed, setCommitted] = useState(() => previewSnapshot({
-    ...SEED,
-    firstNameEn: '', lastNameEn: '', firstNameAr: '', lastNameAr: '',
-    experience: '', location: '',
-  }));
+  const [committed, setCommitted] = useState(EMPTY_PREVIEW);
 
   async function handleSkillQuery(q) {
     const results = await searchSkills(q);
@@ -138,6 +128,8 @@ export default function MyProfilePage({ onNavigate }) {
     setSecondNameAr(u.second_name_ar || '');
     setThirdNameAr(u.third_name_ar || '');
     setLastNameAr(u.last_name_ar || '');
+    setShortTitle(u.job_title || '');
+    setBio(u.bio || '');
     setExperience(u.years_of_experience || '');
     setLocation(u.city_id || '');
     setCommitted((c) => ({
@@ -147,6 +139,8 @@ export default function MyProfilePage({ onNavigate }) {
       lastNameEn: u.last_name_en || '',
       firstNameAr: u.first_name_ar || '',
       lastNameAr: u.last_name_ar || '',
+      shortTitle: u.job_title || '',
+      bio: u.bio || '',
       experience: u.years_of_experience || '',
       location: u.city_id || '',
     }));
@@ -159,6 +153,35 @@ export default function MyProfilePage({ onNavigate }) {
       .then((cities) => setCityOptions(cities.map((c) => ({ value: c.id, label: c.name_en }))))
       .catch(() => {});
   }, []);
+
+  // Validates the picked image (matching the backend's rules) then uploads it.
+  // The response is the fresh profile, so we write it straight into the cache —
+  // every page reading ['profile'] shows the new avatar immediately.
+  async function handleAvatarChange(e) {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // let the same file be re-picked after an error
+    if (!file) return;
+    setAvatarError('');
+
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setAvatarError(t('myProfile.avatarTypeError'));
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setAvatarError(t('myProfile.avatarSizeError'));
+      return;
+    }
+
+    setAvatarUploading(true);
+    try {
+      const updated = await uploadAvatar(file);
+      queryClient.setQueryData(profileQueryKey, updated);
+    } catch (err) {
+      setAvatarError(getApiErrorMessage(err, t('myProfile.avatarUploadError')));
+    } finally {
+      setAvatarUploading(false);
+    }
+  }
 
   const nameGroups = [
     {
@@ -225,7 +248,7 @@ export default function MyProfilePage({ onNavigate }) {
   const nameFieldError = (field) =>
     nameErrors[field] ? { error: true, errorText: t(`signup.${nameErrors[field]}`) } : {};
 
-  function handleProfileUpdate() {
+  async function handleProfileUpdate() {
     const next = {};
     allNameFields.forEach((f) => {
       const err = validateName(f.value, { lang: f.lang, required: f.required });
@@ -233,12 +256,28 @@ export default function MyProfilePage({ onNavigate }) {
     });
     setNameErrors(next);
     if (Object.values(next).some(Boolean)) return;
-    setCommitted((c) => ({
-      ...c,
-      firstNameEn, lastNameEn, firstNameAr, lastNameAr,
-      shortTitle, bio, experience, location, skills,
-    }));
-    // TODO: persist the profile fields via the profile API.
+
+    setProfileSaving(true);
+    setProfileError('');
+    try {
+      const updated = await updateProfile({
+        job_title: shortTitle || null,
+        years_of_experience: experience || null,
+        city_id: location || null,
+        bio: bio || null,
+      });
+      // Refresh the shared cache so the preview and navbar reflect the save.
+      queryClient.setQueryData(profileQueryKey, updated);
+      setCommitted((c) => ({
+        ...c,
+        firstNameEn, lastNameEn, firstNameAr, lastNameAr,
+        shortTitle, bio, experience, location, skills,
+      }));
+    } catch (err) {
+      setProfileError(getApiErrorMessage(err, t('signup.errorGeneric')));
+    } finally {
+      setProfileSaving(false);
+    }
   }
 
   // Preview name follows the active language (Arabic names on the AR UI).
@@ -431,12 +470,15 @@ export default function MyProfilePage({ onNavigate }) {
                   className="myp__input--full"
                 />
 
+                {profileError && <p className="myp__form-error">{profileError}</p>}
+
                 <Button
                   type="button"
                   variant="primary"
                   size="sm"
                   className="myp__submit"
                   onClick={handleProfileUpdate}
+                  disabled={profileSaving}
                 >
                   {t('myProfile.confirmProfileUpdate')}
                 </Button>
@@ -449,13 +491,31 @@ export default function MyProfilePage({ onNavigate }) {
             <h2 className="myp__card-title">{t('myProfile.previewTitle')}</h2>
 
             <div className="myp__avatar-wrap">
-              <span className="myp__avatar" aria-hidden="true">
-                {previewName.trim().charAt(0).toUpperCase()}
-              </span>
-              <button type="button" className="myp__avatar-btn" aria-label={t('myProfile.changePhoto')}>
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="" className="myp__avatar myp__avatar--img" />
+              ) : (
+                <span className="myp__avatar" aria-hidden="true">
+                  {previewName.trim().charAt(0).toUpperCase()}
+                </span>
+              )}
+              <button
+                type="button"
+                className="myp__avatar-btn"
+                aria-label={t('myProfile.changePhoto')}
+                onClick={() => fileInputRef.current?.click()}
+                disabled={avatarUploading}
+              >
                 <Camera width={24} height={24} aria-hidden="true" />
               </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                hidden
+                onChange={handleAvatarChange}
+              />
             </div>
+            {avatarError && <p className="myp__avatar-error">{avatarError}</p>}
 
             <p className="myp__preview-name">{previewName}</p>
             <p className="myp__preview-username">{committed.username}</p>

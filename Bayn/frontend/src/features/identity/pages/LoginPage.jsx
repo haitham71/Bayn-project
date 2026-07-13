@@ -6,6 +6,7 @@ import Input from '@/shared/components/Input';
 import Eye from '@/assets/icons/eye.svg?react';
 import EyeOff from '@/assets/icons/eye-off.svg?react';
 import { login } from '../services/authService';
+import { validateEmail } from '../utils/validation';
 import { getApiErrorMessage } from '@/shared/lib/apiError';
 import './LoginPage.css';
 
@@ -29,6 +30,12 @@ export default function LoginPage({ onNavigate }) {
     setError('');
     if (!email || !password) {
       setError(t('login.error'));
+      return;
+    }
+    // Catch a malformed email here so the user sees a localized message instead
+    // of the backend's raw English validation error.
+    if (validateEmail(email)) {
+      setError(t('signup.errEmail'));
       return;
     }
     setLoading(true);

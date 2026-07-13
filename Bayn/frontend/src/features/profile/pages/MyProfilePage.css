@@ -25,6 +25,8 @@
   border-radius: 8px;
   box-shadow: 0 0 4px rgba(0, 0, 0, 0.25);
   padding: 28px;
+  /* Hold the grid column widths fixed so long content can't stretch a card. */
+  min-width: 0;
 }
 
 .myp__card-title {
@@ -216,6 +218,10 @@
   font-weight: 700;
 }
 
+.myp__avatar--img {
+  object-fit: cover;
+}
+
 .myp__avatar-btn {
   position: absolute;
   bottom: 2px;
@@ -234,6 +240,24 @@
 
 .myp__avatar-btn:hover {
   background: var(--bg-surface-secondary, #d7cbb9);
+}
+
+.myp__avatar-btn:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.myp__avatar-error {
+  margin: -8px 0 16px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-error, #b23b3b);
+}
+
+.myp__form-error {
+  margin: -12px 0 0;
+  font-size: 14px;
+  color: var(--text-error, #b23b3b);
 }
 
 .myp__preview-name {
@@ -293,6 +317,14 @@
   font-size: 16px;
   line-height: 1.5;
   color: var(--text-body-2, #463e31);
+  /* Keep the preview card compact — clamp a long bio to a few lines with an
+     ellipsis; the full text stays editable in the form on the left. */
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: break-word;
 }
 
 .myp__preview-exp {
