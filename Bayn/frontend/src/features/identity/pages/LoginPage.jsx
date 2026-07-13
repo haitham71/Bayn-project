@@ -88,7 +88,7 @@ export default function LoginPage({ onNavigate }) {
         </Button>
 
         <div className="lp__links">
-          <a href="/forgot-password" className="lp__link">{t('login.forgot')}</a>
+          <button type="button" className="lp__link" onClick={() => onNavigate('forgotPassword')}>{t('login.forgot')}</button>
           <p className="lp__sub">
             {t('login.noAccount')}{' '}
             <button type="button" className="lp__link lp__link--bold" onClick={() => onNavigate('signup')}>

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
-import { getSaudiCountryId, getCities, searchSkills, uploadAvatar, updateProfile } from '@/features/identity/services/authService';
+import { getSaudiCountryId, getCities, searchSkills, uploadAvatar, updateProfile, requestPasswordChange as requestPasswordChangeApi } from '@/features/identity/services/authService';
 import { useProfile, profileQueryKey } from '@/shared/hooks/useProfile';
 import { getApiErrorMessage } from '@/shared/lib/apiError';
 import Sidebar from '@/shared/components/Sidebar';
@@ -78,6 +78,9 @@ export default function MyProfilePage({ onNavigate }) {
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [pwErrors, setPwErrors] = useState({});
+  const [pwSaving, setPwSaving] = useState(false);
+  const [pwSubmitError, setPwSubmitError] = useState('');
+  const [pwSuccess, setPwSuccess] = useState('');
 
   // --- Profile information (four-part name in both languages) ---
   // Names, experience and location load from the backend on mount.
@@ -257,14 +260,31 @@ export default function MyProfilePage({ onNavigate }) {
     if (!currentPassword) next.current = 'errRequired';
     const pass = validatePassword(newPassword);
     if (pass) next.new = pass;
-    if (!pass && confirmNewPassword !== newPassword) next.confirm = 'errorPassword';
+    else if (newPassword === currentPassword) next.new = 'errSamePassword';
+    if (!next.new && confirmNewPassword !== newPassword) next.confirm = 'errorPassword';
     setPwErrors(next);
     if (Object.values(next).some(Boolean)) return;
+    setPwSubmitError('');
+    setPwSuccess('');
     setConfirmState({ message: t('myProfile.confirmPasswordMsg'), onConfirm: doPasswordChange });
   }
 
-  function doPasswordChange() {
-    // TODO: submit currentPassword/newPassword to the password API.
+  // The backend stages the new password and emails a confirmation link; the
+  // change only takes effect once the user clicks that link.
+  async function doPasswordChange() {
+    setPwSaving(true);
+    setPwSubmitError('');
+    try {
+      await requestPasswordChangeApi(currentPassword, newPassword);
+      setPwSuccess(t('myProfile.passwordEmailSent'));
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmNewPassword('');
+    } catch (e) {
+      setPwSubmitError(getApiErrorMessage(e, t('signup.errorGeneric')));
+    } finally {
+      setPwSaving(false);
+    }
   }
 
   // Runs the pending action, then closes the modal.
@@ -456,12 +476,16 @@ export default function MyProfilePage({ onNavigate }) {
 
                 <PasswordStrength password={newPassword} />
 
+                {pwSubmitError && <p className="myp__form-error">{pwSubmitError}</p>}
+                {pwSuccess && <p className="myp__form-success">{pwSuccess}</p>}
+
                 <Button
                   type="button"
                   variant="primary"
                   size="sm"
                   className="myp__submit"
                   onClick={requestPasswordChange}
+                  disabled={pwSaving}
                 >
                   {t('myProfile.confirmPasswordChange')}
                 </Button>

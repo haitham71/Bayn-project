@@ -116,6 +116,23 @@ export const sendPhoneOtp = () => api.post(API.auth.sendPhoneOtp).then((r) => r.
 export const confirmPhoneOtp = (otp_code) =>
   api.post(API.auth.confirmPhoneOtp, { otp_code }).then((r) => r.data);
 
+// ── Password reset (forgot flow: request emails a link, reset sets a new one) ──
+
+export const forgotPassword = (email) =>
+  api.post(API.auth.passwordForgot, { email }).then((r) => r.data);
+
+export const resetPassword = (token, new_password) =>
+  api.post(API.auth.passwordReset, { token, new_password }).then((r) => r.data);
+
+// ── Password change (logged-in flow: request emails a link, confirm applies it) ─
+
+export const requestPasswordChange = (current_password, new_password) =>
+  api.post(API.auth.passwordChangeRequest, { current_password, new_password }).then((r) => r.data);
+
+// The confirm endpoint takes the token as a query param, not a body.
+export const confirmPasswordChange = (token) =>
+  api.post(API.auth.passwordChangeConfirm, null, { params: { token } }).then((r) => r.data);
+
 // ── Profile ─────────────────────────────────────────────────────────────────
 
 export const getProfile = () => api.get(API.auth.profile).then((r) => r.data);

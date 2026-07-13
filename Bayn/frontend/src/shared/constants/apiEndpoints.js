@@ -16,6 +16,10 @@ export const API = {
     confirmEmailOtp: '/auth/verify-email/confirm',
     sendPhoneOtp: '/auth/verify-phone/send',
     confirmPhoneOtp: '/auth/verify-phone/confirm',
+    passwordForgot: '/auth/password/forgot',
+    passwordReset: '/auth/password/reset',
+    passwordChangeRequest: '/auth/password/change/request',
+    passwordChangeConfirm: '/auth/password/change/confirm',
   },
   catalog: {
     countries: '/catalog/countries',

@@ -260,6 +260,13 @@
   color: var(--text-error, #b23b3b);
 }
 
+.myp__form-success {
+  margin: -12px 0 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--btn-primary-default, #295e4d);
+}
+
 .myp__preview-name {
   margin: 0;
   text-align: center;
