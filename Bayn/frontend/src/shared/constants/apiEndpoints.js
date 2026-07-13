@@ -4,9 +4,13 @@
 export const API = {
   auth: {
     signup: '/auth/signup',
+    signupVerifyEmail: '/auth/signup/verify-email',
+    signupVerifyPhone: '/auth/signup/verify-phone',
+    signupResendEmail: '/auth/signup/resend-email',
+    signupResendPhone: '/auth/signup/resend-phone',
     login: '/auth/login',
     refresh: '/auth/refresh',
-    me: '/auth/me',
+    profile: '/auth/profile',
     sendEmailOtp: '/auth/verify-email/send',
     confirmEmailOtp: '/auth/verify-email/confirm',
     sendPhoneOtp: '/auth/verify-phone/send',
@@ -14,5 +18,12 @@ export const API = {
   },
   catalog: {
     countries: '/catalog/countries',
+    cities: '/catalog/cities',
+    industries: '/catalog/industries',
+    skillsSearch: '/catalog/skills/search',
+  },
+  profile: {
+    skills: '/profile/skills',
+    specializations: '/profile/specializations',
   },
 };

@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from bayn.common.exceptions import InvalidTokenError
 from bayn.core.database import get_db
 from bayn.core.i18n import get_locale
-from bayn.core.security import decode_token
+from bayn.core.security import decode_refresh_token
 from bayn.features.identity import service
 from bayn.features.identity.dependencies import get_current_active_user
 from bayn.features.identity.models import User
@@ -15,13 +15,21 @@ from bayn.features.identity.schemas import (
     MessageResponse,
     OTPSendResponse,
     OTPVerifyRequest,
+    PendingOTPVerifyRequest,
+    PendingResendRequest,
+    PendingSignupResponse,
     RefreshTokenRequest,
     TokenResponse,
     UpdateProfileRequest,
     UserResponse,
     UserSignup,
     UserLogin,
+    PasswordActionMessageResponse,
+    ForgotPasswordRequest,
+    ResetPasswordConfirm,
+    ChangePasswordRequest,
 )
+from bayn.features.identity import password_service
 from bayn.features.identity.service import _build_user_response
 
 router = APIRouter(prefix="/auth", tags=["Identity"])
@@ -29,13 +37,49 @@ router = APIRouter(prefix="/auth", tags=["Identity"])
 
 # ── Auth ──────────────────────────────────────────────────────────────────────
 
-@router.post("/signup", response_model=TokenResponse, status_code=201, summary="إنشاء حساب جديد")
+@router.post("/signup", response_model=PendingSignupResponse, summary="بدء إنشاء حساب جديد (يرسل رمز تحقق للإيميل)")
 async def signup(
     payload: UserSignup,
     db: AsyncSession = Depends(get_db),
     locale: str = Depends(get_locale),
+) -> PendingSignupResponse:
+    return await service.start_signup(db, payload, locale)
+
+
+@router.post("/signup/verify-email", response_model=PendingSignupResponse, summary="تأكيد رمز الإيميل أثناء التسجيل")
+async def signup_verify_email(
+    payload: PendingOTPVerifyRequest,
+    db: AsyncSession = Depends(get_db),
+    locale: str = Depends(get_locale),
+) -> PendingSignupResponse:
+    return await service.confirm_signup_email(db, payload.pending_token, payload.otp_code, locale)
+
+
+@router.post("/signup/verify-phone", response_model=TokenResponse, status_code=201, summary="تأكيد رمز الجوال وإنشاء الحساب")
+async def signup_verify_phone(
+    payload: PendingOTPVerifyRequest,
+    db: AsyncSession = Depends(get_db),
+    locale: str = Depends(get_locale),
 ) -> TokenResponse:
-    return await service.create_user(db, payload, locale)
+    return await service.confirm_signup_phone(db, payload.pending_token, payload.otp_code, locale)
+
+
+@router.post("/signup/resend-email", response_model=PendingSignupResponse, summary="إعادة إرسال رمز الإيميل أثناء التسجيل")
+async def signup_resend_email(
+    payload: PendingResendRequest,
+    db: AsyncSession = Depends(get_db),
+    locale: str = Depends(get_locale),
+) -> PendingSignupResponse:
+    return await service.resend_signup_email_otp(db, payload.pending_token, locale)
+
+
+@router.post("/signup/resend-phone", response_model=PendingSignupResponse, summary="إعادة إرسال رمز الجوال أثناء التسجيل")
+async def signup_resend_phone(
+    payload: PendingResendRequest,
+    db: AsyncSession = Depends(get_db),
+    locale: str = Depends(get_locale),
+) -> PendingSignupResponse:
+    return await service.resend_signup_phone_otp(db, payload.pending_token, locale)
 
 
 @router.post("/login", response_model=TokenResponse, summary="تسجيل الدخول")
@@ -55,33 +99,35 @@ async def refresh_token(
 ) -> TokenResponse:
     # decoded here, not in a dependency, because the deps expect an access token
     try:
-        user_id = decode_token(payload.refresh_token, expected_type="refresh")
+        user_id, jti = decode_refresh_token(payload.refresh_token)
     except jwt.PyJWTError:
         raise InvalidTokenError()
 
-    return await service.refresh_access_token(db, user_id, locale)
+    return await service.refresh_access_token(db, user_id, jti, locale)
 
 
 # ── Profile ───────────────────────────────────────────────────────────────────
 
-@router.get("/me", response_model=UserResponse, summary="جلب بيانات المستخدم الحالي")
-async def get_me(
-    current_user: User = Depends(get_current_active_user),
-) -> UserResponse:
-    return _build_user_response(current_user)
-
-
-@router.patch("/me", response_model=UserResponse, summary="تحديث الملف الشخصي")
-async def update_me(
-    payload: UpdateProfileRequest,
+@router.get("/profile", response_model=UserResponse, summary="جلب بيانات المستخدم الحالي")
+async def get_profile(
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ) -> UserResponse:
-    return await service.update_profile(db, current_user, payload)
+    return await _build_user_response(db, current_user)
 
 
-@router.delete("/me", response_model=MessageResponse, summary="حذف الحساب (soft delete)")
-async def delete_me(
+@router.patch("/profile", response_model=UserResponse, summary="تحديث الملف الشخصي")
+async def update_profile(
+    payload: UpdateProfileRequest,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+    locale: str = Depends(get_locale),
+) -> UserResponse:
+    return await service.update_profile(db, current_user, payload, locale)
+
+
+@router.delete("/profile", response_model=MessageResponse, summary="حذف الحساب (soft delete)")
+async def delete_profile(
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ) -> MessageResponse:
@@ -91,7 +137,7 @@ async def delete_me(
 
 # ── Avatar ────────────────────────────────────────────────────────────────────
 
-@router.post("/me/avatar", response_model=UserResponse, summary="رفع أو تحديث صورة الملف الشخصي")
+@router.post("/profile/avatar", response_model=UserResponse, summary="رفع أو تحديث صورة الملف الشخصي")
 async def upload_avatar(
     file: UploadFile = File(..., description="JPG / PNG / WebP, max 5MB"),
     current_user: User = Depends(get_current_active_user),
@@ -108,7 +154,7 @@ async def upload_avatar(
     )
 
 
-@router.delete("/me/avatar", response_model=UserResponse, summary="حذف صورة الملف الشخصي")
+@router.delete("/profile/avatar", response_model=UserResponse, summary="حذف صورة الملف الشخصي")
 async def delete_avatar(
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
@@ -161,3 +207,65 @@ async def confirm_phone_otp(
     return await service.verify_phone_otp(
         db=db, user=current_user, otp_code=payload.otp_code, locale=locale,
     )
+
+# ── Forgot Password (RESET flow - unauthenticated) ────────────────────────
+
+
+
+@router.post(
+    "/password/forgot",
+    response_model=PasswordActionMessageResponse,
+    summary="طلب رابط إعادة تعيين كلمة المرور",
+)
+async def forgot_password(
+    payload: ForgotPasswordRequest,
+    db: AsyncSession = Depends(get_db),
+    locale: str = Depends(get_locale),
+) -> PasswordActionMessageResponse:
+    return await password_service.request_password_reset(db, payload.email, locale)
+
+
+@router.post(
+    "/password/reset",
+    response_model=PasswordActionMessageResponse,
+    summary="تأكيد إعادة تعيين كلمة المرور",
+)
+async def reset_password(
+    payload: ResetPasswordConfirm,
+    db: AsyncSession = Depends(get_db),
+    locale: str = Depends(get_locale),
+) -> PasswordActionMessageResponse:
+    return await password_service.confirm_password_reset(
+        db, payload.token, payload.new_password, locale
+    )
+
+
+# ── Change Password (CHANGE flow - authenticated) ─────────────────────────
+
+@router.post(
+    "/password/change/request",
+    response_model=PasswordActionMessageResponse,
+    summary="طلب تغيير كلمة المرور (يرسل رابط تأكيد)",
+)
+async def change_password_request(
+    payload: ChangePasswordRequest,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+    locale: str = Depends(get_locale),
+) -> PasswordActionMessageResponse:
+    return await password_service.request_password_change(
+        db, current_user, payload.current_password, payload.new_password, locale
+    )
+
+
+@router.post(
+    "/password/change/confirm",
+    response_model=PasswordActionMessageResponse,
+    summary="تأكيد تغيير كلمة المرور عبر الرابط",
+)
+async def change_password_confirm(
+    token: str,
+    db: AsyncSession = Depends(get_db),
+    locale: str = Depends(get_locale),
+) -> PasswordActionMessageResponse:
+    return await password_service.confirm_password_change(db, token, locale)

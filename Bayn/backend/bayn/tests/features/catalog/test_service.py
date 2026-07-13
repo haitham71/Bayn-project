@@ -16,7 +16,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from bayn.common.exceptions import ConflictError, NotFoundError
+from bayn.common.exceptions import ConflictError, NotFoundError, ValidationError
 from bayn.features.catalog.models import (
     Industry, Skill, Specialization, UserSkill, UserSpecialization,
 )
@@ -115,13 +115,31 @@ async def test_add_skill_to_user_success(db):
     db.scalar.return_value = None  # no existing link for this (user, skill) pair
 
     created_link = MagicMock(spec=UserSkill)
-    db.execute.return_value = make_execute_result(scalar_one=created_link)
+    db.execute.side_effect = [
+        make_execute_result(scalar_one=0),             # current skill count
+        make_execute_result(scalar_one=created_link),  # reload with skill relationship
+    ]
 
     result = await service.add_skill_to_user(db, user_id, skill_id)
 
     assert result is created_link
     db.add.assert_called_once()
     db.commit.assert_awaited_once()
+
+
+async def test_add_skill_to_user_limit_reached(db):
+    user_id = uuid.uuid4()
+    skill_id = uuid.uuid4()
+
+    db.get.return_value = MagicMock(spec=Skill, id=skill_id)
+    db.scalar.return_value = None
+    db.execute.return_value = make_execute_result(scalar_one=7)  # already at the cap
+
+    with pytest.raises(ValidationError):
+        await service.add_skill_to_user(db, user_id, skill_id)
+
+    db.add.assert_not_called()
+    db.commit.assert_not_awaited()
 
 
 async def test_add_skill_to_user_skill_not_found(db):

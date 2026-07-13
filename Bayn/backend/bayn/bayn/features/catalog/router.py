@@ -10,7 +10,7 @@ from bayn.core.i18n import get_locale
 from bayn.features.catalog import service
 from bayn.features.catalog.schemas import (
     AddSkillRequest, AddSpecializationRequest,
-    CountryResponse, IndustryResponse, SkillResponse,
+    CityResponse, CountryResponse, IndustryResponse, SkillResponse, SpecializationResponse,
     UserSkillResponse, UserSpecializationResponse,
 )
 from bayn.features.identity.dependencies import get_current_active_user
@@ -25,9 +25,22 @@ async def list_countries(db: AsyncSession = Depends(get_db)) -> list[CountryResp
     return await service.get_all_countries(db)
 
 
+@catalog_router.get("/cities", response_model=list[CityResponse], summary="List cities (optionally filtered by country)")
+async def list_cities(
+    country_id: uuid.UUID | None = Query(None, description="Filter cities by country"),
+    db: AsyncSession = Depends(get_db),
+) -> list[CityResponse]:
+    return await service.get_all_cities(db, country_id)
+
+
 @catalog_router.get("/industries", response_model=list[IndustryResponse], summary="List all industries")
 async def list_industries(db: AsyncSession = Depends(get_db)) -> list[IndustryResponse]:
     return await service.get_all_industries(db)
+
+
+@catalog_router.get("/specializations", response_model=list[SpecializationResponse], summary="List all specializations")
+async def list_specializations(db: AsyncSession = Depends(get_db)) -> list[SpecializationResponse]:
+    return await service.get_all_specializations(db)
 
 
 @catalog_router.get("/skills/search", response_model=list[SkillResponse], summary="Skill autocomplete")

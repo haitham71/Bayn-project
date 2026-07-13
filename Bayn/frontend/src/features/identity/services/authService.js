@@ -34,6 +34,21 @@ function toPhoneNumber(phone) {
   return local ? Number(local) : null;
 }
 
+export async function getCities(countryId) {
+  const { data } = await api.get(API.catalog.cities, { params: { country_id: countryId } });
+  return data;
+}
+
+export async function getIndustries() {
+  const { data } = await api.get(API.catalog.industries);
+  return data;
+}
+
+export async function searchSkills(query) {
+  const { data } = await api.get(API.catalog.skillsSearch, { params: { q: query } });
+  return data;
+}
+
 export function toSignupPayload(form, phoneCountryId) {
   const opt = (v) => (v && v.trim() ? v.trim() : null);
   return {
@@ -56,13 +71,31 @@ export function toSignupPayload(form, phoneCountryId) {
 
 // ── Auth ────────────────────────────────────────────────────────────────────
 
-// Signup logs the user straight in — the response carries the tokens + user.
+// Starts a pending signup: the backend stores the data, sends the email OTP and
+// returns a pending_token (no account/tokens yet — those come after the phone
+// step). All OTP sending is done by the backend; the frontend only verifies.
 export async function signup(form) {
   const phoneCountryId = await getSaudiCountryId();
   const { data } = await api.post(API.auth.signup, toSignupPayload(form, phoneCountryId));
-  setTokens(data);
-  return data;
+  return data; // PendingSignupResponse { pending_token, message, email_verified, phone_verified }
 }
+
+// Confirms the email OTP during signup; the backend then sends the phone OTP.
+export const signupVerifyEmail = (pending_token, otp_code) =>
+  api.post(API.auth.signupVerifyEmail, { pending_token, otp_code }).then((r) => r.data);
+
+// Confirms the phone OTP, which creates the account and logs the user in.
+export const signupVerifyPhone = (pending_token, otp_code) =>
+  api.post(API.auth.signupVerifyPhone, { pending_token, otp_code }).then((r) => {
+    setTokens(r.data);
+    return r.data;
+  });
+
+export const signupResendEmail = (pending_token) =>
+  api.post(API.auth.signupResendEmail, { pending_token }).then((r) => r.data);
+
+export const signupResendPhone = (pending_token) =>
+  api.post(API.auth.signupResendPhone, { pending_token }).then((r) => r.data);
 
 export async function login({ email, password }) {
   const { data } = await api.post(API.auth.login, { email, password });
@@ -82,3 +115,12 @@ export const confirmEmailOtp = (otp_code) =>
 export const sendPhoneOtp = () => api.post(API.auth.sendPhoneOtp).then((r) => r.data);
 export const confirmPhoneOtp = (otp_code) =>
   api.post(API.auth.confirmPhoneOtp, { otp_code }).then((r) => r.data);
+
+// ── Profile ─────────────────────────────────────────────────────────────────
+
+export const getProfile = () => api.get(API.auth.profile).then((r) => r.data);
+export const updateProfile = (payload) => api.patch(API.auth.profile, payload).then((r) => r.data);
+export const addSkillToProfile = (skill_id) =>
+  api.post(API.profile.skills, { skill_id }).then((r) => r.data);
+export const addSpecializationToProfile = (specialization_id) =>
+  api.post(API.profile.specializations, { specialization_id }).then((r) => r.data);

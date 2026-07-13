@@ -1,0 +1,221 @@
+/* My projects — dashboard: owned/working project sections + calendar rail.
+   Shares the fixed floating sidebar with the other dashboard screens. */
+.mp {
+  min-height: 100vh;
+  background: var(--bg-surface-primary);
+}
+
+.mp__main {
+  padding-block: 22px 40px;
+  padding-inline: 108px 40px;
+}
+
+.mp__body {
+  margin-top: 26px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 388px;
+  align-items: start;
+  gap: 24px;
+}
+
+.mp__content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Section shell (bordered card holding the heading + project cards). */
+.mp__section {
+  border: 1px solid var(--bg-surface-secondary, #d7cbb9);
+  border-radius: 8px;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.25);
+  padding: 24px;
+}
+
+.mp__title {
+  margin: 0 0 20px;
+  font-family: var(--font-sans);
+  font-size: 32px;
+  font-weight: 550;
+  letter-spacing: -0.72px;
+  color: var(--text-title, #0f3d2e);
+}
+
+.mp__cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+/* ---- Project card ---- */
+.mp__project {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  min-height: 180px;
+  padding: 16px;
+  border: 1px solid var(--bg-surface-secondary, #d7cbb9);
+  border-radius: 8px;
+  background: var(--bg-surface-primary, #ebe5dc);
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.12);
+}
+
+.mp__project-label {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-title, #0f3d2e);
+}
+
+.mp__project-title {
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-title, #0f3d2e);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.mp__pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.mp__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 20px;
+  background: var(--bg-surface-secondary, #d7cbb9);
+  color: var(--text-title, #0f3d2e);
+  font-size: 12px;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+}
+
+.mp__project-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: auto;
+}
+
+.mp__posted {
+  font-size: 12px;
+  color: var(--text-supporting, #786c57);
+}
+
+.mp__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--btn-primary-default, #295e4d);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.mp__link:hover {
+  opacity: 0.75;
+}
+
+/* ---- Post-new card ---- */
+.mp__add {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 180px;
+  border: 1px solid var(--bg-surface-secondary, #d7cbb9);
+  border-radius: 8px;
+  background: var(--bg-surface-primary, #ebe5dc);
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.15);
+  color: var(--text-supporting, #786c57);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.mp__add:hover {
+  background: var(--bg-surface-secondary, #d7cbb9);
+}
+
+.mp__add-label {
+  font-family: var(--font-sans);
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--text-body-2, #463e31);
+}
+
+/* ---- Calendar + meetings rail ---- */
+.mp__side {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 12px;
+  border: 1px solid var(--bg-surface-secondary, #d7cbb9);
+  border-radius: 10px;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.25);
+}
+
+.mp__meetings {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.mp__meeting {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 8px;
+  border: 1px solid var(--bg-surface-secondary, #d7cbb9);
+  border-radius: 4px;
+  background: var(--bg-surface-primary, #ebe5dc);
+  box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+}
+
+.mp__meeting-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.mp__meeting-project {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-title, #0f3d2e);
+}
+
+.mp__meeting-note {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-supporting, #786c57);
+}
+
+@media (max-width: 1100px) {
+  .mp__body {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .mp__main {
+    padding-inline: 24px;
+  }
+}

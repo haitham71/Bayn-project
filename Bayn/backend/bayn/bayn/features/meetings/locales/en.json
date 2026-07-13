@@ -1,0 +1,23 @@
+{
+  "request": {
+    "project_not_found": "Project not found",
+    "member_only": "Only a project member can request a meeting with the owner",
+    "owner_cannot_request_self": "You can't request a meeting with yourself",
+    "invalid_time_range": "The proposed end time must be after the start time",
+    "time_in_past": "The proposed time must be in the future",
+    "not_found": "Meeting request not found",
+    "not_addressed_to_you": "This meeting request isn't addressed to you",
+    "not_your_request": "This isn't your meeting request",
+    "not_pending": "This meeting request is no longer pending",
+    "expired": "This meeting request has expired",
+    "daily_limit_reached": "This member already has 3 meetings scheduled that day",
+    "room_creation_failed": "Failed to create the video room. Please try again."
+  },
+  "meeting": {
+    "not_found": "Meeting not found",
+    "not_a_participant": "You're not a participant in this meeting"
+  },
+  "attendance": {
+    "not_found": "Attendance record not found"
+  }
+}

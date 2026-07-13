@@ -6,9 +6,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from bayn.common.exceptions import ConflictError, NotFoundError
+from bayn.common.exceptions import ConflictError, NotFoundError, ValidationError
 from bayn.core.i18n import DEFAULT_LOCALE, t
-from bayn.features.identity.models import Country
+from bayn.features.identity import service as identity_service
+from bayn.features.identity.models import City, Country
 from bayn.features.catalog.models import (
     Industry, Skill, Specialization, UserSkill, UserSpecialization,
 )
@@ -19,8 +20,23 @@ async def get_all_countries(db: AsyncSession) -> list[Country]:
     return result.scalars().all()
 
 
+async def get_all_cities(db: AsyncSession, country_id: uuid.UUID | None = None) -> list[City]:
+    query = select(City).order_by(City.name_en)
+    if country_id is not None:
+        query = query.where(City.country_id == country_id)
+    result = await db.execute(query)
+    return result.scalars().all()
+
+
 async def get_all_industries(db: AsyncSession) -> list[Industry]:
     result = await db.execute(select(Industry).order_by(Industry.name))
+    return result.scalars().all()
+
+
+async def get_all_specializations(db: AsyncSession) -> list[Specialization]:
+    result = await db.execute(
+        select(Specialization).where(Specialization.is_approved == True).order_by(Specialization.name)
+    )
     return result.scalars().all()
 
 
@@ -49,6 +65,10 @@ async def add_skill_to_user(
     )
     if existing:
         raise ConflictError(t("catalog", "skill.already_added", locale))
+
+    skill_count = await identity_service._count_user_skills(db, user_id)
+    if skill_count >= identity_service.MAX_SKILLS_PER_USER:
+        raise ValidationError(t("catalog", "skill.limit_reached", locale))
 
     link = UserSkill(user_id=user_id, skill_id=skill_id)
     db.add(link)

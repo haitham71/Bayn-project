@@ -1,0 +1,6 @@
+{
+  "errors": {
+    "external_api_failed": "Failed to initiate contract on Haitham's Signature-System API.",
+    "contract_not_found": "The requested contract was not found locally."
+  }
+}
