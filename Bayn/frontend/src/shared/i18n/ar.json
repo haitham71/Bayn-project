@@ -62,6 +62,7 @@
     "confirmNewPassword": "تأكيد كلمة المرور الجديدة",
     "confirmPasswordChange": "تأكيد تغيير كلمة المرور",
     "confirmAccountUpdate": "تأكيد تحديث معلومات الحساب",
+    "updateErrorGeneric": "حدث خطأ ما. حاول مرة أخرى.",
     "confirmProfileUpdate": "تأكيد تحديث المعلومات الشخصية",
     "sectionBio": "نبذة تعريفية",
     "sectionExperience": "سنوات الخبرة",

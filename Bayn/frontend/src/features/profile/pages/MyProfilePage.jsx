@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { getProfile, getSaudiCountryId, getCities, searchSkills } from '@/features/identity/services/authService';
+import { getProfile, updateProfile, getSaudiCountryId, getCities, searchSkills, addSkillToProfile } from '@/features/identity/services/authService';
+import { getApiErrorMessage } from '@/shared/lib/apiError';
 import Sidebar from '@/shared/components/Sidebar';
 import Navbar from '@/shared/components/Navbar';
 import Input from '@/shared/components/Input';
@@ -72,6 +73,8 @@ export default function MyProfilePage({ onNavigate }) {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [accountErrors, setAccountErrors] = useState({});
+  const [accountError, setAccountError] = useState('');
+  const [accountSubmitting, setAccountSubmitting] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
@@ -97,6 +100,8 @@ export default function MyProfilePage({ onNavigate }) {
   const [skills, setSkills] = useState(SEED.skills);
   const [cityOptions, setCityOptions] = useState([]);
   const [nameErrors, setNameErrors] = useState({});
+  const [profileError, setProfileError] = useState('');
+  const [profileSubmitting, setProfileSubmitting] = useState(false);
 
   // Built up as skill search results come in — resolves a chosen skill name
   // back to the skill_id the backend needs when it's actually saved.
@@ -137,6 +142,8 @@ export default function MyProfilePage({ onNavigate }) {
       setLastNameAr(u.last_name_ar || '');
       setExperience(u.years_of_experience || '');
       setLocation(u.city_id || '');
+      setShortTitle(u.job_title || '');
+      setBio(u.bio || '');
       setCommitted((c) => ({
         ...c,
         username: u.username || '',
@@ -146,6 +153,8 @@ export default function MyProfilePage({ onNavigate }) {
         lastNameAr: u.last_name_ar || '',
         experience: u.years_of_experience || '',
         location: u.city_id || '',
+        shortTitle: u.job_title || '',
+        bio: u.bio || '',
       }));
     }).catch(() => {});
 
@@ -180,13 +189,22 @@ export default function MyProfilePage({ onNavigate }) {
   const allNameFields = nameGroups.flatMap((g) => g.fields);
 
 
-  // Confirm actions — validate, then push the values into the preview snapshot.
-  function handleAccountUpdate() {
+  // Confirm actions — validate, then persist via the API and push into the preview snapshot.
+  async function handleAccountUpdate() {
     const err = validateUsername(username);
     setAccountErrors(err ? { username: err } : {});
+    setAccountError('');
     if (err) return;
-    setCommitted((c) => ({ ...c, username }));
-    // TODO: persist username via the account API.
+
+    setAccountSubmitting(true);
+    try {
+      await updateProfile({ username });
+      setCommitted((c) => ({ ...c, username }));
+    } catch (apiErr) {
+      setAccountError(getApiErrorMessage(apiErr, t('myProfile.updateErrorGeneric')));
+    } finally {
+      setAccountSubmitting(false);
+    }
   }
 
   const accountFieldError = (field) =>
@@ -220,20 +238,47 @@ export default function MyProfilePage({ onNavigate }) {
   const nameFieldError = (field) =>
     nameErrors[field] ? { error: true, errorText: t(`signup.${nameErrors[field]}`) } : {};
 
-  function handleProfileUpdate() {
+  async function handleProfileUpdate() {
     const next = {};
     allNameFields.forEach((f) => {
       const err = validateName(f.value, { lang: f.lang, required: f.required });
       if (err) next[f.key] = err;
     });
     setNameErrors(next);
+    setProfileError('');
     if (Object.values(next).some(Boolean)) return;
-    setCommitted((c) => ({
-      ...c,
-      firstNameEn, lastNameEn, firstNameAr, lastNameAr,
-      shortTitle, bio, experience, location, skills,
-    }));
-    // TODO: persist the profile fields via the profile API.
+
+    setProfileSubmitting(true);
+    try {
+      // Names are read-only on this tab (set once at signup) — only the
+      // fields the user can actually edit here are sent.
+      await updateProfile({
+        job_title: shortTitle || null,
+        bio: bio || null,
+        years_of_experience: experience || null,
+        city_id: location || null,
+      });
+
+      // Best-effort, same as profile setup: attach newly chosen skills.
+      // Re-adding an already-linked skill is a no-op the backend rejects
+      // harmlessly, so we don't need to diff against the previous list.
+      await Promise.all(
+        skills
+          .map((name) => skillIdByName[name])
+          .filter(Boolean)
+          .map((skillId) => addSkillToProfile(skillId).catch(() => {})),
+      );
+
+      setCommitted((c) => ({
+        ...c,
+        firstNameEn, lastNameEn, firstNameAr, lastNameAr,
+        shortTitle, bio, experience, location, skills,
+      }));
+    } catch (apiErr) {
+      setProfileError(getApiErrorMessage(apiErr, t('myProfile.updateErrorGeneric')));
+    } finally {
+      setProfileSubmitting(false);
+    }
   }
 
   // Preview name follows the active language (Arabic names on the AR UI).
@@ -300,12 +345,15 @@ export default function MyProfilePage({ onNavigate }) {
                   />
                 </div>
 
+                {accountError && <p className="myp__error">{accountError}</p>}
+
                 <Button
                   type="button"
                   variant="primary"
                   size="sm"
                   className="myp__submit"
                   onClick={handleAccountUpdate}
+                  disabled={accountSubmitting}
                 >
                   {t('myProfile.confirmAccountUpdate')}
                 </Button>
@@ -426,12 +474,15 @@ export default function MyProfilePage({ onNavigate }) {
                   className="myp__input--full"
                 />
 
+                {profileError && <p className="myp__error">{profileError}</p>}
+
                 <Button
                   type="button"
                   variant="primary"
                   size="sm"
                   className="myp__submit"
                   onClick={handleProfileUpdate}
+                  disabled={profileSubmitting}
                 >
                   {t('myProfile.confirmProfileUpdate')}
                 </Button>

@@ -91,6 +91,12 @@
   gap: 24px;
 }
 
+.myp__error {
+  margin: 0;
+  font-size: 13px;
+  color: #900000;
+}
+
 .myp__section-title {
   margin: 4px 0 -4px;
   font-family: var(--font-sans);

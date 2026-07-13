@@ -62,6 +62,7 @@
     "confirmNewPassword": "Confirm new password",
     "confirmPasswordChange": "Confirm password change",
     "confirmAccountUpdate": "Confirm account update",
+    "updateErrorGeneric": "Something went wrong. Please try again.",
     "confirmProfileUpdate": "Confirm profile update",
     "sectionBio": "Bio",
     "sectionExperience": "Years of Experience",
