@@ -26,28 +26,21 @@ class CalComClient:
         self.client_id = settings.CALCOM_CLIENT_ID
         self.client_secret = settings.CALCOM_CLIENT_SECRET
 
-    def _headers(self, api_version: str) -> dict:
+    def _headers(self) -> dict:
         return {
             "Authorization": f"Bearer {self.api_key}",
-            "cal-api-version": api_version,
+            "cal-api-version": "2024-08-13",
         }
 
-    async def get_available_slots(
-        self,
-        event_type_id: str,
-        start_date: str,
-        end_date: str,
-        time_zone: str,
-    ) -> list[dict]:
+    async def get_available_slots(self, event_type_id: str, start_date: str, end_date: str) -> list[dict]:
         async with httpx.AsyncClient() as client:
             response = await client.get(
                 f"{CALCOM_API_BASE}/slots",
-                headers=self._headers("2024-09-04"),
+                headers=self._headers(),
                 params={
                     "eventTypeId": event_type_id,
-                    "start": start_date,
-                    "end": end_date,
-                    "timeZone": time_zone,
+                    "startTime": start_date,
+                    "endTime": end_date,
                 },
             )
 
@@ -62,19 +55,17 @@ class CalComClient:
         start_time: str,
         attendee_email: str,
         attendee_name: str,
-        attendee_time_zone: str,
     ) -> dict:
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 f"{CALCOM_API_BASE}/bookings",
-                headers=self._headers("2024-08-13"),
+                headers=self._headers(),
                 json={
                     "eventTypeId": event_type_id,
                     "start": start_time,
                     "attendee": {
                         "email": attendee_email,
                         "name": attendee_name,
-                        "timeZone": attendee_time_zone,
                     },
                 },
             )
@@ -92,7 +83,7 @@ class CalComClient:
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 f"{CALCOM_API_BASE}/bookings/{booking_uid}/cancel",
-                headers=self._headers("2024-08-13"),
+                headers=self._headers(),
                 json={"cancellationReason": reason},
             )
 
@@ -103,7 +94,7 @@ class CalComClient:
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 f"{CALCOM_API_BASE}/bookings/{booking_uid}/reschedule",
-                headers=self._headers("2024-08-13"),
+                headers=self._headers(),
                 json={"start": new_start_time},
             )
 
