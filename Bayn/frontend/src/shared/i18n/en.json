@@ -70,6 +70,13 @@
     "avatarTypeError": "Unsupported format. Use JPG, PNG, or WebP.",
     "avatarSizeError": "Image exceeds the 5MB limit.",
     "avatarUploadError": "Couldn't upload the photo, please try again.",
+    "confirmTitle": "Are you sure?",
+    "confirmAccountMsg": "Your username will be updated.",
+    "confirmProfileMsg": "Your profile changes will be saved.",
+    "confirmPasswordMsg": "Your password will be changed.",
+    "confirmYes": "Confirm",
+    "confirmCancel": "Cancel",
+    "noChanges": "No changes to save.",
     "save": "Save changes"
   },
   "calendar": {

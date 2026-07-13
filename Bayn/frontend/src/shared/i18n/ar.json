@@ -70,6 +70,13 @@
     "avatarTypeError": "الصيغة غير مدعومة. استخدم JPG أو PNG أو WebP.",
     "avatarSizeError": "حجم الصورة يتجاوز 5 ميجابايت.",
     "avatarUploadError": "تعذّر رفع الصورة، حاول مرة أخرى.",
+    "confirmTitle": "هل أنت متأكد؟",
+    "confirmAccountMsg": "سيتم تحديث اسم المستخدم الخاص بك.",
+    "confirmProfileMsg": "سيتم حفظ التغييرات على ملفك الشخصي.",
+    "confirmPasswordMsg": "سيتم تغيير كلمة المرور الخاصة بك.",
+    "confirmYes": "تأكيد",
+    "confirmCancel": "إلغاء",
+    "noChanges": "لا يوجد تغييرات لحفظها.",
     "save": "حفظ التغييرات"
   },
   "calendar": {

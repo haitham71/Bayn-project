@@ -11,6 +11,7 @@ import Button from '@/shared/components/Button';
 import Select from '@/shared/components/Select';
 import SkillsInput from '@/shared/components/SkillsInput';
 import PasswordStrength from '@/shared/components/PasswordStrength';
+import ConfirmDialog from '@/shared/components/ConfirmDialog';
 import { validateName, validateUsername, validatePassword } from '@/features/identity/utils/validation';
 import Camera from '@/assets/icons/camera.svg?react';
 import MapPin from '@/assets/icons/map-pin.svg?react';
@@ -54,6 +55,8 @@ export default function MyProfilePage({ onNavigate }) {
   const { data: profile } = useProfile();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('account');
+  // Pending confirm modal: { message, onConfirm } while awaiting a yes/no.
+  const [confirmState, setConfirmState] = useState(null);
 
   // --- Avatar upload ---
   const fileInputRef = useRef(null);
@@ -66,6 +69,8 @@ export default function MyProfilePage({ onNavigate }) {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [accountErrors, setAccountErrors] = useState({});
+  const [accountSaving, setAccountSaving] = useState(false);
+  const [accountError, setAccountError] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
@@ -154,6 +159,11 @@ export default function MyProfilePage({ onNavigate }) {
       .catch(() => {});
   }, []);
 
+  // Dismiss the "no changes" note as soon as the user edits any profile field.
+  useEffect(() => {
+    setProfileError((e) => (e ? '' : e));
+  }, [shortTitle, bio, experience, location, skills, firstNameEn, lastNameEn, firstNameAr, lastNameAr]);
+
   // Validates the picked image (matching the backend's rules) then uploads it.
   // The response is the fresh profile, so we write it straight into the cache —
   // every page reading ['profile'] shows the new avatar immediately.
@@ -208,19 +218,39 @@ export default function MyProfilePage({ onNavigate }) {
   const allNameFields = nameGroups.flatMap((g) => g.fields);
 
 
-  // Confirm actions — validate, then push the values into the preview snapshot.
-  function handleAccountUpdate() {
+  // Confirm actions — validate first, then open the confirm modal; the actual
+  // save runs only after the user confirms.
+  function requestAccountUpdate() {
     const err = validateUsername(username);
     setAccountErrors(err ? { username: err } : {});
     if (err) return;
-    setCommitted((c) => ({ ...c, username }));
-    // TODO: persist username via the account API.
+    // Nothing to save if the username matches the last saved value.
+    if (username.trim() === committed.username) {
+      setAccountError(t('myProfile.noChanges'));
+      return;
+    }
+    setConfirmState({ message: t('myProfile.confirmAccountMsg'), onConfirm: doAccountUpdate });
+  }
+
+  async function doAccountUpdate() {
+    setAccountSaving(true);
+    setAccountError('');
+    try {
+      // The backend lowercases the username and rejects one already taken.
+      const updated = await updateProfile({ username });
+      queryClient.setQueryData(profileQueryKey, updated);
+      setCommitted((c) => ({ ...c, username: updated.username || username }));
+    } catch (e) {
+      setAccountError(getApiErrorMessage(e, t('signup.errorGeneric')));
+    } finally {
+      setAccountSaving(false);
+    }
   }
 
   const accountFieldError = (field) =>
     accountErrors[field] ? { error: true, errorText: t(`signup.${accountErrors[field]}`) } : {};
 
-  function handlePasswordChange() {
+  function requestPasswordChange() {
     // Same rules the sign-up form enforces, plus a current-password check
     // and a new/confirm match.
     const next = {};
@@ -230,7 +260,18 @@ export default function MyProfilePage({ onNavigate }) {
     if (!pass && confirmNewPassword !== newPassword) next.confirm = 'errorPassword';
     setPwErrors(next);
     if (Object.values(next).some(Boolean)) return;
+    setConfirmState({ message: t('myProfile.confirmPasswordMsg'), onConfirm: doPasswordChange });
+  }
+
+  function doPasswordChange() {
     // TODO: submit currentPassword/newPassword to the password API.
+  }
+
+  // Runs the pending action, then closes the modal.
+  function handleConfirm() {
+    const action = confirmState?.onConfirm;
+    setConfirmState(null);
+    action?.();
   }
 
   // Clears a single password field's error once the user edits it.
@@ -248,7 +289,7 @@ export default function MyProfilePage({ onNavigate }) {
   const nameFieldError = (field) =>
     nameErrors[field] ? { error: true, errorText: t(`signup.${nameErrors[field]}`) } : {};
 
-  async function handleProfileUpdate() {
+  function requestProfileUpdate() {
     const next = {};
     allNameFields.forEach((f) => {
       const err = validateName(f.value, { lang: f.lang, required: f.required });
@@ -256,7 +297,26 @@ export default function MyProfilePage({ onNavigate }) {
     });
     setNameErrors(next);
     if (Object.values(next).some(Boolean)) return;
+    // Nothing to save if every field still matches the last saved snapshot.
+    const unchanged =
+      firstNameEn === committed.firstNameEn &&
+      lastNameEn === committed.lastNameEn &&
+      firstNameAr === committed.firstNameAr &&
+      lastNameAr === committed.lastNameAr &&
+      shortTitle === committed.shortTitle &&
+      bio === committed.bio &&
+      experience === committed.experience &&
+      location === committed.location &&
+      skills.length === committed.skills.length &&
+      skills.every((s, i) => s === committed.skills[i]);
+    if (unchanged) {
+      setProfileError(t('myProfile.noChanges'));
+      return;
+    }
+    setConfirmState({ message: t('myProfile.confirmProfileMsg'), onConfirm: doProfileUpdate });
+  }
 
+  async function doProfileUpdate() {
     setProfileSaving(true);
     setProfileError('');
     try {
@@ -326,6 +386,7 @@ export default function MyProfilePage({ onNavigate }) {
                     onChange={(e) => {
                       setUsername(e.target.value);
                       setAccountErrors((p) => (p.username ? {} : p));
+                      setAccountError('');
                     }}
                     className="myp__input"
                     {...accountFieldError('username')}
@@ -344,12 +405,15 @@ export default function MyProfilePage({ onNavigate }) {
                   />
                 </div>
 
+                {accountError && <p className="myp__form-error">{accountError}</p>}
+
                 <Button
                   type="button"
                   variant="primary"
                   size="sm"
                   className="myp__submit"
-                  onClick={handleAccountUpdate}
+                  onClick={requestAccountUpdate}
+                  disabled={accountSaving}
                 >
                   {t('myProfile.confirmAccountUpdate')}
                 </Button>
@@ -397,7 +461,7 @@ export default function MyProfilePage({ onNavigate }) {
                   variant="primary"
                   size="sm"
                   className="myp__submit"
-                  onClick={handlePasswordChange}
+                  onClick={requestPasswordChange}
                 >
                   {t('myProfile.confirmPasswordChange')}
                 </Button>
@@ -477,7 +541,7 @@ export default function MyProfilePage({ onNavigate }) {
                   variant="primary"
                   size="sm"
                   className="myp__submit"
-                  onClick={handleProfileUpdate}
+                  onClick={requestProfileUpdate}
                   disabled={profileSaving}
                 >
                   {t('myProfile.confirmProfileUpdate')}
@@ -542,6 +606,16 @@ export default function MyProfilePage({ onNavigate }) {
           </aside>
         </main>
       </div>
+
+      <ConfirmDialog
+        open={!!confirmState}
+        title={t('myProfile.confirmTitle')}
+        message={confirmState?.message}
+        confirmLabel={t('myProfile.confirmYes')}
+        cancelLabel={t('myProfile.confirmCancel')}
+        onConfirm={handleConfirm}
+        onCancel={() => setConfirmState(null)}
+      />
     </div>
   );
 }
