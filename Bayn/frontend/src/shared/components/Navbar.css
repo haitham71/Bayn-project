@@ -107,6 +107,10 @@
   font-size: 16px;
 }
 
+.bayn-topbar__avatar--img {
+  object-fit: cover;
+}
+
 .bayn-topbar__name {
   font-family: var(--font-sans);
   font-size: 20px;

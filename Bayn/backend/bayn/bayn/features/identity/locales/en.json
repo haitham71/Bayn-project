@@ -66,7 +66,8 @@
     "email_plain_text": "Reset your password using this link: {link} (expires in 30 minutes). If you didn't request this, ignore this email.",
     "success": "Password has been reset successfully.",
     "invalid_or_expired": "Invalid or expired reset link.",
-    "expired": "This reset link has expired. Please request a new one."
+    "expired": "This reset link has expired. Please request a new one.",
+    "same_as_current": "Your new password must be different from your current one."
   },
   "password_change": {
     "email_subject": "Confirm your password change",
@@ -77,6 +78,7 @@
     "request_sent": "A confirmation link has been sent to your email.",
     "send_failed": "Failed to send the confirmation email. Please try again.",
     "current_password_incorrect": "Current password is incorrect.",
+    "same_as_current": "Your new password must be different from your current one.",
     "invalid_or_expired": "Invalid or expired confirmation link.",
     "expired": "This confirmation link has expired. Please request the change again.",
     "success": "Password has been changed successfully."

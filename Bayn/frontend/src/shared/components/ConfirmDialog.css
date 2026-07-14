@@ -1,0 +1,49 @@
+.confirm {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.confirm__box {
+  width: 100%;
+  max-width: 420px;
+  padding: 28px;
+  border: 1px solid var(--bg-surface-secondary, #d7cbb9);
+  border-radius: 12px;
+  background: var(--bg-surface-primary, #ebe5dc);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+/* Arabic UI uses the Arabic font family, matching the rest of the app. */
+[dir='rtl'] .confirm__box {
+  font-family: var(--font-ar);
+}
+
+.confirm__title {
+  margin: 0 0 12px;
+  font-family: var(--font-sans);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-title, #0f3d2e);
+}
+
+[dir='rtl'] .confirm__title {
+  font-family: var(--font-ar);
+}
+
+.confirm__message {
+  margin: 0 0 24px;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--text-body-2, #463e31);
+}
+
+.confirm__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
