@@ -33,7 +33,7 @@ function toPhoneNumber(phone) {
   const local = digits.startsWith('966') ? digits.slice(3) : digits;
   return local ? Number(local) : null;
 }
-
+//check
 export async function getCities(countryId) {
   const { data } = await api.get(API.catalog.cities, { params: { country_id: countryId } });
   return data;

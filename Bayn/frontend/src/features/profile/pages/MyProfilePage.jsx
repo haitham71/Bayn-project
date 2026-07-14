@@ -62,7 +62,15 @@ export default function MyProfilePage({ onNavigate }) {
   const fileInputRef = useRef(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [avatarError, setAvatarError] = useState('');
+  // A picked-but-not-yet-uploaded image: staged for preview until confirmed.
+  const [pendingFile, setPendingFile] = useState(null);
+  const [pendingPreview, setPendingPreview] = useState('');
   const avatarUrl = profile?.avatar_url || '';
+
+  // Free the object URL when the preview changes or the page unmounts.
+  useEffect(() => () => {
+    if (pendingPreview) URL.revokeObjectURL(pendingPreview);
+  }, [pendingPreview]);
 
   // --- Account information (loaded from the backend on mount) ---
   const [username, setUsername] = useState('');
@@ -167,12 +175,11 @@ export default function MyProfilePage({ onNavigate }) {
     setProfileError((e) => (e ? '' : e));
   }, [shortTitle, bio, experience, location, skills, firstNameEn, lastNameEn, firstNameAr, lastNameAr]);
 
-  // Validates the picked image (matching the backend's rules) then uploads it.
-  // The response is the fresh profile, so we write it straight into the cache —
-  // every page reading ['profile'] shows the new avatar immediately.
-  async function handleAvatarChange(e) {
+  // Validates the picked image (matching the backend's rules) then stages it
+  // for a preview — the actual upload waits for the confirm button.
+  function handleAvatarChange(e) {
     const file = e.target.files?.[0];
-    e.target.value = ''; // let the same file be re-picked after an error
+    e.target.value = ''; // let the same file be re-picked
     if (!file) return;
     setAvatarError('');
 
@@ -185,10 +192,26 @@ export default function MyProfilePage({ onNavigate }) {
       return;
     }
 
+    setPendingFile(file);
+    setPendingPreview(URL.createObjectURL(file));
+  }
+
+  function cancelAvatarUpload() {
+    setPendingFile(null);
+    setPendingPreview('');
+    setAvatarError('');
+  }
+
+  // Uploads the confirmed image. The response is the fresh profile, so we write
+  // it into the cache — every page reading ['profile'] shows it immediately.
+  async function confirmAvatarUpload() {
+    if (!pendingFile) return;
     setAvatarUploading(true);
+    setAvatarError('');
     try {
-      const updated = await uploadAvatar(file);
+      const updated = await uploadAvatar(pendingFile);
       queryClient.setQueryData(profileQueryKey, updated);
+      cancelAvatarUpload();
     } catch (err) {
       setAvatarError(getApiErrorMessage(err, t('myProfile.avatarUploadError')));
     } finally {
@@ -579,7 +602,9 @@ export default function MyProfilePage({ onNavigate }) {
             <h2 className="myp__card-title">{t('myProfile.previewTitle')}</h2>
 
             <div className="myp__avatar-wrap">
-              {avatarUrl ? (
+              {pendingPreview ? (
+                <img src={pendingPreview} alt="" className="myp__avatar myp__avatar--img" />
+              ) : avatarUrl ? (
                 <img src={avatarUrl} alt="" className="myp__avatar myp__avatar--img" />
               ) : (
                 <span className="myp__avatar" aria-hidden="true">
@@ -604,6 +629,28 @@ export default function MyProfilePage({ onNavigate }) {
               />
             </div>
             {avatarError && <p className="myp__avatar-error">{avatarError}</p>}
+            {pendingFile && (
+              <div className="myp__avatar-actions">
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="sm"
+                  onClick={confirmAvatarUpload}
+                  disabled={avatarUploading}
+                >
+                  {avatarUploading ? t('myProfile.avatarUploading') : t('myProfile.avatarConfirm')}
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={cancelAvatarUpload}
+                  disabled={avatarUploading}
+                >
+                  {t('myProfile.avatarCancel')}
+                </Button>
+              </div>
+            )}
 
             <p className="myp__preview-name">{previewName}</p>
             <p className="myp__preview-username">{committed.username}</p>

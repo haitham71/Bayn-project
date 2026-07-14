@@ -228,6 +228,14 @@
   object-fit: cover;
 }
 
+/* Confirm / cancel shown after a new photo is picked, before uploading. */
+.myp__avatar-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
 .myp__avatar-btn {
   position: absolute;
   bottom: 2px;
