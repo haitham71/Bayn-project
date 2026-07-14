@@ -55,19 +55,27 @@ class CalComClient:
         start_time: str,
         attendee_email: str,
         attendee_name: str,
+        length_minutes: int | None = None,
     ) -> dict:
+        # length_minutes must be one of the event type's configured
+        # lengthInMinutesOptions (Cal.com rejects arbitrary values) — the
+        # caller is responsible for rounding to an allowed option
+        body = {
+            "eventTypeId": event_type_id,
+            "start": start_time,
+            "attendee": {
+                "email": attendee_email,
+                "name": attendee_name,
+            },
+        }
+        if length_minutes is not None:
+            body["lengthInMinutes"] = length_minutes
+
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 f"{CALCOM_API_BASE}/bookings",
                 headers=self._headers(),
-                json={
-                    "eventTypeId": event_type_id,
-                    "start": start_time,
-                    "attendee": {
-                        "email": attendee_email,
-                        "name": attendee_name,
-                    },
-                },
+                json=body,
             )
 
         # Cal.com returns 409 specifically when the slot got taken meanwhile

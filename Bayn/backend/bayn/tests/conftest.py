@@ -175,3 +175,12 @@ def mock_daily():
     with patch("bayn.features.meetings.service.daily_client") as mock:
         mock.create_room = AsyncMock(return_value={"url": "https://bayn.daily.co/test-room"})
         yield mock
+
+
+@pytest_asyncio.fixture
+def mock_calcom():
+    # patch the singleton so tests never hit the real Cal.com API (and never
+    # create a real booking on the live shared calendar)
+    with patch("bayn.features.meetings.service.calcom_client") as mock:
+        mock.create_booking = AsyncMock(return_value={"data": {"uid": "test-calcom-booking"}})
+        yield mock

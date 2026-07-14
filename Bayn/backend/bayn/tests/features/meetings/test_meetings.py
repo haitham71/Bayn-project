@@ -143,7 +143,7 @@ class TestMeetingAcceptReject:
 
     @pytest.mark.asyncio
     async def test_accept_creates_meeting_with_video_link(
-        self, client: AsyncClient, project_with_member: Project, member: User, owner: User, mock_daily
+        self, client: AsyncClient, project_with_member: Project, member: User, owner: User, mock_daily, mock_calcom
     ):
         create = await client.post(
             "/meetings/requests", headers=auth_headers_for(member), json=_request_payload(project_with_member.id)
@@ -211,7 +211,7 @@ class TestMeetingAcceptReject:
 
     @pytest.mark.asyncio
     async def test_daily_meeting_limit_enforced(
-        self, client: AsyncClient, project_with_member: Project, member: User, owner: User, mock_daily
+        self, client: AsyncClient, project_with_member: Project, member: User, owner: User, mock_daily, mock_calcom
     ):
         # book 3 meetings for the same day — the 4th must be rejected
         same_day_start = _future(30)
@@ -253,6 +253,7 @@ class TestMeetingsAndAttendance:
         owner: User,
         outsider: User,
         mock_daily,
+        mock_calcom,
     ):
         create = await client.post(
             "/meetings/requests", headers=auth_headers_for(member), json=_request_payload(project_with_member.id)
@@ -275,7 +276,7 @@ class TestMeetingsAndAttendance:
 
     @pytest.mark.asyncio
     async def test_update_own_attendance(
-        self, client: AsyncClient, project_with_member: Project, member: User, owner: User, mock_daily
+        self, client: AsyncClient, project_with_member: Project, member: User, owner: User, mock_daily, mock_calcom
     ):
         create = await client.post(
             "/meetings/requests", headers=auth_headers_for(member), json=_request_payload(project_with_member.id)

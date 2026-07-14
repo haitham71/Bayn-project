@@ -30,6 +30,9 @@ class Settings(BaseSettings):
     CALCOM_API_KEY: str | None = None
     CALCOM_CLIENT_ID: str | None = None
     CALCOM_CLIENT_SECRET: str | None = None
+    # single shared event type used for every meeting booking — no per-user
+    # OAuth / calendar connection, so there's no per-owner event type to pick
+    CALCOM_EVENT_TYPE_ID: str | None = None
 
     DAILY_API_KEY: str | None = None
     DAILY_API_URL: str | None = None
