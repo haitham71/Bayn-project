@@ -12,6 +12,8 @@ import MyProfilePage    from '@/features/profile/pages/MyProfilePage';
 import MyProjectsPage   from '@/features/projects/pages/MyProjectsPage';
 import JoinRequestsPage from '@/features/projects/pages/JoinRequestsPage';
 import CreateIdeaPage   from '@/features/ideas/pages/CreateIdeaPage';
+import IdeasMarketplacePage from '@/features/ideas/pages/IdeasMarketplacePage';
+import IdeaDetailsPage from '@/features/ideas/pages/IdeaDetailsPage';
 import ProtectedRoute    from '@/shared/components/ProtectedRoute';
 
 // Pages navigate with short keys (onNavigate('home')); this maps each key to its
@@ -23,6 +25,7 @@ const PATHS = {
   profile: '/profile-setup',
   forgotPassword: '/forgot-password',
   home: '/home',
+  ideas: '/ideas',
   myprofile: '/my-profile',
   myprojects: '/my-projects',
   joinrequests: '/join-requests',
@@ -68,6 +71,8 @@ export default function App() {
       <Route path="/forgot-password" element={<ForgotPasswordPage onNavigate={goTo} />} />
       <Route path="/reset-password" element={<ResetPasswordPage onNavigate={goTo} />} />
       <Route path="/home" element={<ProtectedRoute><HomePage onNavigate={goTo} /></ProtectedRoute>} />
+      <Route path="/ideas" element={<ProtectedRoute><IdeasMarketplacePage onNavigate={goTo} /></ProtectedRoute>} />
+      <Route path="/ideas/:id" element={<ProtectedRoute><IdeaDetailsPage onNavigate={goTo} /></ProtectedRoute>} />
       <Route path="/my-profile" element={<ProtectedRoute><MyProfilePage onNavigate={goTo} /></ProtectedRoute>} />
       <Route path="/my-projects" element={<ProtectedRoute><MyProjectsPage onNavigate={goTo} /></ProtectedRoute>} />
       <Route path="/join-requests" element={<ProtectedRoute><JoinRequestsPage onNavigate={goTo} /></ProtectedRoute>} />

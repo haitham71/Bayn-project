@@ -32,6 +32,15 @@ class ProjectUpdateRequest(BaseModel):
     team_members_needed: int | None = Field(default=None, ge=1, le=12)
 
 
+class OwnerInfo(BaseModel):
+    """Public info about a project's owner, shown on the idea cards/details."""
+    id: uuid.UUID
+    name_en: str
+    name_ar: str
+    job_title: str | None = None
+    avatar_url: str | None = None
+
+
 class ProjectResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: uuid.UUID
@@ -46,6 +55,7 @@ class ProjectResponse(BaseModel):
     team_members_needed: int
     created_at: datetime
     updated_at: datetime
+    owner: OwnerInfo | None = None
 
 
 class ProjectMembershipResponse(BaseModel):

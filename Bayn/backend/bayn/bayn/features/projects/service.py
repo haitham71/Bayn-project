@@ -7,8 +7,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from bayn.common.exceptions import ConflictError, ForbiddenError, NotFoundError, ValidationError
 from bayn.core.i18n import DEFAULT_LOCALE, t
+from bayn.features.identity.models import User
 from bayn.features.projects.models import Project, ProjectMembership, ProjectMembershipRole
-from bayn.features.projects.schemas import ProjectCreateRequest, ProjectUpdateRequest
+from bayn.features.projects.schemas import OwnerInfo, ProjectCreateRequest, ProjectUpdateRequest
+from bayn.integrations.storage.cloudflare import StorageError, r2_client
 
 # a user can hold membership (owner or member) in at most this many projects at once
 MAX_MEMBERSHIPS_PER_USER = 2
@@ -19,6 +21,37 @@ async def _count_memberships(db: AsyncSession, user_id: uuid.UUID) -> int:
         select(func.count()).select_from(ProjectMembership).where(ProjectMembership.user_id == user_id)
     )
     return result.scalar_one()
+
+
+def _to_owner_info(user: User) -> OwnerInfo:
+    avatar_url = None
+    if user.avatar_key:
+        try:
+            avatar_url = r2_client.get_avatar_url(user.avatar_key)
+        except StorageError:
+            avatar_url = None
+    return OwnerInfo(
+        id=user.id,
+        name_en=f"{user.first_name_en} {user.last_name_en}".strip(),
+        name_ar=f"{user.first_name_ar} {user.last_name_ar}".strip(),
+        job_title=user.job_title,
+        avatar_url=avatar_url,
+    )
+
+
+async def owners_map(db: AsyncSession, project_ids: list[uuid.UUID]) -> dict[uuid.UUID, OwnerInfo]:
+    # Owner (the OWNER-role member) of each given project, in a single query.
+    if not project_ids:
+        return {}
+    result = await db.execute(
+        select(ProjectMembership.project_id, User)
+        .join(User, User.id == ProjectMembership.user_id)
+        .where(
+            ProjectMembership.project_id.in_(project_ids),
+            ProjectMembership.role == ProjectMembershipRole.OWNER,
+        )
+    )
+    return {pid: _to_owner_info(user) for pid, user in result.all()}
 
 
 async def create_project(

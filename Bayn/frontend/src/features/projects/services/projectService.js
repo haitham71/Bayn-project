@@ -8,3 +8,15 @@ export const createProject = (payload) =>
 // The current user's projects (owned + joined), each with their role.
 export const getMyProjects = () =>
   api.get(API.projects.mine).then((r) => r.data);
+
+// All visible projects — the public ideas marketplace.
+export const listProjects = () =>
+  api.get(API.projects.base).then((r) => r.data);
+
+// A single project (idea) by id.
+export const getProject = (id) =>
+  api.get(`${API.projects.base}/${id}`).then((r) => r.data);
+
+// Join a project as a member.
+export const joinProject = (id) =>
+  api.post(`${API.projects.base}/${id}/join`).then((r) => r.data);

@@ -19,7 +19,7 @@ import './Sidebar.css';
 // inert until their destination exists.
 const defaultItems = [
   { key: 'home', page: 'home', labelKey: 'sidebar.home', icon: House },
-  { key: 'ideas', labelKey: 'sidebar.ideas', icon: Lightbulb },
+  { key: 'ideas', page: 'ideas', labelKey: 'sidebar.ideas', icon: Lightbulb },
   { key: 'projects', page: 'myprojects', labelKey: 'sidebar.projects', icon: Presentation },
   { key: 'meetings', labelKey: 'sidebar.meetings', icon: Video },
   { key: 'profiles', labelKey: 'sidebar.profiles', icon: UserPlus },
