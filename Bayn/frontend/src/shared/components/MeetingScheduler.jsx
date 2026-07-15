@@ -80,7 +80,22 @@ export default function MeetingScheduler({
     return new Intl.DateTimeFormat(locale, { hour: 'numeric', minute: '2-digit' })
       .format(new Date(2023, 0, 1, h, m));
   };
-  const startOptions = startMinutes.map((m) => ({ value: toHHMM(m), label: timeLabel(toHHMM(m)) }));
+  // For today, only offer start times still in the future.
+  function isToday(date) {
+    const t0 = new Date();
+    t0.setHours(0, 0, 0, 0);
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    return d.getTime() === t0.getTime();
+  }
+  function startMinutesFor(date) {
+    if (!isToday(date)) return startMinutes;
+    const now = new Date();
+    const cutoff = now.getHours() * 60 + now.getMinutes();
+    return startMinutes.filter((m) => m > cutoff);
+  }
+  const startOptionsFor = (date) =>
+    startMinutesFor(date).map((m) => ({ value: toHHMM(m), label: timeLabel(toHHMM(m)) }));
   const endOptions = (start) => endMinutesFor(start).map((m) => ({ value: toHHMM(m), label: timeLabel(toHHMM(m)) }));
 
   // Pick a sensible end when a slot is created: an hour if that's allowed,
@@ -114,7 +129,9 @@ export default function MeetingScheduler({
   // we're under the limit). When only one day is allowed we just swap it out.
   function toggleDate(date) {
     const k = keyOf(date);
-    const day = { key: k, date, slots: [newSlot()] };
+    const avail = startMinutesFor(date);
+    const first = avail.length ? avail[0] : dayStartHour * 60;
+    const day = { key: k, date, slots: [newSlot(first)] };
     if (days.some((d) => d.key === k)) commit(days.filter((d) => d.key !== k));
     else if (days.length < maxDays) commit([...days, day]);
     else if (maxDays === 1) commit([day]);
@@ -191,7 +208,7 @@ export default function MeetingScheduler({
                         label={t('scheduler.from')}
                         value={s.start}
                         onChange={(v) => setStart(d.key, s.id, v)}
-                        options={startOptions}
+                        options={startOptionsFor(d.date)}
                         error={conflicts.has(s.id)}
                         className="sched__time"
                       />

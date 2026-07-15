@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import DOMPurify from 'dompurify';
 import Sidebar from '@/shared/components/Sidebar';
 import Navbar from '@/shared/components/Navbar';
 import Button from '@/shared/components/Button';
@@ -123,7 +124,6 @@ export default function IdeaDetailsPage({ onNavigate }) {
                 </div>
 
                 <h1 className="id__title">{idea.title}</h1>
-                {idea.description && <p className="id__lead">{idea.description}</p>}
 
                 <div className="id__meta">
                   <span className="id__pill">
@@ -140,9 +140,21 @@ export default function IdeaDetailsPage({ onNavigate }) {
                   </span>
                 </div>
 
-                {idea.more_info && (
+                {idea.description && (
                   <div className="id__section">
                     <h2 className="id__section-title">{t('ideaDetails.aboutTitle')}</h2>
+                    {/* Rich text authored in the create-idea editor — sanitized
+                        with DOMPurify before rendering to close the XSS hole. */}
+                    <div
+                      className="id__richtext"
+                      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(idea.description) }}
+                    />
+                  </div>
+                )}
+
+                {idea.more_info && (
+                  <div className="id__section">
+                    <h2 className="id__section-title">{t('createIdea.rolesNeeded')}</h2>
                     <p className="id__section-body">{idea.more_info}</p>
                   </div>
                 )}

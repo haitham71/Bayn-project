@@ -1,35 +1,115 @@
 import { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Sidebar from '@/shared/components/Sidebar';
 import Navbar from '@/shared/components/Navbar';
 import Button from '@/shared/components/Button';
+import MeetingScheduler from '@/shared/components/MeetingScheduler';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
 import {
   listMeetingRequests,
   acceptMeetingRequest,
   rejectMeetingRequest,
 } from '@/features/meetings/services/meetingService';
+import {
+  getProject,
+  getProjectSlots,
+  updateProject,
+  replaceSlots,
+} from '@/features/projects/services/projectService';
+import { getApiErrorMessage } from '@/shared/lib/apiError';
 import ArrowLeft from '@/assets/icons/arrow-left.svg?react';
 import Clock from '@/assets/icons/clock.svg?react';
 import CircleCheck from '@/assets/icons/circle-check.svg?react';
 import CircleX from '@/assets/icons/circle-x.svg?react';
 import FilePen from '@/assets/icons/file-pen.svg?react';
 import Calendar from '@/assets/icons/calendar.svg?react';
+import Eye from '@/assets/icons/eye.svg?react';
 import './JoinRequestsPage.css';
+
+const hhmm = (d) => `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+
+function slotsToSchedulerValue(slots) {
+  const byDay = new Map();
+  (slots || []).forEach((s) => {
+    const start = new Date(s.start_time);
+    const end = new Date(s.end_time);
+    const key = `${start.getFullYear()}-${start.getMonth()}-${start.getDate()}`;
+    if (!byDay.has(key)) {
+      byDay.set(key, { date: new Date(start.getFullYear(), start.getMonth(), start.getDate()), slots: [] });
+    }
+    byDay.get(key).slots.push({ start: hhmm(start), end: hhmm(end) });
+  });
+  return [...byDay.values()];
+}
+
+function meetingsToSlots(days) {
+  const out = [];
+  (days || []).forEach((d) => {
+    const date = d.date instanceof Date ? d.date : new Date(d.date);
+    (d.slots || []).forEach((s) => {
+      const [sh, sm] = s.start.split(':').map(Number);
+      const [eh, em] = s.end.split(':').map(Number);
+      const start = new Date(date.getFullYear(), date.getMonth(), date.getDate(), sh, sm);
+      const end = new Date(date.getFullYear(), date.getMonth(), date.getDate(), eh, em);
+      out.push({ start_time: start.toISOString(), end_time: end.toISOString() });
+    });
+  });
+  return out;
+}
 
 export default function JoinRequestsPage({ onNavigate }) {
   const { t, i18n } = useTranslation();
   const { fullName } = useCurrentUser();
+  const { projectId } = useParams();
   const [tab, setTab] = useState('pending');
   const [requests, setRequests] = useState([]);
   const [actioningId, setActioningId] = useState(null);
 
+  // Right-rail management for the selected project (meeting slots + visibility).
+  const [project, setProject] = useState(null);
+  const [schedInitial, setSchedInitial] = useState([]);
+  const [meetings, setMeetings] = useState([]);
+  const [visibility, setVisibility] = useState('public');
+  const [saving, setSaving] = useState(false);
+  const [saveMsg, setSaveMsg] = useState('');
+  const [saveError, setSaveError] = useState('');
+
   function load() {
-    listMeetingRequests('incoming')
+    listMeetingRequests('incoming', projectId)
       .then((rows) => setRequests(rows || []))
       .catch(() => {});
   }
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, [projectId]);
+
+  useEffect(() => {
+    if (!projectId) return;
+    Promise.all([getProject(projectId), getProjectSlots(projectId).catch(() => [])])
+      .then(([p, sl]) => {
+        setProject(p);
+        setVisibility(p.is_hidden ? 'private' : 'public');
+        const val = slotsToSchedulerValue(sl || []);
+        setSchedInitial(val);
+        setMeetings(val);
+      })
+      .catch(() => {});
+  }, [projectId]);
+
+  async function handleSave() {
+    if (!projectId) return;
+    setSaving(true);
+    setSaveMsg('');
+    setSaveError('');
+    try {
+      await updateProject(projectId, { is_hidden: visibility === 'private' });
+      await replaceSlots(projectId, meetingsToSlots(meetings));
+      setSaveMsg(t('joinRequests.saved'));
+    } catch (e) {
+      setSaveError(getApiErrorMessage(e, t('joinRequests.saveError')));
+    } finally {
+      setSaving(false);
+    }
+  }
 
   async function handleAccept(id) {
     setActioningId(id);
@@ -168,12 +248,58 @@ export default function JoinRequestsPage({ onNavigate }) {
             )}
           </section>
 
-          {/* Right rail */}
+          {/* Right rail — manage this project's meeting slots + visibility */}
           <aside className="jr__side">
-            <section className="jr__card jr__tips">
-              <h2 className="jr__about-title">{t('joinRequests.tips')}</h2>
-              <p className="jr__about-hint">{t('joinRequests.subtitle')}</p>
-            </section>
+            {project && (
+              <section className="jr__manage">
+                <h2 className="jr__manage-title">{t('joinRequests.manageTitle')}</h2>
+
+                <ul className="jr__manage-rows">
+                  <li className="jr__manage-row">
+                    <Eye width={20} height={20} aria-hidden="true" />
+                    <span className="jr__manage-label">{t('createIdea.visibility')}</span>
+                    <div className="jr__toggle" role="group" aria-label={t('createIdea.visibility')}>
+                      <button
+                        type="button"
+                        className={`jr__toggle-opt${visibility === 'public' ? ' jr__toggle-opt--active' : ''}`}
+                        onClick={() => setVisibility('public')}
+                      >
+                        {t('createIdea.visibilityValue')}
+                      </button>
+                      <button
+                        type="button"
+                        className={`jr__toggle-opt${visibility === 'private' ? ' jr__toggle-opt--active' : ''}`}
+                        onClick={() => setVisibility('private')}
+                      >
+                        {t('createIdea.visibilityPrivate')}
+                      </button>
+                    </div>
+                  </li>
+                </ul>
+
+                <MeetingScheduler
+                  key={project.id}
+                  title={t('joinRequests.meetingTimes')}
+                  value={schedInitial}
+                  onChange={setMeetings}
+                  maxDays={3}
+                  maxSlots={3}
+                />
+
+                {saveError && <p className="jr__save-error">{saveError}</p>}
+                {saveMsg && <p className="jr__save-msg">{saveMsg}</p>}
+
+                <Button
+                  variant="primary"
+                  size="sm"
+                  className="jr__save"
+                  onClick={handleSave}
+                  disabled={saving}
+                >
+                  {saving ? t('joinRequests.saving') : t('joinRequests.saveEdit')}
+                </Button>
+              </section>
+            )}
           </aside>
         </main>
       </div>

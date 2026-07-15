@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { getMyProjects } from '@/features/projects/services/projectService';
 import Sidebar from '@/shared/components/Sidebar';
@@ -38,6 +39,7 @@ const MEETINGS = [
 
 export default function MyProjectsPage({ onNavigate }) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [activeMeeting, setActiveMeeting] = useState('m1');
   const { fullName } = useCurrentUser();
 
@@ -89,7 +91,7 @@ export default function MyProjectsPage({ onNavigate }) {
                       <span className="mp__posted">
                         {t('myProjects.postedDaysAgo', { count: daysSince(p.created_at) })}
                       </span>
-                      <button type="button" className="mp__link" onClick={() => onNavigate?.('joinrequests')}>
+                      <button type="button" className="mp__link" onClick={() => navigate(`/join-requests/${p.id}`)}>
                         {t('myProjects.viewDetails')}
                         <List width={20} height={20} aria-hidden="true" />
                       </button>

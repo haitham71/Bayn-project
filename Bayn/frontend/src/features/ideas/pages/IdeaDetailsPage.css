@@ -142,6 +142,42 @@
   line-height: 1.6;
   color: var(--text-body-2, #463e31);
   white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+/* Rich-text idea description (bold, lists, line breaks from the editor). */
+.id__richtext {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-body-2, #463e31);
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.id__richtext p {
+  margin: 0 0 8px;
+}
+
+.id__richtext b,
+.id__richtext strong {
+  font-weight: 600;
+  color: var(--text-title, #0f3d2e);
+}
+
+.id__richtext ul,
+.id__richtext ol {
+  margin: 8px 0;
+  padding-inline-start: 22px;
+}
+
+.id__richtext li {
+  margin: 2px 0;
+}
+
+.id__richtext a {
+  color: var(--btn-primary-default, #295e4d);
+  overflow-wrap: anywhere;
 }
 
 .id__divider {

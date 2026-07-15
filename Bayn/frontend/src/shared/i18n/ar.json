@@ -245,7 +245,12 @@
     "tips": "نصائح",
     "meetingsTime": "أوقات الاجتماعات",
     "showCalendar": "عرض التقويم",
-    "saveEdit": "حفظ التعديل"
+    "saveEdit": "حفظ التعديل",
+    "manageTitle": "إدارة المشروع",
+    "meetingTimes": "مواعيد الاجتماعات",
+    "saving": "جارٍ الحفظ...",
+    "saved": "تم الحفظ.",
+    "saveError": "تعذّر الحفظ، حاول مرة أخرى."
   },
   "verification": {
     "title": "أدخل رمز التحقق",

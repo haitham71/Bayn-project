@@ -17,6 +17,7 @@ from bayn.features.projects.schemas import (
     ProjectMembershipResponse,
     ProjectResponse,
     ProjectUpdateRequest,
+    SlotsReplaceRequest,
 )
 
 projects_router = APIRouter(prefix="/projects", tags=["Projects"])
@@ -93,6 +94,20 @@ async def list_slots(
     db: AsyncSession = Depends(get_db),
 ) -> list[MeetingSlotResponse]:
     return await service.list_available_slots(db, project_id)
+
+
+@projects_router.put(
+    "/{project_id}/slots", response_model=list[MeetingSlotResponse],
+    summary="Replace a project's available meeting slots (owner only)",
+)
+async def replace_slots(
+    project_id: uuid.UUID,
+    payload: SlotsReplaceRequest,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+    locale: str = Depends(get_locale),
+) -> list[MeetingSlotResponse]:
+    return await service.replace_slots(db, project_id, current_user.id, payload.slots, locale)
 
 
 @projects_router.get(

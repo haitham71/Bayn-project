@@ -1,6 +1,7 @@
 """Projects service — project CRUD and membership management."""
 
 import uuid
+from datetime import datetime, timezone
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -84,15 +85,52 @@ async def create_project(
 
 
 async def list_available_slots(db: AsyncSession, project_id: uuid.UUID) -> list[ProjectMeetingSlot]:
+    # Only upcoming slots — past ones auto-expire (never returned).
+    now = datetime.now(timezone.utc)
     result = await db.execute(
         select(ProjectMeetingSlot)
         .where(
             ProjectMeetingSlot.project_id == project_id,
             ProjectMeetingSlot.status == SlotStatus.available,
+            ProjectMeetingSlot.start_time > now,
         )
         .order_by(ProjectMeetingSlot.start_time)
     )
     return result.scalars().all()
+
+
+async def replace_slots(db, project_id, user_id, slots, locale: str = DEFAULT_LOCALE):
+    # Owner-only. Replaces the still-available slots (taken ones are kept, since
+    # they belong to confirmed meetings) with the given set.
+    from sqlalchemy import update
+    from bayn.features.meetings.models import MeetingRequest  # local import avoids a cycle
+
+    await _require_owner(db, project_id, user_id, locale)
+
+    result = await db.execute(
+        select(ProjectMeetingSlot).where(
+            ProjectMeetingSlot.project_id == project_id,
+            ProjectMeetingSlot.status == SlotStatus.available,
+        )
+    )
+    existing = result.scalars().all()
+    old_ids = [s.id for s in existing]
+    if old_ids:
+        # Detach any request that pointed at a slot we're removing — keeps the
+        # request's proposed time; approving still adds a non-member.
+        await db.execute(
+            update(MeetingRequest).where(MeetingRequest.slot_id.in_(old_ids)).values(slot_id=None)
+        )
+        await db.flush()
+
+    for slot in existing:
+        await db.delete(slot)
+
+    for s in slots:
+        db.add(ProjectMeetingSlot(project_id=project_id, start_time=s.start_time, end_time=s.end_time))
+
+    await db.commit()
+    return await list_available_slots(db, project_id)
 
 
 async def get_project(db: AsyncSession, project_id: uuid.UUID, locale: str = DEFAULT_LOCALE) -> Project:

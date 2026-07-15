@@ -24,3 +24,11 @@ export const joinProject = (id) =>
 // A project's available meeting slots (for joiners to pick from).
 export const getProjectSlots = (id) =>
   api.get(`${API.projects.base}/${id}/slots`).then((r) => r.data);
+
+// Owner: partial-update a project (e.g. visibility).
+export const updateProject = (id, payload) =>
+  api.patch(`${API.projects.base}/${id}`, payload).then((r) => r.data);
+
+// Owner: replace the project's available meeting slots.
+export const replaceSlots = (id, slots) =>
+  api.put(`${API.projects.base}/${id}/slots`, { slots }).then((r) => r.data);

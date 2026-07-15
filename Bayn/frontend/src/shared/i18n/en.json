@@ -245,7 +245,12 @@
     "tips": "Tips",
     "meetingsTime": "Meetings Time",
     "showCalendar": "Show Calendar",
-    "saveEdit": "Save Edit"
+    "saveEdit": "Save Edit",
+    "manageTitle": "Manage project",
+    "meetingTimes": "Meeting times",
+    "saving": "Saving…",
+    "saved": "Saved.",
+    "saveError": "Couldn't save, please try again."
   },
   "verification": {
     "title": "Enter verification code",

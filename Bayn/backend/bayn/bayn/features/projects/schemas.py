@@ -22,6 +22,10 @@ class MeetingSlotResponse(BaseModel):
     status: SlotStatus
 
 
+class SlotsReplaceRequest(BaseModel):
+    slots: list[MeetingSlotInput] = Field(default_factory=list)
+
+
 class ProjectCreateRequest(BaseModel):
     title: str
     description: str | None = None

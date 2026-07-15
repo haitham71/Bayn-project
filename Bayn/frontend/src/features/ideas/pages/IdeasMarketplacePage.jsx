@@ -27,6 +27,11 @@ function daysSince(iso) {
   return Math.max(0, Math.floor(ms / 86400000));
 }
 
+// Rich-text descriptions are HTML — strip tags for the card's plain preview.
+function stripHtml(html) {
+  return (html || '').replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
 export default function IdeasMarketplacePage({ onNavigate }) {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -149,7 +154,7 @@ export default function IdeasMarketplacePage({ onNavigate }) {
                 <div className="im__summary">
                   <span className="im__summary-label">{t('ideas.summary')}</span>
                   <h2 className="im__card-title">{p.title}</h2>
-                  {p.description && <p className="im__card-desc">{p.description}</p>}
+                  {p.description && <p className="im__card-desc">{stripHtml(p.description)}</p>}
                 </div>
 
                 <div className="im__pills">

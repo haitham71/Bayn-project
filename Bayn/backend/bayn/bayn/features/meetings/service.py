@@ -138,7 +138,7 @@ async def create_join_request(
     slot = await db.get(ProjectMeetingSlot, payload.slot_id)
     if not slot or slot.project_id != project.id:
         raise NotFoundError(t("meetings", "join.slot_not_found", locale))
-    if slot.status != SlotStatus.available:
+    if slot.status != SlotStatus.available or _ensure_aware(slot.start_time) <= datetime.now(timezone.utc):
         raise ConflictError(t("meetings", "join.slot_taken", locale))
 
     duplicate = await db.scalar(
@@ -293,29 +293,28 @@ async def accept_meeting_request(
     if await _count_meetings_on_day(db, request.requester_id, day_start, day_end) >= MAX_MEETINGS_PER_DAY:
         raise ConflictError(t("meetings", "request.daily_limit_reached", locale))
 
-    # A join request adds the requester to the project on approval — enforce the
-    # membership cap and add them before the meeting/attendance is built.
-    if request.slot_id is not None:
-        already_member = await db.scalar(
-            select(ProjectMembership).where(
-                ProjectMembership.project_id == request.project_id,
-                ProjectMembership.user_id == request.requester_id,
+    # If the requester isn't a member yet, approving also adds them (the join
+    # flow) — enforce the membership cap and add them before attendance is built.
+    already_member = await db.scalar(
+        select(ProjectMembership).where(
+            ProjectMembership.project_id == request.project_id,
+            ProjectMembership.user_id == request.requester_id,
+        )
+    )
+    if not already_member:
+        count = await db.scalar(
+            select(func.count()).select_from(ProjectMembership).where(
+                ProjectMembership.user_id == request.requester_id
             )
         )
-        if not already_member:
-            count = await db.scalar(
-                select(func.count()).select_from(ProjectMembership).where(
-                    ProjectMembership.user_id == request.requester_id
-                )
-            )
-            if count >= MAX_MEMBERSHIPS_PER_USER:
-                raise ConflictError(t("meetings", "join.limit_reached", locale))
-            db.add(ProjectMembership(
-                user_id=request.requester_id,
-                project_id=request.project_id,
-                role=ProjectMembershipRole.MEMBER,
-            ))
-            await db.flush()
+        if count >= MAX_MEMBERSHIPS_PER_USER:
+            raise ConflictError(t("meetings", "join.limit_reached", locale))
+        db.add(ProjectMembership(
+            user_id=request.requester_id,
+            project_id=request.project_id,
+            role=ProjectMembershipRole.MEMBER,
+        ))
+        await db.flush()
 
     project = await db.get(Project, request.project_id)
     is_initial = not await _has_prior_meeting(db, request.requester_id, request.owner_id, request.project_id)
