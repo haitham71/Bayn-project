@@ -5,6 +5,7 @@ import DOMPurify from 'dompurify';
 import Sidebar from '@/shared/components/Sidebar';
 import Navbar from '@/shared/components/Navbar';
 import Button from '@/shared/components/Button';
+import Input from '@/shared/components/Input';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
 import { getProject, getProjectSlots } from '@/features/projects/services/projectService';
 import { createJoinRequest } from '@/features/meetings/services/meetingService';
@@ -30,6 +31,9 @@ const STAGE_LABEL = {
   launching: 'createIdea.stageLaunching',
 };
 
+// Stricter than the API's 500-char cap on JoinRequestCreate.message.
+const JOIN_NOTE_MAX = 250;
+
 function daysSince(iso) {
   const ms = Date.now() - new Date(iso).getTime();
   return Math.max(0, Math.floor(ms / 86400000));
@@ -44,6 +48,7 @@ export default function IdeaDetailsPage({ onNavigate }) {
   const [industries, setIndustries] = useState([]);
   const [slots, setSlots] = useState([]);
   const [selectedSlot, setSelectedSlot] = useState('');
+  const [joinNote, setJoinNote] = useState('');
   const [loading, setLoading] = useState(true);
   const [joining, setJoining] = useState(false);
   const [joinMsg, setJoinMsg] = useState('');
@@ -84,8 +89,10 @@ export default function IdeaDetailsPage({ onNavigate }) {
     }
     setJoining(true);
     try {
-      await createJoinRequest({ project_id: id, slot_id: selectedSlot });
+      const note = joinNote.trim();
+      await createJoinRequest({ project_id: id, slot_id: selectedSlot, message: note || null });
       setJoinMsg(t('ideaDetails.joinSuccess'));
+      setJoinNote('');
     } catch (err) {
       setJoinError(getApiErrorMessage(err, t('ideaDetails.joinError')));
     } finally {
@@ -213,7 +220,7 @@ export default function IdeaDetailsPage({ onNavigate }) {
                   {slots.length === 0 ? (
                     <p className="id__no-slots">{t('ideaDetails.noSlots')}</p>
                   ) : (
-                    <ul className="id__slots">
+                    <ul className="id__slots bayn-scroll">
                       {slots.map((s) => (
                         <li key={s.id}>
                           <button
@@ -226,6 +233,19 @@ export default function IdeaDetailsPage({ onNavigate }) {
                         </li>
                       ))}
                     </ul>
+                  )}
+
+                  {slots.length > 0 && (
+                    <Input
+                      label={t('ideaDetails.noteLabel')}
+                      multiline
+                      rows={3}
+                      maxLength={JOIN_NOTE_MAX}
+                      value={joinNote}
+                      onChange={(e) => setJoinNote(e.target.value)}
+                      supportingText={`${joinNote.length}/${JOIN_NOTE_MAX}`}
+                      className="id__note"
+                    />
                   )}
 
                   {joinError && <p className="id__error">{joinError}</p>}

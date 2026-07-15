@@ -227,6 +227,7 @@
     "sendJoin": "Send Join Request",
     "sending": "Sending…",
     "pickSlot": "Please pick a meeting time first.",
+    "noteLabel": "Message to the owner (optional)",
     "noSlots": "The owner hasn't published any meeting times yet.",
     "joinSuccess": "Your join request was sent — the owner will review it.",
     "joinError": "Couldn't send the request, please try again.",

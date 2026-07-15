@@ -340,6 +340,23 @@
   color: var(--text-supporting, #786c57);
 }
 
+/* Join — optional message to the owner */
+.id__note.bayn-input {
+  width: 100%;
+  margin-top: 16px;
+}
+
+.id__note .bayn-input__support {
+  text-align: end;
+}
+
+/* Fixed height — the panel is too narrow to resize into. */
+.id__note .bayn-input__native {
+  resize: none;
+  min-height: 96px;
+  font-size: 14px;
+}
+
 .id__join.bayn-btn {
   width: 100%;
   margin-top: 16px;
