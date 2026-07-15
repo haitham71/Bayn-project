@@ -27,7 +27,17 @@ class Contract(Base):
     status = Column(Enum(ContractStatus), default=ContractStatus.pending_party_one, nullable=False)
     
     # Relations & Foreign Keys
-    meeting_id = Column(UUID(as_uuid=True), ForeignKey("meetings.id", ondelete="CASCADE"), nullable=False)
+
+    # The request this contract gates. This — not meeting_id — is what a
+    # contract is created against, because the meeting doesn't exist yet.
+    meeting_request_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("meeting_requests.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
+    # Null until both parties sign and the meeting is created from the request.
+    meeting_id = Column(UUID(as_uuid=True), ForeignKey("meetings.id", ondelete="CASCADE"), nullable=True)
     project_id = Column(UUID(as_uuid=True), nullable=True)
     confidentiality_period_months = Column(Integer, default=12, nullable=True)
 

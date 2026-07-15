@@ -111,6 +111,9 @@
 .jr__tabs {
   margin-top: 24px;
   display: flex;
+  /* one tab per stage of the join process — they wrap rather than overflow on
+     narrow screens */
+  flex-wrap: wrap;
   gap: 8px;
   border-bottom: 1px solid var(--bg-surface-secondary, #d7cbb9);
 }
@@ -150,6 +153,12 @@
   margin: 32px 0;
   text-align: center;
   color: var(--text-supporting, #786c57);
+}
+
+.jr__error {
+  margin: 12px 0 0;
+  font-size: 14px;
+  color: var(--text-error, #900000);
 }
 
 .jr__req {
@@ -267,6 +276,18 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+  /* the column is empty for finished requests — keep the grid from collapsing
+     so rows in different stages still line up */
+  min-width: 120px;
+}
+
+/* Where a request sits in the process when there's no button to press. */
+.jr__req-state {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: center;
+  color: var(--text-supporting, #786c57);
 }
 
 /* ---- Right rail ---- */

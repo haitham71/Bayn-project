@@ -33,6 +33,23 @@ class RequesterInfo(BaseModel):
     location_ar: str | None = None
 
 
+class SignatureState(BaseModel):
+    """Who still has to sign the NDA before the meeting can be scheduled.
+
+    Deliberately narrow: the UI needs to say "waiting on them" vs "waiting on
+    you" and nothing more. Signing links, PDFs and signature images stay in
+    Signature-System.
+    """
+    requester_signed: bool
+    owner_signed: bool
+
+
+class MeetingRequestFinalize(BaseModel):
+    """The owner's post-meeting call — approve registers the requester as a
+    project member, decline leaves them out."""
+    approve: bool
+
+
 class MeetingRequestResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: uuid.UUID
@@ -46,8 +63,11 @@ class MeetingRequestResponse(BaseModel):
     status: MeetingRequestStatus
     expires_at: datetime
     resulting_meeting_id: uuid.UUID | None
+    decided_at: datetime | None = None
     created_at: datetime
     requester: RequesterInfo | None = None
+    # only set while the request is awaiting signatures
+    signatures: SignatureState | None = None
 
 
 class ParticipantInfo(BaseModel):

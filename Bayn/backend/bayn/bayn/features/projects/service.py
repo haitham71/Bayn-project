@@ -200,29 +200,6 @@ async def list_members(db: AsyncSession, project_id: uuid.UUID) -> list[ProjectM
     return result.scalars().all()
 
 
-async def join_project(
-    db: AsyncSession, project_id: uuid.UUID, user_id: uuid.UUID, locale: str = DEFAULT_LOCALE
-) -> ProjectMembership:
-    await get_project(db, project_id, locale)  # 404s if the project doesn't exist
-
-    existing = await db.scalar(
-        select(ProjectMembership).where(
-            ProjectMembership.project_id == project_id, ProjectMembership.user_id == user_id
-        )
-    )
-    if existing:
-        raise ConflictError(t("projects", "membership.already_joined", locale))
-
-    if await _count_memberships(db, user_id) >= MAX_MEMBERSHIPS_PER_USER:
-        raise ConflictError(t("projects", "membership.limit_reached", locale))
-
-    membership = ProjectMembership(user_id=user_id, project_id=project_id, role=ProjectMembershipRole.MEMBER)
-    db.add(membership)
-    await db.commit()
-    await db.refresh(membership)
-    return membership
-
-
 async def leave_project(
     db: AsyncSession, project_id: uuid.UUID, user_id: uuid.UUID, locale: str = DEFAULT_LOCALE
 ) -> None:

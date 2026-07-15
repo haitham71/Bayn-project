@@ -120,16 +120,10 @@ async def list_members(
     return await service.list_members(db, project_id)
 
 
-@projects_router.post(
-    "/{project_id}/join", response_model=ProjectMembershipResponse, status_code=201, summary="Join a project"
-)
-async def join_project(
-    project_id: uuid.UUID,
-    current_user: User = Depends(get_current_active_user),
-    db: AsyncSession = Depends(get_db),
-    locale: str = Depends(get_locale),
-) -> ProjectMembershipResponse:
-    return await service.join_project(db, project_id, current_user.id, locale)
+# Joining is not a self-service action: membership is granted by the owner after
+# a signed NDA and a meeting (POST /meetings/join-requests, then
+# /meetings/requests/{id}/finalize). The old POST /{project_id}/join granted it
+# outright and would have let anyone skip that entire flow with one call.
 
 
 @projects_router.delete("/{project_id}/leave", status_code=204, summary="Leave a project")

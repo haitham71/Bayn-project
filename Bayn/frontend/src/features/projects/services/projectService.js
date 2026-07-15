@@ -17,9 +17,8 @@ export const listProjects = () =>
 export const getProject = (id) =>
   api.get(`${API.projects.base}/${id}`).then((r) => r.data);
 
-// Join a project as a member.
-export const joinProject = (id) =>
-  api.post(`${API.projects.base}/${id}/join`).then((r) => r.data);
+// Joining isn't self-service — membership is granted by the owner after a
+// signed NDA and a meeting. Start with createJoinRequest in meetingService.
 
 // A project's available meeting slots (for joiners to pick from).
 export const getProjectSlots = (id) =>

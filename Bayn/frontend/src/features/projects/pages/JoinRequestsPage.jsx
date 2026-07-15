@@ -10,6 +10,7 @@ import {
   listMeetingRequests,
   acceptMeetingRequest,
   rejectMeetingRequest,
+  finalizeMeetingRequest,
 } from '@/features/meetings/services/meetingService';
 import {
   getProject,
@@ -19,6 +20,14 @@ import {
 } from '@/features/projects/services/projectService';
 import { getApiErrorMessage } from '@/shared/lib/apiError';
 import { timeAgo } from '@/shared/lib/relativeTime';
+import { useNow } from '@/shared/hooks/useNow';
+import {
+  STAGES,
+  canFinalize,
+  countByStage,
+  signatureLabel,
+  stageOf,
+} from '@/features/meetings/lib/requestStatus';
 import ArrowLeft from '@/assets/icons/arrow-left.svg?react';
 import Clock from '@/assets/icons/clock.svg?react';
 import CircleCheck from '@/assets/icons/circle-check.svg?react';
@@ -68,6 +77,10 @@ export default function JoinRequestsPage({ onNavigate }) {
   const [tab, setTab] = useState('pending');
   const [requests, setRequests] = useState([]);
   const [actioningId, setActioningId] = useState(null);
+  const [actionError, setActionError] = useState('');
+  // The finalize button only unlocks once the meeting has ended, so the page
+  // needs a clock rather than whatever time it happened to render at.
+  const now = useNow();
 
   // Right-rail management for the selected project (meeting slots + visibility).
   const [project, setProject] = useState(null);
@@ -114,14 +127,24 @@ export default function JoinRequestsPage({ onNavigate }) {
     }
   }
 
-  async function handleAccept(id) {
+  // Accept/reject/finalize all share one slot of error state — only one can be
+  // in flight at a time, and the list refetches after each.
+  async function runAction(id, fn) {
     setActioningId(id);
-    try { await acceptMeetingRequest(id); load(); } catch { /* surfaced by refetch */ } finally { setActioningId(null); }
+    setActionError('');
+    try {
+      await fn();
+      load();
+    } catch (e) {
+      setActionError(getApiErrorMessage(e, t('joinRequests.actionError')));
+    } finally {
+      setActioningId(null);
+    }
   }
-  async function handleReject(id) {
-    setActioningId(id);
-    try { await rejectMeetingRequest(id); load(); } catch { /* ignore */ } finally { setActioningId(null); }
-  }
+
+  const handleAccept = (id) => runAction(id, () => acceptMeetingRequest(id));
+  const handleReject = (id) => runAction(id, () => rejectMeetingRequest(id));
+  const handleFinalize = (id, approve) => runAction(id, () => finalizeMeetingRequest(id, approve));
 
   const requesterName = (r) =>
     r.requester ? (i18n.language === 'ar' ? r.requester.name_ar : r.requester.name_en) : '—';
@@ -135,27 +158,18 @@ export default function JoinRequestsPage({ onNavigate }) {
     return `${day} · ${time(start)} – ${time(end)}`;
   };
 
-  const counts = {
-    pending: requests.filter((r) => r.status === 'pending').length,
-    accepted: requests.filter((r) => r.status === 'accepted').length,
-    rejected: requests.filter((r) => r.status === 'rejected').length,
-  };
-  const total = requests.length;
+  const counts = countByStage(requests);
 
   const stats = [
     { icon: Clock, label: t('joinRequests.statPending'), value: counts.pending, note: t('joinRequests.newRequests') },
-    { icon: CircleCheck, label: t('joinRequests.statAccepted'), value: counts.accepted, note: t('joinRequests.acceptedRequests') },
+    { icon: FilePen, label: t('joinRequests.statSigning'), value: counts.signing, note: t('joinRequests.signingNote') },
+    { icon: CircleCheck, label: t('joinRequests.statApproved'), value: counts.approved, note: t('joinRequests.approvedNote') },
     { icon: CircleX, label: t('joinRequests.statRejected'), value: counts.rejected, note: t('joinRequests.rejectedRequests') },
-    { icon: FilePen, label: t('joinRequests.statTotal'), value: total, note: t('joinRequests.totalRequestsNote') },
   ];
 
-  const tabs = [
-    { key: 'pending', label: t('joinRequests.tabPending'), count: counts.pending },
-    { key: 'accepted', label: t('joinRequests.tabAccepted'), count: counts.accepted },
-    { key: 'rejected', label: t('joinRequests.tabRejected'), count: counts.rejected },
-  ];
+  const tabs = STAGES.map((key) => ({ key, label: t(`joinRequests.tab.${key}`), count: counts[key] }));
 
-  const visible = requests.filter((r) => r.status === tab);
+  const visible = requests.filter((r) => stageOf(r) === tab);
 
   return (
     <div className="jr bayn-scroll">
@@ -245,20 +259,47 @@ export default function JoinRequestsPage({ onNavigate }) {
                       )}
                     </div>
 
-                    {r.status === 'pending' && (
-                      <div className="jr__req-actions">
-                        <Button variant="primary" size="sm" onClick={() => handleAccept(r.id)} disabled={actioningId === r.id}>
-                          {t('joinRequests.accept')}
-                        </Button>
-                        <Button variant="secondary" size="sm" onClick={() => handleReject(r.id)} disabled={actioningId === r.id}>
-                          {t('joinRequests.reject')}
-                        </Button>
-                      </div>
-                    )}
+                    <div className="jr__req-actions">
+                      {r.status === 'pending' && (
+                        <>
+                          <Button variant="primary" size="sm" onClick={() => handleAccept(r.id)} disabled={actioningId === r.id}>
+                            {t('joinRequests.accept')}
+                          </Button>
+                          <Button variant="secondary" size="sm" onClick={() => handleReject(r.id)} disabled={actioningId === r.id}>
+                            {t('joinRequests.reject')}
+                          </Button>
+                        </>
+                      )}
+
+                      {stageOf(r) === 'signing' && (
+                        <p className="jr__req-state">
+                          {t(`joinRequests.signature.${signatureLabel(r) || 'waitingOnRequester'}`)}
+                        </p>
+                      )}
+
+                      {/* Nothing to decide until they've actually met. */}
+                      {stageOf(r) === 'meeting' && !canFinalize(r, now) && (
+                        <p className="jr__req-state">{t('joinRequests.meetingScheduled')}</p>
+                      )}
+
+                      {canFinalize(r, now) && (
+                        <>
+                          <p className="jr__req-state">{t('joinRequests.decidePrompt')}</p>
+                          <Button variant="primary" size="sm" onClick={() => handleFinalize(r.id, true)} disabled={actioningId === r.id}>
+                            {t('joinRequests.approve')}
+                          </Button>
+                          <Button variant="secondary" size="sm" onClick={() => handleFinalize(r.id, false)} disabled={actioningId === r.id}>
+                            {t('joinRequests.decline')}
+                          </Button>
+                        </>
+                      )}
+                    </div>
                   </li>
                 ))}
               </ul>
             )}
+
+            {actionError && <p className="jr__error">{actionError}</p>}
           </section>
 
           {/* Right rail — manage this project's meeting slots + visibility */}

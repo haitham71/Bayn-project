@@ -11,7 +11,9 @@
     "not_pending": "This meeting request is no longer pending",
     "expired": "This meeting request has expired",
     "daily_limit_reached": "This member already has 3 meetings scheduled that day",
-    "room_creation_failed": "Failed to create the video room. Please try again."
+    "room_creation_failed": "Failed to create the video room. Please try again.",
+    "not_scheduled": "This request has no meeting to decide on yet",
+    "meeting_not_over": "You can decide once the meeting has ended"
   },
   "meeting": {
     "not_found": "Meeting not found",

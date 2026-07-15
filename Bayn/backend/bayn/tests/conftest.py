@@ -184,3 +184,23 @@ def mock_calcom():
     with patch("bayn.features.meetings.service.calcom_client") as mock:
         mock.create_booking = AsyncMock(return_value={"data": {"uid": "test-calcom-booking"}})
         yield mock
+
+
+@pytest_asyncio.fixture
+def mock_nda():
+    """Patch Signature-System so tests never create real contracts or email
+    anyone a signing link.
+
+    Starts out unsigned, which is the state accepting a request lands in. Use
+    `sign()` to move it to fully signed, the way both parties signing would.
+    """
+    with patch("bayn.features.contracts.service.nda_service_client") as mock:
+        state = {"id": "test-contract-id", "status": "pending_party_one"}
+        mock.create_contract = AsyncMock(return_value=state)
+        mock.get_contract = AsyncMock(side_effect=lambda _id: dict(state))
+
+        def sign(status: str = "signed") -> None:
+            state["status"] = status
+
+        mock.sign = sign
+        yield mock

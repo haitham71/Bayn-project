@@ -12,11 +12,41 @@ from bayn.core.database import Base
 
 
 class MeetingRequestStatus(str, enum.Enum):
+    """Lifecycle of a request, from submitted to a final membership decision.
+
+    The happy path is pending -> awaiting_signatures -> scheduled -> approved.
+    A request only reaches `scheduled` once every party has signed the NDA, so
+    a meeting never exists with an unsigned party in it.
+    """
     pending = "pending"
+    # owner took the slot; NDA created and both parties emailed a signing link
+    awaiting_signatures = "awaiting_signatures"
+    # everyone signed — the meeting exists and is joinable
+    scheduled = "scheduled"
+    # the owner's call after the meeting: approved grants membership, declined doesn't
+    approved = "approved"
+    declined = "declined"
+
+    # kept for rows written before the NDA gate existed, where accepting created
+    # the meeting outright. Treated as `scheduled` when read.
     accepted = "accepted"
+
     rejected = "rejected"
     cancelled = "cancelled"
     expired = "expired"
+
+
+# Statuses where a meeting exists and the post-meeting decision is still open.
+SCHEDULED_STATUSES = (MeetingRequestStatus.scheduled, MeetingRequestStatus.accepted)
+
+# A request that is still going somewhere. Membership is only granted at the very
+# end of the flow, so "are they already a member" no longer answers "do they
+# already have a request in flight" — this does.
+ACTIVE_REQUEST_STATUSES = (
+    MeetingRequestStatus.pending,
+    MeetingRequestStatus.awaiting_signatures,
+    *SCHEDULED_STATUSES,
+)
 
 
 class AttendanceStatus(str, enum.Enum):
@@ -27,8 +57,11 @@ class AttendanceStatus(str, enum.Enum):
 
 class MeetingRequest(Base):
     """A member's proposal to meet the project owner at a specific time.
-    Owner accepts (-> creates a Meeting) or rejects; the requester can
-    cancel while it's still pending; unaddressed requests simply expire."""
+
+    Accepting no longer creates the meeting: it creates an NDA both parties
+    must sign, and only a fully signed NDA promotes the request to `scheduled`
+    and builds the Meeting. The requester can cancel while it's still pending;
+    unaddressed requests simply expire."""
     __tablename__ = "meeting_requests"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -54,10 +87,13 @@ class MeetingRequest(Base):
     )
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
-    # set once the owner accepts and a Meeting is created from this request
+    # set once every party has signed and a Meeting is created from this request
     resulting_meeting_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("meetings.id"), nullable=True
     )
+
+    # when the owner made the post-meeting call (approved / declined)
+    decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(

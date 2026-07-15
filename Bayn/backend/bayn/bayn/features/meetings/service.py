@@ -18,8 +18,12 @@ from sqlalchemy.orm import selectinload
 from bayn.common.exceptions import ConflictError, ForbiddenError, NotFoundError, ValidationError
 from bayn.core.config import settings
 from bayn.core.i18n import DEFAULT_LOCALE, t
+from bayn.features.contracts import service as contracts_service
+from bayn.features.contracts.models import Contract, ContractStatus
 from bayn.features.identity.models import User
 from bayn.features.meetings.models import (
+    ACTIVE_REQUEST_STATUSES,
+    SCHEDULED_STATUSES,
     AttendanceStatus,
     Meeting,
     MeetingAttendance,
@@ -32,6 +36,7 @@ from bayn.features.meetings.schemas import (
     MeetingRequestCreate,
     ParticipantInfo,
     RequesterInfo,
+    SignatureState,
 )
 from bayn.integrations.storage.cloudflare import StorageError, r2_client
 from bayn.features.projects.models import (
@@ -122,8 +127,9 @@ async def create_meeting_request(
 async def create_join_request(
     db: AsyncSession, requester_id: uuid.UUID, payload: JoinRequestCreate, locale: str = DEFAULT_LOCALE
 ) -> MeetingRequest:
-    # A joiner (not yet a member) picks a published slot. Accepting this both
-    # adds them to the project and schedules the meeting.
+    # A joiner (not yet a member) picks a published slot. Accepting this sends
+    # both parties an NDA; the meeting follows once they've signed, and
+    # membership only if the owner approves them afterwards.
     project = await db.get(Project, payload.project_id)
     if not project:
         raise NotFoundError(t("meetings", "request.project_not_found", locale))
@@ -146,11 +152,14 @@ async def create_join_request(
     if slot.status != SlotStatus.available or _ensure_aware(slot.start_time) <= datetime.now(timezone.utc):
         raise ConflictError(t("meetings", "join.slot_taken", locale))
 
+    # Any request still in flight blocks another, not just a pending one: the
+    # requester stays a non-member until the very end of the flow, so the
+    # already_member check above can't be what stops them taking a second slot.
     duplicate = await db.scalar(
         select(MeetingRequest).where(
             MeetingRequest.project_id == project.id,
             MeetingRequest.requester_id == requester_id,
-            MeetingRequest.status == MeetingRequestStatus.pending,
+            MeetingRequest.status.in_(ACTIVE_REQUEST_STATUSES),
         )
     )
     if duplicate:
@@ -200,6 +209,30 @@ async def participants_map(db: AsyncSession, meetings) -> dict[uuid.UUID, list[P
     out = {}
     for m in meetings:
         out[m.id] = [users[uid] for uid in (m.user_id, m.counterpart_id) if uid in users]
+    return out
+
+
+async def signature_map(db: AsyncSession, requests) -> dict[uuid.UUID, SignatureState]:
+    """Per-request NDA signing progress, keyed by request id.
+
+    Only requests actually waiting on signatures get an entry — before accept
+    there's no contract, and after scheduling everyone has signed by
+    definition, so a state would be noise either way.
+    """
+    ids = [r.id for r in requests if r.status == MeetingRequestStatus.awaiting_signatures]
+    if not ids:
+        return {}
+
+    contracts = await db.execute(select(Contract).where(Contract.meeting_request_id.in_(ids)))
+    out = {}
+    for contract in contracts.scalars().all():
+        # Signature-System reports one status, not a flag per party: it walks
+        # pending_party_one -> pending_party_two -> signed, so party one having
+        # signed is implied by having moved past their step.
+        out[contract.meeting_request_id] = SignatureState(
+            requester_signed=contract.status != ContractStatus.pending_party_one,
+            owner_signed=contract.status == ContractStatus.signed,
+        )
     return out
 
 
@@ -265,12 +298,26 @@ async def list_meeting_requests(
 async def _count_meetings_on_day(
     db: AsyncSession, user_id: uuid.UUID, day_start: datetime, day_end: datetime
 ) -> int:
-    result = await db.execute(
+    """How many of the user's meetings that day are booked or on their way there.
+
+    Requests out for signature count: they turn into meetings on their own once
+    signed, so ignoring them would let an owner accept an unlimited number for
+    one day and have them all land at once.
+    """
+    scheduled = await db.scalar(
         select(func.count()).select_from(Meeting).where(
             Meeting.user_id == user_id, Meeting.start_time >= day_start, Meeting.start_time < day_end
         )
     )
-    return result.scalar_one()
+    awaiting = await db.scalar(
+        select(func.count()).select_from(MeetingRequest).where(
+            MeetingRequest.requester_id == user_id,
+            MeetingRequest.status == MeetingRequestStatus.awaiting_signatures,
+            MeetingRequest.proposed_start_time >= day_start,
+            MeetingRequest.proposed_start_time < day_end,
+        )
+    )
+    return scheduled + awaiting
 
 
 def _english_full_name(user: User) -> str:
@@ -333,7 +380,14 @@ async def _has_prior_meeting(
 
 async def accept_meeting_request(
     db: AsyncSession, request_id: uuid.UUID, owner_id: uuid.UUID, locale: str = DEFAULT_LOCALE
-) -> Meeting:
+) -> MeetingRequest:
+    """Owner takes the proposed slot. This does not schedule anything.
+
+    It creates the NDA and hands it to Signature-System, which emails both
+    parties a signing link. The meeting is only built once both have signed —
+    see `refresh_request_state`. Membership waits until after the meeting, for
+    the owner's final call in `finalize_meeting_request`.
+    """
     request = await get_meeting_request(db, request_id, locale)
     if request.owner_id != owner_id:
         raise ForbiddenError(t("meetings", "request.not_addressed_to_you", locale))
@@ -350,29 +404,31 @@ async def accept_meeting_request(
     if await _count_meetings_on_day(db, request.requester_id, day_start, day_end) >= MAX_MEETINGS_PER_DAY:
         raise ConflictError(t("meetings", "request.daily_limit_reached", locale))
 
-    # If the requester isn't a member yet, approving also adds them (the join
-    # flow) — enforce the membership cap and add them before attendance is built.
-    already_member = await db.scalar(
-        select(ProjectMembership).where(
-            ProjectMembership.project_id == request.project_id,
-            ProjectMembership.user_id == request.requester_id,
-        )
-    )
-    if not already_member:
-        count = await db.scalar(
-            select(func.count()).select_from(ProjectMembership).where(
-                ProjectMembership.user_id == request.requester_id
-            )
-        )
-        if count >= MAX_MEMBERSHIPS_PER_USER:
-            raise ConflictError(t("meetings", "join.limit_reached", locale))
-        db.add(ProjectMembership(
-            user_id=request.requester_id,
-            project_id=request.project_id,
-            role=ProjectMembershipRole.MEMBER,
-        ))
-        await db.flush()
+    await contracts_service.create_nda_for_request(db, request, locale)
 
+    request.status = MeetingRequestStatus.awaiting_signatures
+
+    # The slot is held from here, not from the meeting: leaving it available
+    # while the NDA is out for signature would let a second joiner take the
+    # time the owner already committed to.
+    if request.slot_id is not None:
+        slot = await db.get(ProjectMeetingSlot, request.slot_id)
+        if slot:
+            slot.status = SlotStatus.taken
+
+    await db.commit()
+    await db.refresh(request)
+    return request
+
+
+async def _schedule_meeting(
+    db: AsyncSession, request: MeetingRequest, locale: str = DEFAULT_LOCALE
+) -> Meeting:
+    """Build the actual meeting for a request whose NDA is fully signed.
+
+    Callers must have checked the signatures — this doesn't re-check. Flushes
+    but doesn't commit; the caller owns the transaction.
+    """
     project = await db.get(Project, request.project_id)
     is_initial = not await _has_prior_meeting(db, request.requester_id, request.owner_id, request.project_id)
 
@@ -404,15 +460,16 @@ async def accept_meeting_request(
     db.add(meeting)
     await db.flush()
 
-    request.status = MeetingRequestStatus.accepted
+    request.status = MeetingRequestStatus.scheduled
     request.resulting_meeting_id = meeting.id
 
-    # A picked slot is consumed once the meeting is confirmed.
-    if request.slot_id is not None:
-        slot = await db.get(ProjectMeetingSlot, request.slot_id)
-        if slot:
-            slot.status = SlotStatus.taken
+    contract = await contracts_service.get_contract_for_request(db, request.id)
+    if contract is not None:
+        contract.meeting_id = meeting.id
 
+    # Only the owner has a membership at this point — the requester earns theirs
+    # after the meeting — so this builds the one attendance row it can. The
+    # requester's is added by finalize_meeting_request if they're approved.
     memberships = await db.execute(
         select(ProjectMembership).where(
             ProjectMembership.project_id == request.project_id,
@@ -422,9 +479,129 @@ async def accept_meeting_request(
     for membership in memberships.scalars().all():
         db.add(MeetingAttendance(meeting_id=meeting.id, membership_id=membership.id))
 
-    await db.commit()
-    await db.refresh(meeting)
     return meeting
+
+
+async def refresh_request_state(
+    db: AsyncSession, request: MeetingRequest, locale: str = DEFAULT_LOCALE
+) -> MeetingRequest:
+    """Pull the NDA's signing status and schedule the meeting if it's complete.
+
+    This is what makes "everyone signed -> the meeting appears" happen without a
+    background worker: it runs whenever a request is read, and on the webhook
+    Signature-System calls. Best-effort by design — a Signature-System or
+    Daily.co outage leaves the request awaiting signatures rather than failing
+    the read that triggered it.
+    """
+    if request.status != MeetingRequestStatus.awaiting_signatures:
+        return request
+
+    # Nobody can sign an NDA for a meeting whose time has already passed, so the
+    # request is dead and the slot it was holding goes back on the market.
+    if _ensure_aware(request.proposed_start_time) < datetime.now(timezone.utc):
+        request.status = MeetingRequestStatus.expired
+        await _release_slot(db, request)
+        await db.commit()
+        await db.refresh(request)
+        return request
+
+    contract = await contracts_service.get_contract_for_request(db, request.id)
+    if contract is None:
+        return request
+
+    await contracts_service.sync_contract(db, contract)
+    if contract.status != ContractStatus.signed:
+        await db.commit()
+        return request
+
+    try:
+        # A savepoint, not a plain try: rolling the whole session back here would
+        # expire every object the caller is holding — this runs in a loop over a
+        # list the router is about to serialise, and an expired row would lazy
+        # load mid-serialisation and blow up the entire response. Only the
+        # half-built meeting is discarded; the signature sync above survives.
+        async with db.begin_nested():
+            await _schedule_meeting(db, request, locale)
+    except ValidationError:
+        # Room creation failed. The NDA is still signed and that's worth keeping,
+        # so the next read retries scheduling against a healthy Daily.co.
+        logger.warning("Scheduling failed for signed request %s", request.id, exc_info=True)
+
+    await db.commit()
+    await db.refresh(request)
+    return request
+
+
+async def finalize_meeting_request(
+    db: AsyncSession,
+    request_id: uuid.UUID,
+    owner_id: uuid.UUID,
+    approve: bool,
+    locale: str = DEFAULT_LOCALE,
+) -> MeetingRequest:
+    """The owner's call after the meeting: approving registers the requester as
+    a project member, declining leaves them out."""
+    request = await get_meeting_request(db, request_id, locale)
+    if request.owner_id != owner_id:
+        raise ForbiddenError(t("meetings", "request.not_addressed_to_you", locale))
+
+    if request.status not in SCHEDULED_STATUSES:
+        raise ValidationError(t("meetings", "request.not_scheduled", locale))
+
+    # There is nothing to judge until the meeting has actually happened.
+    if _ensure_aware(request.proposed_end_time) > datetime.now(timezone.utc):
+        raise ValidationError(t("meetings", "request.meeting_not_over", locale))
+
+    if not approve:
+        request.status = MeetingRequestStatus.declined
+        request.decided_at = datetime.now(timezone.utc)
+        await db.commit()
+        await db.refresh(request)
+        return request
+
+    membership = await db.scalar(
+        select(ProjectMembership).where(
+            ProjectMembership.project_id == request.project_id,
+            ProjectMembership.user_id == request.requester_id,
+        )
+    )
+    if membership is None:
+        # Checked here rather than at accept time: the cap is on memberships, and
+        # this is the first moment one is actually granted.
+        count = await db.scalar(
+            select(func.count()).select_from(ProjectMembership).where(
+                ProjectMembership.user_id == request.requester_id
+            )
+        )
+        if count >= MAX_MEMBERSHIPS_PER_USER:
+            raise ConflictError(t("meetings", "join.limit_reached", locale))
+        membership = ProjectMembership(
+            user_id=request.requester_id,
+            project_id=request.project_id,
+            role=ProjectMembershipRole.MEMBER,
+        )
+        db.add(membership)
+        await db.flush()
+
+    # The attendance row skipped at scheduling time, now that they have a
+    # membership to hang it on.
+    if request.resulting_meeting_id is not None:
+        existing = await db.scalar(
+            select(MeetingAttendance).where(
+                MeetingAttendance.meeting_id == request.resulting_meeting_id,
+                MeetingAttendance.membership_id == membership.id,
+            )
+        )
+        if existing is None:
+            db.add(MeetingAttendance(
+                meeting_id=request.resulting_meeting_id, membership_id=membership.id
+            ))
+
+    request.status = MeetingRequestStatus.approved
+    request.decided_at = datetime.now(timezone.utc)
+    await db.commit()
+    await db.refresh(request)
+    return request
 
 
 async def reject_meeting_request(
@@ -442,14 +619,29 @@ async def reject_meeting_request(
     return request
 
 
+async def _release_slot(db: AsyncSession, request: MeetingRequest) -> None:
+    """Hand a held slot back once the request it was held for is dead."""
+    if request.slot_id is None:
+        return
+    slot = await db.get(ProjectMeetingSlot, request.slot_id)
+    if slot is not None:
+        slot.status = SlotStatus.available
+
+
 async def cancel_meeting_request(
     db: AsyncSession, request_id: uuid.UUID, requester_id: uuid.UUID, locale: str = DEFAULT_LOCALE
 ) -> MeetingRequest:
     request = await get_meeting_request(db, request_id, locale)
     if request.requester_id != requester_id:
         raise ForbiddenError(t("meetings", "request.not_your_request", locale))
-    if request.status != MeetingRequestStatus.pending:
+    # Withdrawable right up until the meeting exists: a requester who decides
+    # not to sign shouldn't be stuck holding the owner's slot. Once both have
+    # signed the NDA it's binding and cancelling is no longer theirs to do.
+    if request.status not in (MeetingRequestStatus.pending, MeetingRequestStatus.awaiting_signatures):
         raise ValidationError(t("meetings", "request.not_pending", locale))
+
+    if request.status == MeetingRequestStatus.awaiting_signatures:
+        await _release_slot(db, request)
 
     request.status = MeetingRequestStatus.cancelled
     await db.commit()

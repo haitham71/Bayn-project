@@ -23,6 +23,7 @@ import SendHorizontal from '@/assets/icons/send-horizontal.svg?react';
 import Send from '@/assets/icons/send.svg?react';
 import FileText from '@/assets/icons/file-text.svg?react';
 import MessageSquareText from '@/assets/icons/message-square-text.svg?react';
+import CircleCheck from '@/assets/icons/circle-check.svg?react';
 import './IdeaDetailsPage.css';
 
 const STAGE_LABEL = {
@@ -276,6 +277,10 @@ export default function IdeaDetailsPage({ onNavigate }) {
                     <li className="id__step">
                       <MessageSquareText width={20} height={20} aria-hidden="true" />
                       <span>{t('ideaDetails.step3')}</span>
+                    </li>
+                    <li className="id__step">
+                      <CircleCheck width={20} height={20} aria-hidden="true" />
+                      <span>{t('ideaDetails.step4')}</span>
                     </li>
                   </ol>
                 </div>

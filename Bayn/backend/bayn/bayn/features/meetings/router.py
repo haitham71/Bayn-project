@@ -17,6 +17,7 @@ from bayn.features.meetings.schemas import (
     MeetingAttendanceResponse,
     MeetingAttendanceUpdate,
     MeetingRequestCreate,
+    MeetingRequestFinalize,
     MeetingRequestResponse,
     MeetingResponse,
 )
@@ -57,30 +58,57 @@ async def list_meeting_requests(
     project_id: uuid.UUID | None = Query(default=None),
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
+    locale: str = Depends(get_locale),
 ) -> list[MeetingRequestResponse]:
     requests = await service.list_meeting_requests(db, current_user.id, role, project_id)
+    # Signing happens in Signature-System, which can't reach us unless the
+    # webhook is wired, so reading a request is also when we notice it went
+    # through. Only touches rows awaiting signature.
+    for r in requests:
+        await service.refresh_request_state(db, r, locale)
+
     requesters = await service.requesters_map(db, [r.requester_id for r in requests])
+    signatures = await service.signature_map(db, requests)
     result = []
     for r in requests:
         resp = MeetingRequestResponse.model_validate(r)
         resp.requester = requesters.get(r.requester_id)
+        resp.signatures = signatures.get(r.id)
         result.append(resp)
     return result
 
 
 @router.post(
     "/requests/{request_id}/accept",
-    response_model=MeetingResponse,
+    response_model=MeetingRequestResponse,
     status_code=201,
-    summary="Accept a meeting request (owner only)",
+    summary="Accept the proposed slot and send both parties the NDA (owner only)",
 )
 async def accept_meeting_request(
     request_id: uuid.UUID,
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
     locale: str = Depends(get_locale),
-) -> MeetingResponse:
+) -> MeetingRequestResponse:
+    """Does not schedule the meeting — that happens once both parties sign."""
     return await service.accept_meeting_request(db, request_id, current_user.id, locale)
+
+
+@router.post(
+    "/requests/{request_id}/finalize",
+    response_model=MeetingRequestResponse,
+    summary="Approve or decline the requester after the meeting (owner only)",
+)
+async def finalize_meeting_request(
+    request_id: uuid.UUID,
+    payload: MeetingRequestFinalize,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+    locale: str = Depends(get_locale),
+) -> MeetingRequestResponse:
+    return await service.finalize_meeting_request(
+        db, request_id, current_user.id, payload.approve, locale
+    )
 
 
 @router.post(
