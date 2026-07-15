@@ -15,6 +15,9 @@ const MEETING_ACCENTS = [
   { accent: '#944ae3', tint: 'rgba(240, 227, 255, 0.5)' },
 ];
 
+const AVATAR_COLORS = ['#0f3d2e', '#295e4d', '#5ca18a', '#c9baa1', '#463e31'];
+const MAX_AVATARS = 3;
+
 function greetingKey() {
   const hour = new Date().getHours();
   if (hour < 12) return 'greetMorning';
@@ -58,6 +61,41 @@ export default function HomePage({ onNavigate }) {
     t('home.progressLabel'),
     t('home.statusLabel'),
   ];
+
+  function People({ participants }) {
+    const people = participants || [];
+    if (people.length === 0) return null;
+    const shown = people.slice(0, MAX_AVATARS);
+    const extra = people.length - shown.length;
+
+    return (
+      <div className="home__meeting-people">
+        {shown.map((p, pi) => {
+          const name = ((locale === 'ar' ? p.name_ar : p.name_en) || '').trim();
+          return (
+            <span key={p.id} className="home__meeting-person">
+              {p.avatar_url ? (
+                <img
+                  className="home__meeting-avatar home__meeting-avatar--img"
+                  src={p.avatar_url}
+                  alt=""
+                />
+              ) : (
+                <span
+                  className="home__meeting-avatar"
+                  style={{ background: AVATAR_COLORS[pi % AVATAR_COLORS.length] }}
+                >
+                  {name.charAt(0).toUpperCase()}
+                </span>
+              )}
+              <span className="home__meeting-tooltip" role="tooltip">{name}</span>
+            </span>
+          );
+        })}
+        {extra > 0 && <span className="home__meeting-extra">+{extra}</span>}
+      </div>
+    );
+  }
 
   return (
     <div className="home">
@@ -131,6 +169,7 @@ export default function HomePage({ onNavigate }) {
                             {fmtDay(m.start_time)} · {fmtTime(m.start_time)}
                           </span>
                           <span className="home__meeting-name">{m.title || t('home.meeting')}</span>
+                          <People participants={m.participants} />
                           {m.video_link && (
                             <a
                               className="home__meeting-join"
