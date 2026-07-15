@@ -116,6 +116,20 @@ async def create_nda_for_request(
         raise ValidationError(t("contracts", "errors.external_api_failed", locale)) from exc
 
     contract.generated_pdf_key = str(remote.get("id"))
+
+    # The remote contract exists even if its signing email didn't go out, so this
+    # is persisted like any other success — raising here would leave nothing for
+    # `get_contract_for_request` to find, and a retried accept would create a
+    # second, orphaned contract on Signature-System's side. Logged instead so
+    # ops can see requester.email never got their signing link.
+    if not remote.get("email_sent", True):
+        logger.warning(
+            "NDA contract %s created for meeting request %s but signing email to %s failed",
+            contract.generated_pdf_key,
+            request.id,
+            requester.email,
+        )
+
     db.add(contract)
     await db.flush()
     return contract
