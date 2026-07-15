@@ -25,8 +25,20 @@ from bayn.features.meetings.models import (
     MeetingRequest,
     MeetingRequestStatus,
 )
-from bayn.features.meetings.schemas import MeetingAttendanceUpdate, MeetingRequestCreate
-from bayn.features.projects.models import Project, ProjectMembership, ProjectMembershipRole
+from bayn.features.meetings.schemas import (
+    JoinRequestCreate,
+    MeetingAttendanceUpdate,
+    MeetingRequestCreate,
+    RequesterInfo,
+)
+from bayn.features.projects.models import (
+    Project,
+    ProjectMeetingSlot,
+    ProjectMembership,
+    ProjectMembershipRole,
+    SlotStatus,
+)
+from bayn.features.projects.service import MAX_MEMBERSHIPS_PER_USER
 from bayn.integrations.cal import CalComError, calcom_client
 from bayn.integrations.daily import DailyError, daily_client
 
@@ -100,6 +112,77 @@ async def create_meeting_request(
     await db.commit()
     await db.refresh(request)
     return request
+
+
+async def create_join_request(
+    db: AsyncSession, requester_id: uuid.UUID, payload: JoinRequestCreate, locale: str = DEFAULT_LOCALE
+) -> MeetingRequest:
+    # A joiner (not yet a member) picks a published slot. Accepting this both
+    # adds them to the project and schedules the meeting.
+    project = await db.get(Project, payload.project_id)
+    if not project:
+        raise NotFoundError(t("meetings", "request.project_not_found", locale))
+
+    owner_membership = await _get_owner_membership(db, project.id, locale)
+    if owner_membership.user_id == requester_id:
+        raise ValidationError(t("meetings", "join.owner_cannot_join", locale))
+
+    already_member = await db.scalar(
+        select(ProjectMembership).where(
+            ProjectMembership.project_id == project.id, ProjectMembership.user_id == requester_id
+        )
+    )
+    if already_member:
+        raise ConflictError(t("meetings", "join.already_member", locale))
+
+    slot = await db.get(ProjectMeetingSlot, payload.slot_id)
+    if not slot or slot.project_id != project.id:
+        raise NotFoundError(t("meetings", "join.slot_not_found", locale))
+    if slot.status != SlotStatus.available:
+        raise ConflictError(t("meetings", "join.slot_taken", locale))
+
+    duplicate = await db.scalar(
+        select(MeetingRequest).where(
+            MeetingRequest.project_id == project.id,
+            MeetingRequest.requester_id == requester_id,
+            MeetingRequest.status == MeetingRequestStatus.pending,
+        )
+    )
+    if duplicate:
+        raise ConflictError(t("meetings", "join.already_requested", locale))
+
+    request = MeetingRequest(
+        requester_id=requester_id,
+        owner_id=owner_membership.user_id,
+        project_id=project.id,
+        proposed_start_time=slot.start_time,
+        proposed_end_time=slot.end_time,
+        message=payload.message,
+        slot_id=slot.id,
+        expires_at=datetime.now(timezone.utc) + MEETING_REQUEST_TTL,
+    )
+    db.add(request)
+    await db.commit()
+    await db.refresh(request)
+    return request
+
+
+async def requesters_map(db: AsyncSession, user_ids: list[uuid.UUID]) -> dict[uuid.UUID, RequesterInfo]:
+    # Basic public info for each requester, keyed by user id (for the owner's
+    # incoming-requests view).
+    ids = list({uid for uid in user_ids})
+    if not ids:
+        return {}
+    result = await db.execute(select(User).where(User.id.in_(ids)))
+    out = {}
+    for user in result.scalars().all():
+        out[user.id] = RequesterInfo(
+            id=user.id,
+            name_en=f"{user.first_name_en} {user.last_name_en}".strip(),
+            name_ar=f"{user.first_name_ar} {user.last_name_ar}".strip(),
+            job_title=user.job_title,
+        )
+    return out
 
 
 async def get_meeting_request(db: AsyncSession, request_id: uuid.UUID, locale: str = DEFAULT_LOCALE) -> MeetingRequest:
@@ -210,6 +293,30 @@ async def accept_meeting_request(
     if await _count_meetings_on_day(db, request.requester_id, day_start, day_end) >= MAX_MEETINGS_PER_DAY:
         raise ConflictError(t("meetings", "request.daily_limit_reached", locale))
 
+    # A join request adds the requester to the project on approval — enforce the
+    # membership cap and add them before the meeting/attendance is built.
+    if request.slot_id is not None:
+        already_member = await db.scalar(
+            select(ProjectMembership).where(
+                ProjectMembership.project_id == request.project_id,
+                ProjectMembership.user_id == request.requester_id,
+            )
+        )
+        if not already_member:
+            count = await db.scalar(
+                select(func.count()).select_from(ProjectMembership).where(
+                    ProjectMembership.user_id == request.requester_id
+                )
+            )
+            if count >= MAX_MEMBERSHIPS_PER_USER:
+                raise ConflictError(t("meetings", "join.limit_reached", locale))
+            db.add(ProjectMembership(
+                user_id=request.requester_id,
+                project_id=request.project_id,
+                role=ProjectMembershipRole.MEMBER,
+            ))
+            await db.flush()
+
     project = await db.get(Project, request.project_id)
     is_initial = not await _has_prior_meeting(db, request.requester_id, request.owner_id, request.project_id)
 
@@ -238,6 +345,12 @@ async def accept_meeting_request(
 
     request.status = MeetingRequestStatus.accepted
     request.resulting_meeting_id = meeting.id
+
+    # A picked slot is consumed once the meeting is confirmed.
+    if request.slot_id is not None:
+        slot = await db.get(ProjectMeetingSlot, request.slot_id)
+        if slot:
+            slot.status = SlotStatus.taken
 
     memberships = await db.execute(
         select(ProjectMembership).where(

@@ -20,3 +20,7 @@ export const getProject = (id) =>
 // Join a project as a member.
 export const joinProject = (id) =>
   api.post(`${API.projects.base}/${id}/join`).then((r) => r.data);
+
+// A project's available meeting slots (for joiners to pick from).
+export const getProjectSlots = (id) =>
+  api.get(`${API.projects.base}/${id}/slots`).then((r) => r.data);

@@ -26,6 +26,11 @@ class ProjectStage(str, enum.Enum):
     launching = "launching"
 
 
+class SlotStatus(str, enum.Enum):
+    available = "available"
+    taken = "taken"
+
+
 class Project(Base):
     __tablename__ = "projects"
     __table_args__ = (
@@ -66,9 +71,36 @@ class Project(Base):
     memberships: Mapped[list["ProjectMembership"]] = relationship(
         "ProjectMembership", back_populates="project", cascade="all, delete-orphan"
     )
+    meeting_slots: Mapped[list["ProjectMeetingSlot"]] = relationship(
+        "ProjectMeetingSlot", back_populates="project", cascade="all, delete-orphan"
+    )
 
     def __repr__(self) -> str:
         return f"<Project {self.title}>"
+
+
+class ProjectMeetingSlot(Base):
+    """A time window the owner offers for a first meeting. A joiner picks one
+    when requesting to join; on approval the slot is marked taken."""
+    __tablename__ = "project_meeting_slots"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    project_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False
+    )
+    start_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    end_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    status: Mapped[SlotStatus] = mapped_column(
+        Enum(SlotStatus, values_callable=lambda x: [e.value for e in x]),
+        default=SlotStatus.available,
+        nullable=False,
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    project: Mapped["Project"] = relationship("Project", back_populates="meeting_slots")
+
+    def __repr__(self) -> str:
+        return f"<ProjectMeetingSlot project={self.project_id} {self.start_time} ({self.status})>"
 
 
 class ProjectMembership(Base):

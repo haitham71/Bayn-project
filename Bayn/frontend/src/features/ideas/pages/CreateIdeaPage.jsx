@@ -27,6 +27,23 @@ const STAGE_OPTIONS = [
   { value: 'launching', labelKey: 'createIdea.stageLaunching' },
 ];
 
+// Flatten the scheduler's [{ date, slots:[{start,end}] }] into backend meeting
+// slots ({ start_time, end_time } ISO) by combining each day with its times.
+function meetingsToSlots(days) {
+  const out = [];
+  (days || []).forEach((d) => {
+    const date = d.date instanceof Date ? d.date : new Date(d.date);
+    (d.slots || []).forEach((s) => {
+      const [sh, sm] = s.start.split(':').map(Number);
+      const [eh, em] = s.end.split(':').map(Number);
+      const start = new Date(date.getFullYear(), date.getMonth(), date.getDate(), sh, sm);
+      const end = new Date(date.getFullYear(), date.getMonth(), date.getDate(), eh, em);
+      out.push({ start_time: start.toISOString(), end_time: end.toISOString() });
+    });
+  });
+  return out;
+}
+
 // One numbered form step: circled index + title + note, then its field(s).
 function Step({ n, title, note, children }) {
   return (
@@ -83,9 +100,9 @@ export default function CreateIdeaPage({ onNavigate }) {
         stage,
         team_members_needed: Number(teamSize),
         is_hidden: visibility === 'private',
-        // NOTE: skills, meeting availability, and join-request toggle are not
-        // sent yet — the create endpoint doesn't support them. Wire once the
-        // backend does.
+        slots: meetingsToSlots(meetings),
+        // NOTE: skills and the join-request toggle aren't sent yet — the create
+        // endpoint doesn't support them. Wire once the backend does.
       });
       onNavigate?.('myprojects');
       return project;

@@ -11,6 +11,7 @@ from bayn.features.identity.dependencies import get_current_active_user
 from bayn.features.identity.models import User
 from bayn.features.projects import service
 from bayn.features.projects.schemas import (
+    MeetingSlotResponse,
     MyProjectResponse,
     ProjectCreateRequest,
     ProjectMembershipResponse,
@@ -82,6 +83,16 @@ async def update_project(
     locale: str = Depends(get_locale),
 ) -> ProjectResponse:
     return await service.update_project(db, project_id, current_user.id, payload, locale)
+
+
+@projects_router.get(
+    "/{project_id}/slots", response_model=list[MeetingSlotResponse], summary="List a project's available meeting slots"
+)
+async def list_slots(
+    project_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+) -> list[MeetingSlotResponse]:
+    return await service.list_available_slots(db, project_id)
 
 
 @projects_router.get(

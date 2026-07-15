@@ -40,6 +40,13 @@ class MeetingRequest(Base):
     proposed_end_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     message: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
+    # Set when this request comes from a joiner picking a published slot. Its
+    # presence marks the request as a "join request": accepting it also adds the
+    # requester to the project and marks the slot taken.
+    slot_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("project_meeting_slots.id"), nullable=True
+    )
+
     status: Mapped[MeetingRequestStatus] = mapped_column(
         Enum(MeetingRequestStatus, values_callable=lambda x: [e.value for e in x]),
         default=MeetingRequestStatus.pending,

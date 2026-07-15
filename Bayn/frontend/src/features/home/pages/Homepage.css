@@ -281,3 +281,18 @@
     font-size: 32px;
   }
 }
+
+.home__schedule-empty {
+  margin: 8px 0;
+  font-size: 14px;
+  color: var(--text-supporting, #786c57);
+}
+
+.home__meeting-join {
+  align-self: flex-start;
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--btn-primary-default, #295e4d);
+  text-decoration: underline;
+}

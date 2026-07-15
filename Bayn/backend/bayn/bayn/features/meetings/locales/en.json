@@ -19,5 +19,13 @@
   },
   "attendance": {
     "not_found": "Attendance record not found"
+  },
+  "join": {
+    "owner_cannot_join": "You own this project, you can't join it.",
+    "already_member": "You're already part of this project.",
+    "slot_not_found": "That meeting slot no longer exists.",
+    "slot_taken": "That meeting slot is no longer available.",
+    "already_requested": "You already have a pending request for this project.",
+    "limit_reached": "You already hold the maximum of 2 project memberships."
   }
 }

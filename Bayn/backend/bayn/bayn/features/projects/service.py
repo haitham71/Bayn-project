@@ -8,7 +8,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from bayn.common.exceptions import ConflictError, ForbiddenError, NotFoundError, ValidationError
 from bayn.core.i18n import DEFAULT_LOCALE, t
 from bayn.features.identity.models import User
-from bayn.features.projects.models import Project, ProjectMembership, ProjectMembershipRole
+from bayn.features.projects.models import (
+    Project,
+    ProjectMeetingSlot,
+    ProjectMembership,
+    ProjectMembershipRole,
+    SlotStatus,
+)
 from bayn.features.projects.schemas import OwnerInfo, ProjectCreateRequest, ProjectUpdateRequest
 from bayn.integrations.storage.cloudflare import StorageError, r2_client
 
@@ -63,14 +69,30 @@ async def create_project(
     if await _count_memberships(db, owner_user_id) >= MAX_MEMBERSHIPS_PER_USER:
         raise ConflictError(t("projects", "membership.limit_reached", locale))
 
-    project = Project(**payload.model_dump())
+    project = Project(**payload.model_dump(exclude={"slots"}))
     db.add(project)
     await db.flush()  # assigns project.id without ending the transaction
 
     db.add(ProjectMembership(user_id=owner_user_id, project_id=project.id, role=ProjectMembershipRole.OWNER))
+    for slot in payload.slots:
+        db.add(ProjectMeetingSlot(
+            project_id=project.id, start_time=slot.start_time, end_time=slot.end_time,
+        ))
     await db.commit()
     await db.refresh(project)
     return project
+
+
+async def list_available_slots(db: AsyncSession, project_id: uuid.UUID) -> list[ProjectMeetingSlot]:
+    result = await db.execute(
+        select(ProjectMeetingSlot)
+        .where(
+            ProjectMeetingSlot.project_id == project_id,
+            ProjectMeetingSlot.status == SlotStatus.available,
+        )
+        .order_by(ProjectMeetingSlot.start_time)
+    )
+    return result.scalars().all()
 
 
 async def get_project(db: AsyncSession, project_id: uuid.UUID, locale: str = DEFAULT_LOCALE) -> Project:

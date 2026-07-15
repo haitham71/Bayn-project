@@ -4,9 +4,9 @@ import { useTranslation } from 'react-i18next';
 import Sidebar from '@/shared/components/Sidebar';
 import Navbar from '@/shared/components/Navbar';
 import Button from '@/shared/components/Button';
-import Calendar from '@/shared/components/Calendar';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
-import { getProject, joinProject } from '@/features/projects/services/projectService';
+import { getProject, getProjectSlots } from '@/features/projects/services/projectService';
+import { createJoinRequest } from '@/features/meetings/services/meetingService';
 import { getIndustries } from '@/features/identity/services/authService';
 import { getApiErrorMessage } from '@/shared/lib/apiError';
 import ArrowLeft from '@/assets/icons/arrow-left.svg?react';
@@ -41,17 +41,23 @@ export default function IdeaDetailsPage({ onNavigate }) {
 
   const [idea, setIdea] = useState(null);
   const [industries, setIndustries] = useState([]);
+  const [slots, setSlots] = useState([]);
+  const [selectedSlot, setSelectedSlot] = useState('');
   const [loading, setLoading] = useState(true);
-  const [meetingDate, setMeetingDate] = useState(null);
   const [joining, setJoining] = useState(false);
   const [joinMsg, setJoinMsg] = useState('');
   const [joinError, setJoinError] = useState('');
 
   useEffect(() => {
-    Promise.all([getProject(id), getIndustries().catch(() => [])])
-      .then(([p, inds]) => {
+    Promise.all([
+      getProject(id),
+      getIndustries().catch(() => []),
+      getProjectSlots(id).catch(() => []),
+    ])
+      .then(([p, inds, sl]) => {
         setIdea(p);
         setIndustries(inds || []);
+        setSlots(sl || []);
       })
       .catch(() => setIdea(null))
       .finally(() => setLoading(false));
@@ -59,12 +65,25 @@ export default function IdeaDetailsPage({ onNavigate }) {
 
   const industryName = idea ? (industries.find((i) => i.id === idea.industry_id)?.name || '') : '';
 
+  const slotLabel = (s) => {
+    const start = new Date(s.start_time);
+    const end = new Date(s.end_time);
+    const locale = i18n.language === 'ar' ? 'ar' : 'en';
+    const day = new Intl.DateTimeFormat(locale, { weekday: 'short', day: 'numeric', month: 'short' }).format(start);
+    const time = (d) => new Intl.DateTimeFormat(locale, { hour: 'numeric', minute: '2-digit' }).format(d);
+    return `${day} · ${time(start)} – ${time(end)}`;
+  };
+
   async function handleJoin() {
     setJoinError('');
     setJoinMsg('');
+    if (!selectedSlot) {
+      setJoinError(t('ideaDetails.pickSlot'));
+      return;
+    }
     setJoining(true);
     try {
-      await joinProject(id);
+      await createJoinRequest({ project_id: id, slot_id: selectedSlot });
       setJoinMsg(t('ideaDetails.joinSuccess'));
     } catch (err) {
       setJoinError(getApiErrorMessage(err, t('ideaDetails.joinError')));
@@ -178,10 +197,25 @@ export default function IdeaDetailsPage({ onNavigate }) {
 
                 <div className="id__panel">
                   <h2 className="id__panel-title">{t('ideaDetails.joinTitle')}</h2>
-                  <Calendar
-                    selectedDates={meetingDate ? [meetingDate] : []}
-                    onSelectDate={setMeetingDate}
-                  />
+
+                  {slots.length === 0 ? (
+                    <p className="id__no-slots">{t('ideaDetails.noSlots')}</p>
+                  ) : (
+                    <ul className="id__slots">
+                      {slots.map((s) => (
+                        <li key={s.id}>
+                          <button
+                            type="button"
+                            className={`id__slot${selectedSlot === s.id ? ' id__slot--active' : ''}`}
+                            onClick={() => setSelectedSlot(s.id)}
+                          >
+                            {slotLabel(s)}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+
                   {joinError && <p className="id__error">{joinError}</p>}
                   {joinMsg && <p className="id__success">{joinMsg}</p>}
                   <Button
@@ -189,7 +223,7 @@ export default function IdeaDetailsPage({ onNavigate }) {
                     size="md"
                     className="id__join"
                     onClick={handleJoin}
-                    disabled={joining}
+                    disabled={joining || slots.length === 0}
                     trailingIcon={<SendHorizontal width={20} height={20} aria-hidden="true" />}
                   >
                     {joining ? t('ideaDetails.sending') : t('ideaDetails.sendJoin')}

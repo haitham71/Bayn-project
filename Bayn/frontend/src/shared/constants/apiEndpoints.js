@@ -35,4 +35,9 @@ export const API = {
     base: '/projects',
     mine: '/projects/mine',
   },
+  meetings: {
+    base: '/meetings',
+    requests: '/meetings/requests',
+    joinRequests: '/meetings/join-requests',
+  },
 };

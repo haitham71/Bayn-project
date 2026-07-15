@@ -13,6 +13,7 @@ from bayn.features.identity.dependencies import get_current_active_user
 from bayn.features.identity.models import User
 from bayn.features.meetings import service
 from bayn.features.meetings.schemas import (
+    JoinRequestCreate,
     MeetingAttendanceResponse,
     MeetingAttendanceUpdate,
     MeetingRequestCreate,
@@ -37,6 +38,19 @@ async def create_meeting_request(
     return await service.create_meeting_request(db, current_user.id, payload, locale)
 
 
+@router.post(
+    "/join-requests", response_model=MeetingRequestResponse, status_code=201,
+    summary="Request to join a project by picking one of its meeting slots",
+)
+async def create_join_request(
+    payload: JoinRequestCreate,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+    locale: str = Depends(get_locale),
+) -> MeetingRequestResponse:
+    return await service.create_join_request(db, current_user.id, payload, locale)
+
+
 @router.get("/requests", response_model=list[MeetingRequestResponse], summary="List meeting requests")
 async def list_meeting_requests(
     role: Literal["incoming", "outgoing"] = Query(..., description="incoming = as owner, outgoing = as requester"),
@@ -44,7 +58,14 @@ async def list_meeting_requests(
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ) -> list[MeetingRequestResponse]:
-    return await service.list_meeting_requests(db, current_user.id, role, project_id)
+    requests = await service.list_meeting_requests(db, current_user.id, role, project_id)
+    requesters = await service.requesters_map(db, [r.requester_id for r in requests])
+    result = []
+    for r in requests:
+        resp = MeetingRequestResponse.model_validate(r)
+        resp.requester = requesters.get(r.requester_id)
+        result.append(resp)
+    return result
 
 
 @router.post(
