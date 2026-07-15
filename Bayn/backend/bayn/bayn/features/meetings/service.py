@@ -29,8 +29,10 @@ from bayn.features.meetings.schemas import (
     JoinRequestCreate,
     MeetingAttendanceUpdate,
     MeetingRequestCreate,
+    ParticipantInfo,
     RequesterInfo,
 )
+from bayn.integrations.storage.cloudflare import StorageError, r2_client
 from bayn.features.projects.models import (
     Project,
     ProjectMeetingSlot,
@@ -165,6 +167,37 @@ async def create_join_request(
     await db.commit()
     await db.refresh(request)
     return request
+
+
+def _participant_info(user: User) -> ParticipantInfo:
+    avatar_url = None
+    if user.avatar_key:
+        try:
+            avatar_url = r2_client.get_avatar_url(user.avatar_key)
+        except StorageError:
+            avatar_url = None
+    return ParticipantInfo(
+        id=user.id,
+        name_en=f"{user.first_name_en} {user.last_name_en}".strip(),
+        name_ar=f"{user.first_name_ar} {user.last_name_ar}".strip(),
+        avatar_url=avatar_url,
+    )
+
+
+async def participants_map(db: AsyncSession, meetings) -> dict[uuid.UUID, list[ParticipantInfo]]:
+    # The two participants (requester + owner) of each meeting, with avatars.
+    ids = set()
+    for m in meetings:
+        ids.add(m.user_id)
+        ids.add(m.counterpart_id)
+    if not ids:
+        return {}
+    result = await db.execute(select(User).where(User.id.in_(ids)))
+    users = {u.id: _participant_info(u) for u in result.scalars().all()}
+    out = {}
+    for m in meetings:
+        out[m.id] = [users[uid] for uid in (m.user_id, m.counterpart_id) if uid in users]
+    return out
 
 
 async def requesters_map(db: AsyncSession, user_ids: list[uuid.UUID]) -> dict[uuid.UUID, RequesterInfo]:

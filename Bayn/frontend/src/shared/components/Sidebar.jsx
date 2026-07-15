@@ -21,7 +21,7 @@ const defaultItems = [
   { key: 'home', page: 'home', labelKey: 'sidebar.home', icon: House },
   { key: 'ideas', page: 'ideas', labelKey: 'sidebar.ideas', icon: Lightbulb },
   { key: 'projects', page: 'myprojects', labelKey: 'sidebar.projects', icon: Presentation },
-  { key: 'meetings', labelKey: 'sidebar.meetings', icon: Video },
+  { key: 'meetings', page: 'meetings', labelKey: 'sidebar.meetings', icon: Video },
   { key: 'profiles', labelKey: 'sidebar.profiles', icon: UserPlus },
   { key: 'profile', page: 'myprofile', labelKey: 'sidebar.profile', icon: UserRound },
 ];

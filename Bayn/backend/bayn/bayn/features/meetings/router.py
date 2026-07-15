@@ -119,7 +119,14 @@ async def list_meetings(
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ) -> list[MeetingResponse]:
-    return await service.list_meetings(db, current_user.id, project_id)
+    meetings = await service.list_meetings(db, current_user.id, project_id)
+    parts = await service.participants_map(db, meetings)
+    result = []
+    for m in meetings:
+        resp = MeetingResponse.model_validate(m)
+        resp.participants = parts.get(m.id, [])
+        result.append(resp)
+    return result
 
 
 @router.get("/{meeting_id}", response_model=MeetingResponse, summary="Get a meeting")
@@ -129,7 +136,10 @@ async def get_meeting(
     db: AsyncSession = Depends(get_db),
     locale: str = Depends(get_locale),
 ) -> MeetingResponse:
-    return await service.get_meeting(db, meeting_id, current_user.id, locale)
+    meeting = await service.get_meeting(db, meeting_id, current_user.id, locale)
+    resp = MeetingResponse.model_validate(meeting)
+    resp.participants = (await service.participants_map(db, [meeting])).get(meeting.id, [])
+    return resp
 
 
 @router.patch(

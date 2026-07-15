@@ -47,6 +47,14 @@ class MeetingRequestResponse(BaseModel):
     requester: RequesterInfo | None = None
 
 
+class ParticipantInfo(BaseModel):
+    """A meeting participant, for showing attendee avatars."""
+    id: uuid.UUID
+    name_en: str
+    name_ar: str
+    avatar_url: str | None = None
+
+
 class MeetingResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: uuid.UUID
@@ -60,6 +68,7 @@ class MeetingResponse(BaseModel):
     calcom_booking_id: str | None
     video_link: str | None
     created_at: datetime
+    participants: list[ParticipantInfo] = []
 
 
 class MeetingAttendanceUpdate(BaseModel):

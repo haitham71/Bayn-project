@@ -51,11 +51,16 @@ class DailyClient:
             properties["exp"] = exp_epoch_seconds
 
         async with httpx.AsyncClient() as client:
-            response = await client.post(
-                f"{self._base_url}/rooms",
-                headers=self._headers(),
-                json={"name": name, "properties": properties},
-            )
+            try:
+                response = await client.post(
+                    f"{self._base_url}/rooms",
+                    headers=self._headers(),
+                    json={"name": name, "properties": properties},
+                )
+            except httpx.HTTPError as exc:
+                # connection/timeout/DNS failure — surface as DailyError so the
+                # caller can handle it cleanly instead of a raw 500
+                raise DailyError(f"Could not reach Daily.co: {exc}") from exc
 
         if not response.is_success:
             raise DailyError(f"Failed to create Daily room: {response.text}")

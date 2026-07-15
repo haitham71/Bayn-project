@@ -1,0 +1,283 @@
+/* Meetings — upcoming + past calls. Shares the fixed floating sidebar. */
+.mt {
+  min-height: 100vh;
+  background: var(--bg-surface-primary, #ebe5dc);
+}
+
+.mt__main {
+  padding-block: 22px 40px;
+  padding-inline: 108px 40px;
+}
+
+.mt__body {
+  margin-top: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mt__page-title {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-title, #0f3d2e);
+}
+
+[dir='rtl'] .mt__page-title {
+  font-family: var(--font-ar);
+}
+
+.mt__page-sub {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: var(--text-supporting, #786c57);
+}
+
+/* Tabs */
+.mt__tabs {
+  display: flex;
+  gap: 28px;
+  margin: 18px 0 8px;
+  border-bottom: 1px solid var(--bg-surface-secondary, #d7cbb9);
+}
+
+.mt__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 2px 12px;
+  border: none;
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-supporting, #786c57);
+  cursor: pointer;
+  position: relative;
+}
+
+[dir='rtl'] .mt__tab {
+  font-family: var(--font-ar);
+}
+
+.mt__tab--active {
+  color: var(--text-title, #0f3d2e);
+  font-weight: 600;
+}
+
+.mt__tab--active::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  bottom: -1px;
+  height: 3px;
+  border-radius: 3px;
+  background: var(--btn-primary-default, #295e4d);
+}
+
+.mt__tab-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 11px;
+  background: var(--bg-surface-secondary, #d7cbb9);
+  font-size: 12px;
+  color: var(--text-title, #0f3d2e);
+}
+
+/* Groups */
+.mt__group {
+  margin-top: 12px;
+}
+
+.mt__group-title {
+  margin: 0 0 10px;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--text-supporting, #786c57);
+}
+
+.mt__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Meeting row */
+.mt__row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 20px;
+  border: 1px solid var(--bg-surface-secondary, #d7cbb9);
+  border-radius: 10px;
+  box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.08);
+}
+
+.mt__date {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  flex: 0 0 auto;
+  border: 1px solid var(--bg-surface-secondary, #d7cbb9);
+  border-radius: 8px;
+  background: var(--bg-surface-primary, #ebe5dc);
+}
+
+.mt__date-day {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text-title, #0f3d2e);
+}
+
+.mt__date-month {
+  font-size: 9px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--text-supporting, #786c57);
+}
+
+.mt__info {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.mt__info-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mt__title {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-title, #0f3d2e);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mt__status {
+  flex: 0 0 auto;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: var(--color-primary-200, #76c3a9);
+  font-size: 11px;
+  color: var(--text-title, #0f3d2e);
+}
+
+.mt__meta {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--text-supporting, #786c57);
+}
+
+.mt__people {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+}
+
+.mt__person {
+  position: relative;
+  display: inline-flex;
+}
+
+.mt__person:not(:first-child) {
+  margin-inline-start: -10px;
+}
+
+.mt__person:hover {
+  z-index: 2;
+}
+
+.mt__avatar {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 2px solid var(--bg-surface-primary, #ebe5dc);
+  background: linear-gradient(135deg, var(--color-primary-300, #5ca18a), var(--color-primary-600, #0f3d2e));
+  color: var(--color-neutral-100, #ebe5dc);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 700;
+  object-fit: cover;
+  overflow: hidden;
+}
+
+/* Name tooltip on avatar hover. */
+.mt__tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: var(--color-primary-600, #0f3d2e);
+  color: var(--color-neutral-100, #ebe5dc);
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease;
+  z-index: 3;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.mt__person:hover .mt__tooltip {
+  opacity: 1;
+}
+
+.mt__join {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  padding: 8px 18px;
+  border-radius: 8px;
+  background: var(--btn-primary-default, #295e4d);
+  color: var(--btn-text, #ebe5dc);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 0.15s ease;
+}
+
+.mt__join:hover {
+  background: var(--btn-primary-hover, #0f3d2e);
+}
+
+.mt__ended {
+  flex: 0 0 auto;
+  font-size: 12px;
+  color: var(--text-supporting, #786c57);
+}
+
+.mt__empty {
+  margin: 24px 0;
+  text-align: center;
+  color: var(--text-supporting, #786c57);
+}
+
+@media (max-width: 720px) {
+  .mt__main {
+    padding-inline: 24px;
+  }
+  .mt__row {
+    flex-wrap: wrap;
+  }
+}

@@ -198,6 +198,20 @@
     "viewDetails": "View details",
     "empty": "No ideas match your filters."
   },
+  "meetings": {
+    "title": "Meetings",
+    "subtitle": "Upcoming calls and past meetings.",
+    "tabUpcoming": "Upcoming",
+    "tabPast": "Past",
+    "thisWeek": "Today & this week",
+    "later": "Later",
+    "confirmed": "Confirmed",
+    "join": "Join",
+    "ended": "Ended",
+    "dailyRoom": "Daily.co room",
+    "meeting": "Meeting",
+    "empty": "No meetings yet."
+  },
   "ideaDetails": {
     "back": "Back to Ideas",
     "loading": "Loading…",
