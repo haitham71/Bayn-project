@@ -18,12 +18,14 @@ import {
   replaceSlots,
 } from '@/features/projects/services/projectService';
 import { getApiErrorMessage } from '@/shared/lib/apiError';
+import { timeAgo } from '@/shared/lib/relativeTime';
 import ArrowLeft from '@/assets/icons/arrow-left.svg?react';
 import Clock from '@/assets/icons/clock.svg?react';
 import CircleCheck from '@/assets/icons/circle-check.svg?react';
 import CircleX from '@/assets/icons/circle-x.svg?react';
 import FilePen from '@/assets/icons/file-pen.svg?react';
 import Calendar from '@/assets/icons/calendar.svg?react';
+import MapPin from '@/assets/icons/map-pin.svg?react';
 import Eye from '@/assets/icons/eye.svg?react';
 import './JoinRequestsPage.css';
 
@@ -62,6 +64,7 @@ export default function JoinRequestsPage({ onNavigate }) {
   const { t, i18n } = useTranslation();
   const { fullName } = useCurrentUser();
   const { projectId } = useParams();
+  const locale = i18n.language === 'ar' ? 'ar' : 'en';
   const [tab, setTab] = useState('pending');
   const [requests, setRequests] = useState([]);
   const [actioningId, setActioningId] = useState(null);
@@ -122,8 +125,9 @@ export default function JoinRequestsPage({ onNavigate }) {
 
   const requesterName = (r) =>
     r.requester ? (i18n.language === 'ar' ? r.requester.name_ar : r.requester.name_en) : '—';
+  const requesterLocation = (r) =>
+    r.requester ? (i18n.language === 'ar' ? r.requester.location_ar : r.requester.location_en) : '';
   const slotLabel = (r) => {
-    const locale = i18n.language === 'ar' ? 'ar' : 'en';
     const start = new Date(r.proposed_start_time);
     const end = new Date(r.proposed_end_time);
     const day = new Intl.DateTimeFormat(locale, { weekday: 'short', day: 'numeric', month: 'short' }).format(start);
@@ -217,9 +221,18 @@ export default function JoinRequestsPage({ onNavigate }) {
                     <div className="jr__req-info">
                       <p className="jr__req-name">{requesterName(r)}</p>
                       {r.requester?.job_title && <p className="jr__req-role">{r.requester.job_title}</p>}
-                      <p className="jr__req-loc">
+                      {requesterLocation(r) && (
+                        <p className="jr__req-loc">
+                          <MapPin width={14} height={14} aria-hidden="true" />
+                          {requesterLocation(r)}
+                        </p>
+                      )}
+                      <p className="jr__req-slot">
                         <Calendar width={14} height={14} aria-hidden="true" />
                         {slotLabel(r)}
+                      </p>
+                      <p className="jr__req-applied">
+                        {t('joinRequests.applied', { when: timeAgo(r.created_at, locale) })}
                       </p>
                     </div>
 

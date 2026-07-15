@@ -32,12 +32,22 @@ class DailyClient:
             "Content-Type": "application/json",
         }
 
-    async def create_room(self, name: str, exp_epoch_seconds: int | None = None) -> dict:
+    async def create_room(
+        self,
+        name: str,
+        exp_epoch_seconds: int | None = None,
+        nbf_epoch_seconds: int | None = None,
+    ) -> dict:
         """
         Create a video call room.
 
         POST /rooms
-        Body: { "name": "<room>", "properties": { "exp": <unix_ts> } }
+        Body: { "name": "<room>", "properties": { "nbf": <unix_ts>, "exp": <unix_ts> } }
+
+        Args:
+            exp_epoch_seconds: nobody can connect after this time.
+            nbf_epoch_seconds: nobody can connect before this time. Daily enforces
+                this itself, so holding the room URL early is not enough to get in.
 
         Returns:
             Daily's room object — includes "url", the joinable video link
@@ -49,6 +59,8 @@ class DailyClient:
         properties = {}
         if exp_epoch_seconds is not None:
             properties["exp"] = exp_epoch_seconds
+        if nbf_epoch_seconds is not None:
+            properties["nbf"] = nbf_epoch_seconds
 
         async with httpx.AsyncClient() as client:
             try:

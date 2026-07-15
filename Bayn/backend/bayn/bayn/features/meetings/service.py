@@ -13,6 +13,7 @@ from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from bayn.common.exceptions import ConflictError, ForbiddenError, NotFoundError, ValidationError
 from bayn.core.config import settings
@@ -48,6 +49,8 @@ logger = logging.getLogger(__name__)
 
 MEETING_REQUEST_TTL = timedelta(days=7)
 MAX_MEETINGS_PER_DAY = 3
+# How early participants may enter the video room before the meeting starts.
+JOIN_WINDOW = timedelta(minutes=5)
 
 
 def _ensure_aware(dt: datetime) -> datetime:
@@ -200,13 +203,32 @@ async def participants_map(db: AsyncSession, meetings) -> dict[uuid.UUID, list[P
     return out
 
 
+def _location(user: User, arabic: bool) -> str | None:
+    """Build a display location like "Riyadh, Saudi Arabia" from the user's
+    city/country. Returns None when the user set neither."""
+    parts = []
+    if user.city is not None:
+        parts.append(user.city.name_ar if arabic else user.city.name_en)
+    if user.country is not None:
+        parts.append(user.country.name_ar if arabic else user.country.name_en)
+    if not parts:
+        return None
+    return ("، " if arabic else ", ").join(parts)
+
+
 async def requesters_map(db: AsyncSession, user_ids: list[uuid.UUID]) -> dict[uuid.UUID, RequesterInfo]:
     # Basic public info for each requester, keyed by user id (for the owner's
     # incoming-requests view).
     ids = list({uid for uid in user_ids})
     if not ids:
         return {}
-    result = await db.execute(select(User).where(User.id.in_(ids)))
+    # city/country are eager-loaded — a lazy load here would raise MissingGreenlet
+    # under async SQLAlchemy.
+    result = await db.execute(
+        select(User)
+        .options(selectinload(User.city), selectinload(User.country))
+        .where(User.id.in_(ids))
+    )
     out = {}
     for user in result.scalars().all():
         out[user.id] = RequesterInfo(
@@ -214,6 +236,8 @@ async def requesters_map(db: AsyncSession, user_ids: list[uuid.UUID]) -> dict[uu
             name_en=f"{user.first_name_en} {user.last_name_en}".strip(),
             name_ar=f"{user.first_name_ar} {user.last_name_ar}".strip(),
             job_title=user.job_title,
+            location_en=_location(user, arabic=False),
+            location_ar=_location(user, arabic=True),
         )
     return out
 
@@ -354,8 +378,13 @@ async def accept_meeting_request(
 
     room_name = f"meeting-{uuid.uuid4().hex}"
     exp = int(_ensure_aware(request.proposed_end_time).timestamp()) + 3600
+    nbf = int((_ensure_aware(request.proposed_start_time) - JOIN_WINDOW).timestamp())
     try:
-        room = await daily_client.create_room(name=room_name, exp_epoch_seconds=exp)
+        room = await daily_client.create_room(
+            name=room_name,
+            exp_epoch_seconds=exp,
+            nbf_epoch_seconds=nbf,
+        )
     except DailyError:
         raise ValidationError(t("meetings", "request.room_creation_failed", locale))
 

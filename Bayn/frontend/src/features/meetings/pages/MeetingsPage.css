@@ -261,6 +261,16 @@
   background: var(--btn-primary-hover, #0f3d2e);
 }
 
+/* Locked until the room opens, 5 minutes before the start time. */
+.mt__join--locked,
+.mt__join--locked:hover {
+  background: var(--bg-surface-secondary, #d7cbb9);
+  color: var(--text-supporting, #786c57);
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: default;
+}
+
 .mt__ended {
   flex: 0 0 auto;
   font-size: 12px;

@@ -333,3 +333,11 @@
   color: var(--btn-primary-default, #295e4d);
   text-decoration: underline;
 }
+
+/* Shown instead of the join link until the room opens. */
+.home__meeting-locked {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--text-supporting, #786c57);
+}

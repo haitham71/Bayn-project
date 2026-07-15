@@ -3,7 +3,9 @@ import { useTranslation } from 'react-i18next';
 import Sidebar from '@/shared/components/Sidebar';
 import Navbar from '@/shared/components/Navbar';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
+import { useNow } from '@/shared/hooks/useNow';
 import { listMeetings } from '@/features/meetings/services/meetingService';
+import { canJoin, minutesUntilOpen } from '@/features/meetings/lib/joinWindow';
 import Video from '@/assets/icons/video.svg?react';
 import './MeetingsPage.css';
 
@@ -21,7 +23,7 @@ export default function MeetingsPage({ onNavigate }) {
     listMeetings().then((rows) => setMeetings(rows || [])).catch(() => {});
   }, []);
 
-  const now = Date.now();
+  const now = useNow();
   const upcoming = meetings
     .filter((m) => new Date(m.end_time).getTime() >= now)
     .sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
@@ -47,6 +49,28 @@ export default function MeetingsPage({ onNavigate }) {
   };
 
   function Row({ m, joinable }) {
+    // The room only opens shortly before the start time, so an upcoming meeting
+    // still shows a locked button until then.
+    let joinCell;
+    if (!joinable || !m.video_link) {
+      joinCell = <span className="mt__ended">{joinable ? '' : t('meetings.ended')}</span>;
+    } else if (canJoin(m, now)) {
+      joinCell = (
+        <a className="mt__join" href={m.video_link} target="_blank" rel="noopener noreferrer">
+          <Video width={18} height={18} aria-hidden="true" />
+          {t('meetings.join')}
+        </a>
+      );
+    } else {
+      const mins = minutesUntilOpen(m, now);
+      joinCell = (
+        <span className="mt__join mt__join--locked">
+          <Video width={18} height={18} aria-hidden="true" />
+          {mins <= 60 ? t('meetings.opensIn', { mins }) : t('meetings.opensSoon')}
+        </span>
+      );
+    }
+
     return (
       <li className="mt__row">
         <span className="mt__date" aria-hidden="true">
@@ -81,14 +105,7 @@ export default function MeetingsPage({ onNavigate }) {
           })}
         </div>
 
-        {joinable && m.video_link ? (
-          <a className="mt__join" href={m.video_link} target="_blank" rel="noopener noreferrer">
-            <Video width={18} height={18} aria-hidden="true" />
-            {t('meetings.join')}
-          </a>
-        ) : (
-          <span className="mt__ended">{joinable ? '' : t('meetings.ended')}</span>
-        )}
+        {joinCell}
       </li>
     );
   }

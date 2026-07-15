@@ -197,13 +197,20 @@
   color: var(--btn-primary-default, #295e4d);
 }
 
-.jr__req-loc {
+.jr__req-loc,
+.jr__req-slot {
   display: flex;
   align-items: center;
   gap: 4px;
   margin: 2px 0 0;
   font-size: 12px;
   color: var(--btn-primary-default, #295e4d);
+}
+
+/* The icons keep their size when the text beside them wraps. */
+.jr__req-loc svg,
+.jr__req-slot svg {
+  flex: 0 0 auto;
 }
 
 .jr__req-applied {

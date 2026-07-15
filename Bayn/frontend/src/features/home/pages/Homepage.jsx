@@ -4,7 +4,9 @@ import Sidebar from '@/shared/components/Sidebar';
 import Navbar from '@/shared/components/Navbar';
 import Headset from '@/assets/icons/headset.svg?react';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
+import { useNow } from '@/shared/hooks/useNow';
 import { listMeetings } from '@/features/meetings/services/meetingService';
+import { canJoin, minutesUntilOpen } from '@/features/meetings/lib/joinWindow';
 import './Homepage.css';
 
 // Accent colours cycled across the upcoming-meeting rows.
@@ -35,9 +37,11 @@ export default function HomePage({ onNavigate }) {
     listMeetings().then((rows) => setMeetings(rows || [])).catch(() => {});
   }, []);
 
+  const now = useNow();
+
   // Upcoming (not-yet-ended) meetings, soonest first.
   const upcoming = meetings
-    .filter((m) => new Date(m.end_time).getTime() >= Date.now())
+    .filter((m) => new Date(m.end_time).getTime() >= now)
     .sort((a, b) => new Date(a.start_time) - new Date(b.start_time))
     .slice(0, 6);
 
@@ -170,7 +174,7 @@ export default function HomePage({ onNavigate }) {
                           </span>
                           <span className="home__meeting-name">{m.title || t('home.meeting')}</span>
                           <People participants={m.participants} />
-                          {m.video_link && (
+                          {m.video_link && (canJoin(m, now) ? (
                             <a
                               className="home__meeting-join"
                               href={m.video_link}
@@ -179,7 +183,13 @@ export default function HomePage({ onNavigate }) {
                             >
                               {t('home.joinMeeting')}
                             </a>
-                          )}
+                          ) : (
+                            <span className="home__meeting-locked">
+                              {minutesUntilOpen(m, now) <= 60
+                                ? t('meetings.opensIn', { mins: minutesUntilOpen(m, now) })
+                                : t('meetings.opensSoon')}
+                            </span>
+                          ))}
                         </li>
                       );
                     })}

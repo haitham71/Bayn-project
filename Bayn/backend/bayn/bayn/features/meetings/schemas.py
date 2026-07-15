@@ -28,6 +28,9 @@ class RequesterInfo(BaseModel):
     name_en: str
     name_ar: str
     job_title: str | None = None
+    # "Riyadh, Saudi Arabia" — None when the user set neither city nor country.
+    location_en: str | None = None
+    location_ar: str | None = None
 
 
 class MeetingRequestResponse(BaseModel):
