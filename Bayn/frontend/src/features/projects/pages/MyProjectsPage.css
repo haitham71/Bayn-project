@@ -145,8 +145,13 @@
   transition: background-color 0.15s ease;
 }
 
-.mp__add:hover {
+.mp__add:hover:not(:disabled) {
   background: var(--bg-surface-secondary, #d7cbb9);
+}
+
+.mp__add:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .mp__add-label {

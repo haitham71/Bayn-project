@@ -55,3 +55,8 @@ class ProjectMembershipResponse(BaseModel):
     project_id: uuid.UUID
     role: ProjectMembershipRole
     created_at: datetime
+
+
+class MyProjectResponse(ProjectResponse):
+    """A project the current user belongs to, plus their role in it."""
+    role: ProjectMembershipRole

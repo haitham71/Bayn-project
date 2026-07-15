@@ -1,5 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { getIndustries } from '@/features/identity/services/authService';
+import { createProject } from '@/features/projects/services/projectService';
+import { getApiErrorMessage } from '@/shared/lib/apiError';
 import Sidebar from '@/shared/components/Sidebar';
 import Navbar from '@/shared/components/Navbar';
 import Input from '@/shared/components/Input';
@@ -17,8 +20,12 @@ const TITLE_MAX = 100;
 const DESC_MAX = 2000;
 
 const TEAM_OPTIONS = Array.from({ length: 8 }, (_, i) => ({ value: String(i + 1), label: String(i + 1) }));
-const CATEGORY_OPTIONS = ['FinTech', 'HealthTech', 'EdTech', 'E-commerce', 'AI / ML', 'Other'].map((c) => ({ value: c, label: c }));
-const STAGE_OPTIONS = ['Idea', 'Planning', 'Development', 'Launched'].map((s) => ({ value: s, label: s }));
+// Values match the backend's ProjectStage enum; labels are translated at render.
+const STAGE_OPTIONS = [
+  { value: 'planning', labelKey: 'createIdea.stagePlanning' },
+  { value: 'development', labelKey: 'createIdea.stageDevelopment' },
+  { value: 'launching', labelKey: 'createIdea.stageLaunching' },
+];
 
 // One numbered form step: circled index + title + note, then its field(s).
 function Step({ n, title, note, children }) {
@@ -48,6 +55,46 @@ export default function CreateIdeaPage({ onNavigate }) {
   const [meetings, setMeetings] = useState([]);
   const [visibility, setVisibility] = useState('public');
   const [joinOpen, setJoinOpen] = useState(true);
+  const [industryOptions, setIndustryOptions] = useState([]);
+  const [publishing, setPublishing] = useState(false);
+  const [publishError, setPublishError] = useState('');
+
+  // Categories come from the industries catalog (value = industry id).
+  useEffect(() => {
+    getIndustries()
+      .then((rows) => setIndustryOptions(rows.map((r) => ({ value: r.id, label: r.name }))))
+      .catch(() => {});
+  }, []);
+
+  async function handlePublish() {
+    setPublishError('');
+    if (!title.trim() || !teamSize || !stage) {
+      setPublishError(t('createIdea.requiredFields'));
+      return;
+    }
+
+    setPublishing(true);
+    try {
+      const project = await createProject({
+        title: title.trim(),
+        description: description || null,
+        more_info: roles || null,
+        industry_id: category || null,
+        stage,
+        team_members_needed: Number(teamSize),
+        is_hidden: visibility === 'private',
+        // NOTE: skills, meeting availability, and join-request toggle are not
+        // sent yet — the create endpoint doesn't support them. Wire once the
+        // backend does.
+      });
+      onNavigate?.('myprojects');
+      return project;
+    } catch (err) {
+      setPublishError(getApiErrorMessage(err, t('createIdea.publishError')));
+    } finally {
+      setPublishing(false);
+    }
+  }
 
 
   return (
@@ -122,14 +169,14 @@ export default function CreateIdeaPage({ onNavigate }) {
                   label={t('createIdea.category')}
                   value={category}
                   onChange={setCategory}
-                  options={CATEGORY_OPTIONS}
+                  options={industryOptions}
                   className="ci__input ci__input--sm"
                 />
                 <Select
                   label={t('createIdea.currentStage')}
                   value={stage}
                   onChange={setStage}
-                  options={STAGE_OPTIONS}
+                  options={STAGE_OPTIONS.map((s) => ({ value: s.value, label: t(s.labelKey) }))}
                   className="ci__input ci__input--sm"
                 />
               </div>
@@ -186,11 +233,20 @@ export default function CreateIdeaPage({ onNavigate }) {
               </li>
             </ul>
 
+            {/* Suspended until the backend supports meeting availability. */}
             <MeetingScheduler onChange={setMeetings} />
 
+            {publishError && <p className="ci__error">{publishError}</p>}
+
             <div className="ci__actions">
-              <Button variant="primary" size="sm" className="ci__publish">
-                {t('createIdea.publish')}
+              <Button
+                variant="primary"
+                size="sm"
+                className="ci__publish"
+                onClick={handlePublish}
+                disabled={publishing}
+              >
+                {publishing ? t('createIdea.publishing') : t('createIdea.publish')}
               </Button>
               <Button variant="secondary" size="sm" className="ci__draft">
                 {t('createIdea.saveDraft')}

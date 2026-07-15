@@ -135,6 +135,7 @@
     "youWorkOn": "Projects you work on",
     "projectLabel": "Project",
     "postNew": "Post new idea/project",
+    "limitReached": "You've reached the limit of 2 projects",
     "viewDetails": "View details",
     "dashboard": "Dashboard",
     "planningStage": "Planning stage",
@@ -173,7 +174,13 @@
     "joinRequestValue": "On",
     "joinRequestOff": "Off",
     "publish": "Publish Idea",
-    "saveDraft": "Save Draft"
+    "saveDraft": "Save Draft",
+    "publishing": "Publishing…",
+    "stagePlanning": "Planning",
+    "stageDevelopment": "Development",
+    "stageLaunching": "Launching",
+    "requiredFields": "Please fill in the title, team size, and stage.",
+    "publishError": "Couldn't publish your idea, please try again."
   },
   "joinRequests": {
     "back": "Back to your projects",

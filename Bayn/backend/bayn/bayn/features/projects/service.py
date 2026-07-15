@@ -55,6 +55,20 @@ async def list_projects(db: AsyncSession, include_hidden: bool = False) -> list[
     return result.scalars().all()
 
 
+async def list_my_projects(
+    db: AsyncSession, user_id: uuid.UUID
+) -> list[tuple[Project, ProjectMembershipRole]]:
+    # Every project the user belongs to (owner or member), with their role —
+    # includes hidden ones they own. One join, no N+1.
+    result = await db.execute(
+        select(Project, ProjectMembership.role)
+        .join(ProjectMembership, ProjectMembership.project_id == Project.id)
+        .where(ProjectMembership.user_id == user_id)
+        .order_by(Project.created_at.desc())
+    )
+    return list(result.all())
+
+
 async def _require_owner(
     db: AsyncSession, project_id: uuid.UUID, user_id: uuid.UUID, locale: str
 ) -> ProjectMembership:

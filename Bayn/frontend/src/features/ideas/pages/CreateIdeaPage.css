@@ -236,6 +236,13 @@
   color: var(--btn-text, #ebe5dc);
 }
 
+.ci__error {
+  margin: 12px 0 0;
+  text-align: center;
+  font-size: 14px;
+  color: #900000;
+}
+
 .ci__actions {
   display: flex;
   gap: 16px;

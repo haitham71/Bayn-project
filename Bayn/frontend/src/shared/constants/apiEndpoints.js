@@ -31,4 +31,8 @@ export const API = {
     skills: '/profile/skills',
     specializations: '/profile/specializations',
   },
+  projects: {
+    base: '/projects',
+    mine: '/projects/mine',
+  },
 };

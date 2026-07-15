@@ -135,6 +135,7 @@
     "youWorkOn": "المشاريع التي تعمل عليها",
     "projectLabel": "مشروع",
     "postNew": "انشر فكرة/مشروع جديد",
+    "limitReached": "وصلت للحد الأقصى (مشروعين)",
     "viewDetails": "عرض التفاصيل",
     "dashboard": "لوحة التحكم",
     "planningStage": "مرحلة التخطيط",
@@ -173,7 +174,13 @@
     "joinRequestValue": "مُفعّل",
     "joinRequestOff": "معطّل",
     "publish": "نشر الفكرة",
-    "saveDraft": "حفظ كمسودة"
+    "saveDraft": "حفظ كمسودة",
+    "publishing": "جارٍ النشر...",
+    "stagePlanning": "التخطيط",
+    "stageDevelopment": "التطوير",
+    "stageLaunching": "الإطلاق",
+    "requiredFields": "يرجى تعبئة العنوان وحجم الفريق والمرحلة.",
+    "publishError": "تعذّر نشر الفكرة، حاول مرة أخرى."
   },
   "joinRequests": {
     "back": "العودة إلى مشاريعك",

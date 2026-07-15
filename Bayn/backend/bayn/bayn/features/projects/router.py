@@ -11,6 +11,7 @@ from bayn.features.identity.dependencies import get_current_active_user
 from bayn.features.identity.models import User
 from bayn.features.projects import service
 from bayn.features.projects.schemas import (
+    MyProjectResponse,
     ProjectCreateRequest,
     ProjectMembershipResponse,
     ProjectResponse,
@@ -36,6 +37,18 @@ async def list_projects(
     db: AsyncSession = Depends(get_db),
 ) -> list[ProjectResponse]:
     return await service.list_projects(db, include_hidden)
+
+
+@projects_router.get("/mine", response_model=list[MyProjectResponse], summary="List my projects (owned + joined) with my role")
+async def list_my_projects(
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> list[MyProjectResponse]:
+    rows = await service.list_my_projects(db, current_user.id)
+    return [
+        MyProjectResponse(**ProjectResponse.model_validate(project).model_dump(), role=role)
+        for project, role in rows
+    ]
 
 
 @projects_router.get("/{project_id}", response_model=ProjectResponse, summary="Get a project")
