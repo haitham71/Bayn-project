@@ -2,9 +2,12 @@
 
 Scheduling is owned by us, not Cal.com: a member proposes a time, the project
 owner accepts or rejects it. Cal.com booking is best-effort (calendar sync
-only); Daily.co room creation is the part that actually needs to succeed.
+only, against one shared event type — no per-user OAuth / Google Calendar
+connection); Daily.co room creation is the part that actually needs to
+succeed.
 """
 
+import logging
 import uuid
 from datetime import datetime, timedelta, timezone
 
@@ -12,7 +15,9 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from bayn.common.exceptions import ConflictError, ForbiddenError, NotFoundError, ValidationError
+from bayn.core.config import settings
 from bayn.core.i18n import DEFAULT_LOCALE, t
+from bayn.features.identity.models import User
 from bayn.features.meetings.models import (
     AttendanceStatus,
     Meeting,
@@ -22,7 +27,10 @@ from bayn.features.meetings.models import (
 )
 from bayn.features.meetings.schemas import MeetingAttendanceUpdate, MeetingRequestCreate
 from bayn.features.projects.models import Project, ProjectMembership, ProjectMembershipRole
+from bayn.integrations.cal import CalComError, calcom_client
 from bayn.integrations.daily import DailyError, daily_client
+
+logger = logging.getLogger(__name__)
 
 MEETING_REQUEST_TTL = timedelta(days=7)
 MAX_MEETINGS_PER_DAY = 3
@@ -125,6 +133,51 @@ async def _count_meetings_on_day(
     return result.scalar_one()
 
 
+def _english_full_name(user: User) -> str:
+    # Cal.com attendee name — English name only, no locale concept on their side
+    return f"{user.first_name_en} {user.last_name_en}"
+
+
+# durations enabled on the shared "cal-event" Cal.com event type
+# (CALCOM_EVENT_TYPE_ID) — Cal.com rejects any lengthInMinutes not in this set
+_CALCOM_LENGTH_OPTIONS = (15, 30, 45, 60)
+
+
+def _round_to_calcom_length(request: MeetingRequest) -> int:
+    actual_minutes = (request.proposed_end_time - request.proposed_start_time).total_seconds() / 60
+    return min(_CALCOM_LENGTH_OPTIONS, key=lambda option: abs(option - actual_minutes))
+
+
+async def _try_create_calcom_booking(
+    db: AsyncSession, request: MeetingRequest
+) -> str | None:
+    # best-effort calendar sync against one shared event type (no per-user
+    # OAuth / Google Calendar connection — see module docstring). A failure
+    # here must never block accepting the meeting; Daily.co is the part that
+    # actually needs to succeed.
+    if not settings.CALCOM_EVENT_TYPE_ID:
+        return None
+
+    requester = await db.get(User, request.requester_id)
+    if requester is None:
+        return None
+
+    try:
+        booking = await calcom_client.create_booking(
+            event_type_id=settings.CALCOM_EVENT_TYPE_ID,
+            start_time=_ensure_aware(request.proposed_start_time).isoformat(),
+            attendee_email=requester.email,
+            attendee_name=_english_full_name(requester),
+            length_minutes=_round_to_calcom_length(request),
+        )
+    except CalComError:
+        logger.warning("Cal.com booking failed for meeting request %s", request.id, exc_info=True)
+        return None
+
+    data = booking.get("data", booking)
+    return data.get("uid") or data.get("id")
+
+
 async def _has_prior_meeting(
     db: AsyncSession, user_id: uuid.UUID, counterpart_id: uuid.UUID, project_id: uuid.UUID
 ) -> bool:
@@ -167,6 +220,8 @@ async def accept_meeting_request(
     except DailyError:
         raise ValidationError(t("meetings", "request.room_creation_failed", locale))
 
+    calcom_booking_id = await _try_create_calcom_booking(db, request)
+
     meeting = Meeting(
         user_id=request.requester_id,
         counterpart_id=request.owner_id,
@@ -175,10 +230,7 @@ async def accept_meeting_request(
         start_time=request.proposed_start_time,
         end_time=request.proposed_end_time,
         is_initial_meeting=is_initial,
-        # Cal.com booking is intentionally not wired in yet — no event type is
-        # configured, and it's supplementary calendar sync, not the source of
-        # truth for scheduling (see module docstring)
-        calcom_booking_id=None,
+        calcom_booking_id=calcom_booking_id,
         video_link=room.get("url"),
     )
     db.add(meeting)
