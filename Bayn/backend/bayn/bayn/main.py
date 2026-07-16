@@ -17,9 +17,6 @@ from bayn.features.meetings.models import Meeting, MeetingAttendance, MeetingReq
 from bayn.features.meetings.router import router as meetings_router
 from bayn.features.contracts.models import Contract
 from bayn.features.contracts.router import router as contracts_router
-from bayn.features.catalog.models import Industry, Skill, Specialization, UserSkill, UserSpecialization  # noqa: F401
-from bayn.features.catalog.router import catalog_router, profile_router                                     ## Adding # noqa to a line indicates that the linter (a program that automatically checks code quality) should not check this line. Any warnings that code may have generated will be ignored.
-
 
 app = FastAPI(
     title="Beyn API",
@@ -52,8 +49,6 @@ app.include_router(profile_router)
 app.include_router(projects_router)
 app.include_router(meetings_router)
 app.include_router(contracts_router)
-
-app.include_router(project_router)
 
 
 @app.get("/health", tags=["System"])
