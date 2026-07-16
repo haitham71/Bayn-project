@@ -1,9 +1,0 @@
-{
-  "errors": {
-    "external_api_failed": "Failed to initiate contract on Haitham's Signature-System API.",
-    "contract_not_found": "The requested contract was not found locally.",
-    "party_not_found": "One of the contract parties no longer exists.",
-    "not_a_party": "You are not a party to this contract.",
-    "bad_webhook_key": "Invalid webhook credentials."
-  }
-}
