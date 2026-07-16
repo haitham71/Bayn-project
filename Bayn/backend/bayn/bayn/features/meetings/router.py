@@ -146,8 +146,9 @@ async def list_meetings(
     project_id: uuid.UUID | None = Query(default=None),
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
+    locale: str = Depends(get_locale),
 ) -> list[MeetingResponse]:
-    meetings = await service.list_meetings(db, current_user.id, project_id)
+    meetings = await service.list_meetings(db, current_user.id, project_id, locale)
     parts = await service.participants_map(db, meetings)
     result = []
     for m in meetings:

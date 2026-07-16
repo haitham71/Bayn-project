@@ -233,6 +233,24 @@ class TestMeetingAcceptReject:
         mock_daily.create_room.assert_called_once()
 
     @pytest.mark.asyncio
+    async def test_meeting_appears_on_meetings_page_without_visiting_requests_first(
+        self, client: AsyncClient, project_with_member: Project, member: User, owner: User,
+        mock_daily, mock_calcom, mock_nda,
+    ):
+        """GET /meetings must self-heal a signed-but-not-yet-promoted request —
+        not every caller reads /meetings/requests (or gets the webhook) first."""
+        create = await client.post(
+            "/meetings/requests", headers=auth_headers_for(member), json=_request_payload(project_with_member.id)
+        )
+        request_id = create.json()["id"]
+        await client.post(f"/meetings/requests/{request_id}/accept", headers=auth_headers_for(owner))
+        mock_nda.sign("signed")
+
+        meetings = (await client.get("/meetings", headers=auth_headers_for(member))).json()
+        assert len(meetings) == 1
+        assert meetings[0]["counterpart_id"] == str(owner.id)
+
+    @pytest.mark.asyncio
     async def test_accept_not_owner_forbidden(
         self, client: AsyncClient, project_with_member: Project, member: User, outsider: User, mock_daily, mock_nda,
     ):

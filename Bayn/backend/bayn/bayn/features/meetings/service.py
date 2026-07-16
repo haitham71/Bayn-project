@@ -664,8 +664,23 @@ async def get_meeting(
 
 
 async def list_meetings(
-    db: AsyncSession, user_id: uuid.UUID, project_id: uuid.UUID | None = None
+    db: AsyncSession, user_id: uuid.UUID, project_id: uuid.UUID | None = None, locale: str = DEFAULT_LOCALE
 ) -> list[Meeting]:
+    # A request that finished signing is only promoted to a Meeting row by
+    # refresh_request_state — normally via the Signature-System webhook, or
+    # lazily whenever /meetings/requests is read. A user who signs and goes
+    # straight to this page without either of those firing would otherwise
+    # see no upcoming meeting, so the same lazy promotion runs here too.
+    pending_query = select(MeetingRequest).where(
+        MeetingRequest.status == MeetingRequestStatus.awaiting_signatures,
+        or_(MeetingRequest.owner_id == user_id, MeetingRequest.requester_id == user_id),
+    )
+    if project_id is not None:
+        pending_query = pending_query.where(MeetingRequest.project_id == project_id)
+    pending = await db.execute(pending_query)
+    for request in pending.scalars().all():
+        await refresh_request_state(db, request, locale)
+
     query = (
         select(Meeting)
         .where(or_(Meeting.user_id == user_id, Meeting.counterpart_id == user_id))
