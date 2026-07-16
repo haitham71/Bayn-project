@@ -38,20 +38,36 @@ INDUSTRIES = [
     ("Non-Profit", "القطاع غير الربحي"),
 ]
 
+# Arabic backfill for specializations that may already exist (some environments
+# were seeded manually, English-only, before this migration introduced name_ar).
+EXISTING_SPECIALIZATION_TRANSLATIONS = {
+    "Backend Development": "تطوير الخلفية",
+    "Blockchain Development": "تطوير تقنية البلوك تشين",
+    "Cloud Architecture": "هندسة الحوسبة السحابية",
+    "Cybersecurity": "الأمن السيبراني",
+    "Database Administration": "إدارة قواعد البيانات",
+    "Data Engineering": "هندسة البيانات",
+    "Data Science": "علم البيانات",
+    "DevOps Engineering": "هندسة DevOps",
+    "Embedded Systems": "الأنظمة المدمجة",
+    "Frontend Development": "تطوير الواجهات الأمامية",
+    "Full Stack Development": "التطوير المتكامل",
+    "Game Development": "تطوير الألعاب",
+    "Machine Learning Engineering": "هندسة تعلم الآلة",
+    "Mobile App Development": "تطوير تطبيقات الجوال",
+    "Network Engineering": "هندسة الشبكات",
+    "Product Management": "إدارة المنتجات",
+    "QA / Software Testing": "ضمان الجودة واختبار البرمجيات",
+    "System Administration": "إدارة الأنظمة",
+    "Technical Writing": "الكتابة التقنية",
+    "UI/UX Design": "تصميم واجهة وتجربة المستخدم",
+}
+
+# New specializations not already covered by EXISTING_SPECIALIZATION_TRANSLATIONS
 SPECIALIZATIONS = [
-    ("Frontend Development", "تطوير الواجهات الأمامية"),
-    ("Backend Development", "تطوير الخلفية"),
-    ("Full-Stack Development", "التطوير المتكامل"),
-    ("Mobile Development", "تطوير تطبيقات الجوال"),
-    ("UI/UX Design", "تصميم واجهة وتجربة المستخدم"),
     ("Graphic Design", "التصميم الجرافيكي"),
-    ("Product Management", "إدارة المنتجات"),
-    ("Project Management", "إدارة المشاريع"),
-    ("Data Science", "علم البيانات"),
     ("Data Analysis", "تحليل البيانات"),
-    ("Machine Learning", "تعلم الآلة"),
-    ("DevOps", "ديف أوبس"),
-    ("Quality Assurance", "ضمان الجودة"),
+    ("Project Management", "إدارة المشاريع"),
     ("Digital Marketing", "التسويق الرقمي"),
     ("Content Writing", "كتابة المحتوى"),
     ("Business Development", "تطوير الأعمال"),
@@ -63,6 +79,8 @@ SPECIALIZATIONS = [
 
 
 def upgrade() -> None:
+    conn = op.get_bind()
+
     # industries: name -> name_en/name_ar
     op.add_column('industries', sa.Column('name_en', sa.String(length=100), nullable=True))
     op.add_column('industries', sa.Column('name_ar', sa.String(length=100), nullable=True))
@@ -78,6 +96,13 @@ def upgrade() -> None:
     op.add_column('specializations', sa.Column('name_en', sa.String(length=100), nullable=True))
     op.add_column('specializations', sa.Column('name_ar', sa.String(length=100), nullable=True))
     op.execute("UPDATE specializations SET name_en = name")
+
+    # backfill Arabic for rows that predate this migration
+    conn.execute(
+        sa.text("UPDATE specializations SET name_ar = :name_ar WHERE name_en = :name_en AND name_ar IS NULL"),
+        [{"name_en": en, "name_ar": ar} for en, ar in EXISTING_SPECIALIZATION_TRANSLATIONS.items()],
+    )
+
     op.drop_constraint('specializations_name_key', 'specializations', type_='unique')
     op.drop_column('specializations', 'name')
     op.alter_column('specializations', 'name_en', existing_type=sa.String(length=100), nullable=False)
@@ -85,7 +110,6 @@ def upgrade() -> None:
     op.create_unique_constraint('uq_specializations_name_en', 'specializations', ['name_en'])
     op.create_unique_constraint('uq_specializations_name_ar', 'specializations', ['name_ar'])
 
-    conn = op.get_bind()
     conn.execute(
         sa.text(
             "INSERT INTO industries (id, name_en, name_ar, created_at) "
