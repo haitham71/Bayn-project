@@ -72,3 +72,7 @@ def get_locale(
     lang_code = primary.split("-")[0].strip().lower()
 
     return lang_code if lang_code in SUPPORTED_LOCALES else DEFAULT_LOCALE
+
+
+def localized_name(name_en: str, name_ar: str, locale: str) -> str:
+    return name_ar if locale == "ar" else name_en

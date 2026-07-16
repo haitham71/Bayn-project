@@ -21,6 +21,7 @@ class ProjectMembershipRole(str, enum.Enum):
 
 
 class ProjectStage(str, enum.Enum):
+    idea = "idea"
     planning = "planning"
     development = "development"
     launching = "launching"

@@ -29,13 +29,13 @@ async def get_all_cities(db: AsyncSession, country_id: uuid.UUID | None = None) 
 
 
 async def get_all_industries(db: AsyncSession) -> list[Industry]:
-    result = await db.execute(select(Industry).order_by(Industry.name))
+    result = await db.execute(select(Industry).order_by(Industry.name_en))
     return result.scalars().all()
 
 
 async def get_all_specializations(db: AsyncSession) -> list[Specialization]:
     result = await db.execute(
-        select(Specialization).where(Specialization.is_approved == True).order_by(Specialization.name)
+        select(Specialization).where(Specialization.is_approved == True).order_by(Specialization.name_en)
     )
     return result.scalars().all()
 

@@ -29,25 +29,27 @@ class Specialization(Base):
     __tablename__ = "specializations"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
+    name_en: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
+    name_ar: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
     is_approved: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     user_specializations: Mapped[list["UserSpecialization"]] = relationship("UserSpecialization", back_populates="specialization", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
-        return f"<Specialization {self.name}>"
+        return f"<Specialization {self.name_en}>"
 
 
 class Industry(Base):
     __tablename__ = "industries"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
+    name_en: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
+    name_ar: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     def __repr__(self) -> str:
-        return f"<Industry {self.name}>"
+        return f"<Industry {self.name_en}>"
 
 
 class UserSkill(Base):
