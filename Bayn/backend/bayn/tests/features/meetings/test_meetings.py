@@ -209,13 +209,13 @@ class TestMeetingAcceptReject:
         request_id = create.json()["id"]
         await client.post(f"/meetings/requests/{request_id}/accept", headers=auth_headers_for(owner))
 
-        # Party one signing alone isn't enough — no one-sided meetings.
+        # Party one (the owner) signing alone isn't enough — no one-sided meetings.
         mock_nda.sign("pending_party_two")
         listed = await client.get(
             "/meetings/requests", params={"role": "incoming"}, headers=auth_headers_for(owner)
         )
         assert listed.json()[0]["status"] == "awaiting_signatures"
-        assert listed.json()[0]["signatures"] == {"requester_signed": True, "owner_signed": False}
+        assert listed.json()[0]["signatures"] == {"requester_signed": False, "owner_signed": True}
         assert (await client.get("/meetings", headers=auth_headers_for(member))).json() == []
 
         mock_nda.sign("signed")

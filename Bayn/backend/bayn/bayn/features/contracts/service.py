@@ -69,8 +69,8 @@ async def create_nda_for_request(
     Idempotent: an existing contract for the request is returned untouched, so a
     retried accept can't double-send signing emails.
 
-    The requester is party one — Signature-System emails them first, and they're
-    the one asking to join.
+    The owner is party one — Signature-System emails them first, since it's
+    their project's confidential information being protected.
     """
     existing = await get_contract_for_request(db, request.id)
     if existing is not None:
@@ -85,12 +85,12 @@ async def create_nda_for_request(
         meeting_request_id=request.id,
         project_id=request.project_id,
         confidentiality_period_months=DEFAULT_CONFIDENTIALITY_MONTHS,
-        party_one_user_id=requester.id,
-        party_one_name=_full_name(requester),
-        party_one_national_id=_national_id(requester),
-        party_two_user_id=owner.id,
-        party_two_name=_full_name(owner),
-        party_two_national_id=_national_id(owner),
+        party_one_user_id=owner.id,
+        party_one_name=_full_name(owner),
+        party_one_national_id=_national_id(owner),
+        party_two_user_id=requester.id,
+        party_two_name=_full_name(requester),
+        party_two_national_id=_national_id(requester),
         status=ContractStatus.pending_party_one,
     )
 
@@ -100,14 +100,14 @@ async def create_nda_for_request(
             meeting_id=None,
             project_id=str(request.project_id),
             confidentiality_period_months=DEFAULT_CONFIDENTIALITY_MONTHS,
-            party_one_user_id=str(requester.id),
+            party_one_user_id=str(owner.id),
             party_one_name=contract.party_one_name,
             party_one_national_id=contract.party_one_national_id,
-            party_one_email=requester.email,
-            party_two_user_id=str(owner.id),
+            party_one_email=owner.email,
+            party_two_user_id=str(requester.id),
             party_two_name=contract.party_two_name,
             party_two_national_id=contract.party_two_national_id,
-            party_two_email=owner.email,
+            party_two_email=requester.email,
         )
     except NDAServiceError as exc:
         # Nothing is persisted, so the owner can just accept again once
@@ -121,13 +121,13 @@ async def create_nda_for_request(
     # is persisted like any other success — raising here would leave nothing for
     # `get_contract_for_request` to find, and a retried accept would create a
     # second, orphaned contract on Signature-System's side. Logged instead so
-    # ops can see requester.email never got their signing link.
+    # ops can see owner.email never got their signing link.
     if not remote.get("email_sent", True):
         logger.warning(
             "NDA contract %s created for meeting request %s but signing email to %s failed",
             contract.generated_pdf_key,
             request.id,
-            requester.email,
+            owner.email,
         )
 
     db.add(contract)

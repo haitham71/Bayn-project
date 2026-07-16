@@ -228,10 +228,11 @@ async def signature_map(db: AsyncSession, requests) -> dict[uuid.UUID, Signature
     for contract in contracts.scalars().all():
         # Signature-System reports one status, not a flag per party: it walks
         # pending_party_one -> pending_party_two -> signed, so party one having
-        # signed is implied by having moved past their step.
+        # signed is implied by having moved past their step. The owner is
+        # party one (see contracts.service.create_nda_for_request).
         out[contract.meeting_request_id] = SignatureState(
-            requester_signed=contract.status != ContractStatus.pending_party_one,
-            owner_signed=contract.status == ContractStatus.signed,
+            owner_signed=contract.status != ContractStatus.pending_party_one,
+            requester_signed=contract.status == ContractStatus.signed,
         )
     return out
 
