@@ -20,7 +20,7 @@ from sqlalchemy.pool import StaticPool
 from bayn.common.exceptions import NotFoundError
 from bayn.core.database import Base, get_db
 from bayn.core.security import create_access_token, hash_password
-from bayn.features.identity.models import Country, User
+from bayn.features.identity.models import City, Country, User
 from bayn.main import app
 
 
@@ -104,6 +104,18 @@ async def test_country(db: AsyncSession) -> Country:
     return country
 
 @pytest_asyncio.fixture
+async def test_city(db: AsyncSession, test_country: Country) -> City:
+    city = City(
+        country_id=test_country.id,
+        name_en="Riyadh",
+        name_ar="الرياض",
+    )
+    db.add(city)
+    await db.flush()
+    await db.refresh(city)
+    return city
+
+@pytest_asyncio.fixture
 async def test_user(db: AsyncSession, test_country: Country) -> User:
     user = User(
         first_name_ar="أسعد",
@@ -140,10 +152,56 @@ def mock_authentica():
 
 
 @pytest_asyncio.fixture
+def mock_email():
+    # patch the singleton so tests never hit a real SMTP server
+    with patch("bayn.features.identity.password_service.email_client") as mock:
+        mock.send_email = AsyncMock(return_value=None)
+        yield mock
+
+
+@pytest_asyncio.fixture
 def mock_r2():
     with patch("bayn.integrations.storage.cloudflare.r2_client") as mock:
         mock.upload_avatar.return_value = "avatars/test.png"
         mock.delete_avatar.return_value = None
         # real image on R2 — visible to anyone running the tests
         mock.get_avatar_url.return_value = "https://pub-e7461587069f419e8cadac646b04ce3b.r2.dev/avatars/test.png"
+        yield mock
+
+
+@pytest_asyncio.fixture
+def mock_daily():
+    # patch the singleton so tests never hit the real Daily.co API
+    with patch("bayn.features.meetings.service.daily_client") as mock:
+        mock.create_room = AsyncMock(return_value={"url": "https://bayn.daily.co/test-room"})
+        mock.create_meeting_token = AsyncMock(return_value="test-token")
+        yield mock
+
+
+@pytest_asyncio.fixture
+def mock_calcom():
+    # patch the singleton so tests never hit the real Cal.com API (and never
+    # create a real booking on the live shared calendar)
+    with patch("bayn.features.meetings.service.calcom_client") as mock:
+        mock.create_booking = AsyncMock(return_value={"data": {"uid": "test-calcom-booking"}})
+        yield mock
+
+
+@pytest_asyncio.fixture
+def mock_nda():
+    """Patch Signature-System so tests never create real contracts or email
+    anyone a signing link.
+
+    Starts out unsigned, which is the state accepting a request lands in. Use
+    `sign()` to move it to fully signed, the way both parties signing would.
+    """
+    with patch("bayn.features.contracts.service.nda_service_client") as mock:
+        state = {"id": "test-contract-id", "status": "pending_party_one"}
+        mock.create_contract = AsyncMock(return_value=state)
+        mock.get_contract = AsyncMock(side_effect=lambda _id: dict(state))
+
+        def sign(status: str = "signed") -> None:
+            state["status"] = status
+
+        mock.sign = sign
         yield mock

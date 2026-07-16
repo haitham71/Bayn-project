@@ -30,13 +30,26 @@ class Settings(BaseSettings):
     CALCOM_API_KEY: str | None = None
     CALCOM_CLIENT_ID: str | None = None
     CALCOM_CLIENT_SECRET: str | None = None
+    # single shared event type used for every meeting booking — no per-user
+    # OAuth / calendar connection, so there's no per-owner event type to pick
+    CALCOM_EVENT_TYPE_ID: str | None = None
 
-    SMTP_HOST: str | None = None 
+    DAILY_API_KEY: str | None = None
+    DAILY_API_URL: str | None = None
+    DAILY_DOMAIN: str | None = None
+
+    SMTP_HOST: str | None = None
     SMTP_PORT: int = 587
     SMTP_USERNAME: str | None = None
     SMTP_PASSWORD: str | None = None
     EMAIL_FROM: str | None = None
     EMAIL_FROM_NAME: str | None = None
+
+
+    NDA_SERVICE_URL: str | None = None
+    NDA_SERVICE_KEY: str | None = None
+
+    FRONTEND_URL: str = "http://localhost:3000"
 
     model_config = SettingsConfigDict(
         env_file=".env",

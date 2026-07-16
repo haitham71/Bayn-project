@@ -45,9 +45,12 @@
 .bayn-sidebar__logo {
   width: 44px;
   height: 33px;
-  background-color: var(--bg-surface-thirdary);
-  -webkit-mask: var(--logo-src) center / contain no-repeat;
-  mask: var(--logo-src) center / contain no-repeat;
+  color: var(--bg-surface-thirdary);
+}
+
+/* Flatten the two-tone mark to one tint; its green would vanish on the green bg */
+.bayn-sidebar__logo path {
+  fill: currentColor;
 }
 
 /* Header row holding the pin toggle */

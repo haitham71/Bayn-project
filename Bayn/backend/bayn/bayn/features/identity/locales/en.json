@@ -24,12 +24,18 @@
     "verification_failed": "OTP verification failed",
     "no_pending_otp": "No pending OTP found — request a new one",
     "sent_email": "OTP sent to your email",
-    "sent_phone": "OTP sent to your phone number"
+    "sent_phone": "OTP sent to your phone number",
+    "rate_limit_exceeded": "You've reached the maximum number of OTP requests for today. Please try again later",
+    "email_must_be_verified_first": "Please verify your email before verifying your phone number"
   },
   "avatar": {
     "no_avatar_to_delete": "No avatar to delete",
     "upload_failed": "Failed to upload avatar",
     "delete_failed": "Failed to delete avatar"
+  },
+  "profile": {
+    "national_id_already_in_use": "This national ID is already registered to another account",
+    "incomplete": "Please complete your profile before booking a meeting"
   },
   "account": {
     "deleted": "Account deleted successfully"
@@ -49,5 +55,32 @@
     "phone_leading_zero": "Phone number must be in format 5XXXXXXXX (e.g., 501234567), not 05XXXXXXX",
     "phone_digits_only": "Phone number must contain digits only",
     "phone_format": "Phone number must start with 5 and be exactly 9 digits long (e.g., 501234567)"
+  },
+  "password_reset": {
+    "generic_message": "If this email is registered, a password reset link has been sent to it.",
+    "email_subject": "Reset your Been password",
+    "email_body_title": "Reset your password",
+    "email_body_text": "Click the link below to reset your password. This link expires in {minutes} minutes.",
+    "email_body_ignore": "If you didn't request this, you can safely ignore this email.",
+    "email_button": "Reset Password",
+    "email_plain_text": "Reset your password using this link: {link} (expires in 30 minutes). If you didn't request this, ignore this email.",
+    "success": "Password has been reset successfully.",
+    "invalid_or_expired": "Invalid or expired reset link.",
+    "expired": "This reset link has expired. Please request a new one.",
+    "same_as_current": "Your new password must be different from your current one."
+  },
+  "password_change": {
+    "email_subject": "Confirm your password change",
+    "email_body_title": "Confirm password change",
+    "email_body_text": "Click the link to confirm your password change. If you didn't request this, ignore this email.",
+    "email_button": "Confirm Change",
+    "email_plain_text": "Confirm your password change using this link: {link}. If you didn't request this, ignore this email.",
+    "request_sent": "A confirmation link has been sent to your email.",
+    "send_failed": "Failed to send the confirmation email. Please try again.",
+    "current_password_incorrect": "Current password is incorrect.",
+    "same_as_current": "Your new password must be different from your current one.",
+    "invalid_or_expired": "Invalid or expired confirmation link.",
+    "expired": "This confirmation link has expired. Please request the change again.",
+    "success": "Password has been changed successfully."
   }
 }

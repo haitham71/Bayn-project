@@ -7,12 +7,16 @@ from pydantic import BaseModel, ConfigDict
 
 
 class CountryResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
     id: uuid.UUID
-    name_en: str
-    name_ar: str
+    name: str
     iso2: str
     dial_code: str
+
+
+class CityResponse(BaseModel):
+    id: uuid.UUID
+    country_id: uuid.UUID
+    name: str
 
 
 class SkillResponse(BaseModel):
@@ -23,14 +27,12 @@ class SkillResponse(BaseModel):
 
 
 class SpecializationResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
     id: uuid.UUID
     name: str
     is_approved: bool
 
 
 class IndustryResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
     id: uuid.UUID
     name: str
     created_at: datetime

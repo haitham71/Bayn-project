@@ -53,3 +53,27 @@ body {
 [dir='rtl'] {
   font-family: var(--font-ar);
 }
+
+/* Reusable themed scrollbar (secondary-700 thumb). Apply to any scroll area. */
+.bayn-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-secondary-700, #bca98a) transparent;
+}
+
+.bayn-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.bayn-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.bayn-scroll::-webkit-scrollbar-thumb {
+  background: var(--color-secondary-700, #bca98a);
+  border-radius: 8px;
+}
+
+.bayn-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--color-secondary-800, #9a8a71);
+}

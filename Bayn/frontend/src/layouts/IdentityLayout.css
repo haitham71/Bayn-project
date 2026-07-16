@@ -27,10 +27,14 @@
   margin: 0 auto;
 }
 
-/* Hero column */
+/* Hero column — kept a fixed viewport height and stuck to the top so it stays
+   the same size (floating) no matter how tall the form content grows. */
 .identity-layout__hero {
   flex: 1 1 35%;
-  position: relative;
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  height: 100vh;
   background-size: cover;
   background-position: center;
   border-start-start-radius: 48px;
@@ -53,8 +57,8 @@
 
 .identity-layout__quick-actions {
   position: absolute;
-  top: 750px;
-  inset-inline-start: -70px;
+  top: 15px;
+  inset-inline-start: -60px;
   z-index: 2;
   display: flex;
   flex-direction: column;
@@ -62,9 +66,6 @@
 }
 
 /* Size/shape/colour come from Button (iconOnly, primary); we only add the lift */
-.identity-layout__circle {
-  box-shadow: 0 8px 20px -8px rgba(4, 18, 14, 0.5);
-}
 
 .identity-layout__lang {
   position: absolute;

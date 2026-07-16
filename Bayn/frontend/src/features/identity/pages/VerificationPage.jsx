@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import IdentityLayout from '@/layouts/IdentityLayout';
 import Stepper from '../components/Stepper';
@@ -8,10 +8,10 @@ import Button from '@/shared/components/Button';
 import Check from '@/assets/icons/check.svg?react';
 import useCountdown from '../hooks/useCountdown';
 import {
-  sendEmailOtp,
-  confirmEmailOtp,
-  sendPhoneOtp,
-  confirmPhoneOtp,
+  signupVerifyEmail,
+  signupVerifyPhone,
+  signupResendEmail,
+  signupResendPhone,
 } from '../services/authService';
 import { getApiErrorMessage } from '@/shared/lib/apiError';
 import './VerificationPage.css';
@@ -23,7 +23,9 @@ const OTP_LENGTH = 4;
 export default function VerificationPage({
   email = 'user@email.com',
   phone = '+966 5X XXX XXXX',
+  pendingToken = '',
   onEditInfo,
+  onNext,
 }) {
   const { t } = useTranslation();
   const [code, setCode] = useState('');
@@ -31,11 +33,17 @@ export default function VerificationPage({
   const [verified, setVerified] = useState({ email: false, phone: false });
   const [phase, setPhase] = useState('input'); // input | loading | success | error
   const [errorMsg, setErrorMsg] = useState('');
+  // The pending signup is tracked by this token; the backend may rotate it on
+  // each step, so we keep the latest one it returns.
+  const [token, setToken] = useState(pendingToken);
   const { formatted, isDone, reset } = useCountdown(32);
 
-  // Guards against sending an OTP twice for the same channel (React StrictMode
-  // runs effects twice in dev, and SMS sends cost credits).
-  const sentChannels = useRef(new Set());
+  // Everything confirmed — nothing left to resend. Stop the timer so it doesn't
+  // keep ticking in the background and keep the resend action disabled.
+  const allVerified = verified.email && verified.phone;
+  useEffect(() => {
+    if (allVerified) reset(0);
+  }, [allVerified, reset]);
 
   const steps = [
     { key: 'account', label: t('steps.account') },
@@ -45,32 +53,22 @@ export default function VerificationPage({
 
   const destination = active === 'email' ? email : phone;
 
-  async function sendOtp(channel) {
-    setErrorMsg('');
-    try {
-      if (channel === 'email') await sendEmailOtp();
-      else await sendPhoneOtp();
-      reset();
-    } catch (err) {
-      setErrorMsg(getApiErrorMessage(err, t('verification.sendFailed')));
-    }
-  }
-
-  // Auto-send the OTP the first time each channel becomes active.
-  useEffect(() => {
-    if (verified[active]) return;
-    if (sentChannels.current.has(active)) return;
-    sentChannels.current.add(active);
-    sendOtp(active);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active]);
+  // The backend sends every OTP itself — the email one on /signup, the phone one
+  // the moment the email is confirmed. The frontend never triggers a send; it
+  // only verifies the codes the user enters (and asks for a resend on request).
 
   async function handleComplete(entered) {
     setPhase('loading');
     setErrorMsg('');
     try {
-      if (active === 'email') await confirmEmailOtp(entered);
-      else await confirmPhoneOtp(entered);
+      if (active === 'email') {
+        // Confirms the email; the backend then sends the phone OTP.
+        const res = await signupVerifyEmail(token, entered);
+        if (res?.pending_token) setToken(res.pending_token);
+      } else {
+        // Confirms the phone, which creates the account and logs the user in.
+        await signupVerifyPhone(token, entered);
+      }
 
       setPhase('success');
       setVerified((prev) => ({ ...prev, [active]: true }));
@@ -80,9 +78,9 @@ export default function VerificationPage({
           setCode('');
           reset();
           setPhase('input');
-        } else {
-          setPhase('input');
         }
+        // Phone was the last step — keep the success state so the check mark
+        // stays and the input boxes don't reappear.
       }, 900);
     } catch (err) {
       setPhase('error');
@@ -91,6 +89,20 @@ export default function VerificationPage({
         setCode('');
         setPhase('input');
       }, 1500);
+    }
+  }
+
+  // Ask the backend to resend the current channel's OTP (user-initiated only).
+  async function handleResend() {
+    setErrorMsg('');
+    try {
+      const res = active === 'email'
+        ? await signupResendEmail(token)
+        : await signupResendPhone(token);
+      if (res?.pending_token) setToken(res.pending_token);
+      reset();
+    } catch (err) {
+      setErrorMsg(getApiErrorMessage(err, t('verification.sendFailed')));
     }
   }
 
@@ -130,10 +142,10 @@ export default function VerificationPage({
 
         <div className="verify__resend">
           <span>{t('verification.didntReceive')}</span>
-          <Button variant="tertiary" size="sm" disabled={!isDone} onClick={() => sendOtp(active)}>
+          <Button variant="tertiary" size="sm" disabled={!isDone || verified[active] || allVerified} onClick={handleResend}>
             {t('verification.resend')}
           </Button>
-          {!isDone && <span className="verify__timer">({formatted})</span>}
+          {!isDone && !allVerified && <span className="verify__timer">({formatted})</span>}
         </div>
 
         <div className="verify__methods">
@@ -165,13 +177,14 @@ export default function VerificationPage({
           trailingIcon
           className="verify__next"
           disabled={!verified.email || !verified.phone}
+          onClick={onNext}
         >
           {t('verification.nextStep')}
         </Button>
 
         <p className="verify__edit">
           <span>{t('verification.wrongInfo')}</span>
-          <Button variant="tertiary" size="sm" onClick={onEditInfo}>
+          <Button variant="tertiary" size="sm" onClick={onEditInfo} disabled={verified.phone}>
             {t('verification.editInfo')}
           </Button>
         </p>

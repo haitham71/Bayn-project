@@ -1,0 +1,114 @@
+.sched {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.sched__list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sched__empty {
+  margin: 0;
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-supporting, #786c57);
+}
+
+/* One selected day + its time slots. */
+.sched__day {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--bg-surface-secondary, #d7cbb9);
+  border-radius: 8px;
+  background: var(--bg-surface-primary, #ebe5dc);
+  box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.12);
+}
+
+.sched__day-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sched__day-label {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-title, #0f3d2e);
+}
+
+.sched__remove,
+.sched__slot-x {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-supporting, #786c57);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.sched__remove:hover,
+.sched__slot-x:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: var(--text-title, #0f3d2e);
+}
+
+.sched__slots {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sched__slot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Time pickers reuse the standard dropdown (Select) styling/colours. */
+.sched__time.bayn-select {
+  flex: 1 1 0;
+  min-width: 0;
+  width: auto;
+}
+
+.sched__time.bayn-select .bayn-select__field {
+  min-height: 46px;
+}
+
+.sched__conflict {
+  margin: 0;
+  font-size: 12px;
+  color: var(--input-error, #900000);
+}
+
+.sched__add {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px;
+  border: none;
+  background: transparent;
+  color: var(--btn-primary-default, #295e4d);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.sched__add:hover {
+  opacity: 0.75;
+}

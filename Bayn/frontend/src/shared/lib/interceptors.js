@@ -33,7 +33,17 @@ export function attachInterceptors(api) {
           original.headers.Authorization = `Bearer ${data.access_token}`;
           return api(original);
         } catch {
-          clearTokens();
+          // refresh failed — fall through to the logout below
+        }
+      }
+
+      // Any 401 we couldn't recover from means the session is over: drop the
+      // stale tokens and send the user to login instead of leaving them on a
+      // broken protected page.
+      if (status === 401) {
+        clearTokens();
+        if (!window.location.pathname.startsWith('/login')) {
+          window.location.replace('/login');
         }
       }
 

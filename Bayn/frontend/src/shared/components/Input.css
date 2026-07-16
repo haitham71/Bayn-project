@@ -62,6 +62,25 @@
   resize: vertical;
   min-height: 120px;
   padding-top: 20px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-secondary-700, #bca98a) transparent;
+}
+
+.bayn-input--multiline .bayn-input__native::-webkit-scrollbar {
+  width: 8px;
+}
+
+.bayn-input--multiline .bayn-input__native::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.bayn-input--multiline .bayn-input__native::-webkit-scrollbar-thumb {
+  background: var(--color-secondary-700, #bca98a);
+  border-radius: 8px;
+}
+
+.bayn-input--multiline .bayn-input__native::-webkit-scrollbar-thumb:hover {
+  background: var(--color-secondary-800, #9a8a71);
 }
 
 .bayn-input--multiline .bayn-input__native::-webkit-resizer {

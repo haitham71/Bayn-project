@@ -7,6 +7,7 @@ from typing import Optional
 
 from sqlalchemy import Boolean, Date, DateTime, Enum, ForeignKey, Integer, String, func
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from bayn.core.database import Base
@@ -29,6 +30,20 @@ class OTPStatus(str, enum.Enum):
     verified = "verified"
     expired = "expired"
 
+class PasswordActionType(str, enum.Enum):
+    RESET = "reset"
+    CHANGE = "change"
+
+
+# values_callable (used wherever this is mapped) stores these .value strings
+# in Postgres, e.g. "1-2" — member names are just valid-identifier stand-ins
+class ExperienceRange(str, enum.Enum):
+    less_than_1 = "less_than_1"
+    range_1_2 = "1-2"
+    range_2_3 = "2-3"
+    range_3_4 = "3-4"
+    range_5_10 = "5-10"
+    more_than_10 = "10+"
 
 class Country(Base):
     __tablename__ = "countries"
@@ -49,6 +64,23 @@ class Country(Base):
 
     def __repr__(self) -> str:
         return f"<Country {self.iso2} - {self.name_en}>"
+
+
+class City(Base):
+    __tablename__ = "cities"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    country_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("countries.id"), nullable=False)
+    name_en: Mapped[str] = mapped_column(String(100), nullable=False)
+    name_ar: Mapped[str] = mapped_column(String(100), nullable=False)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    country: Mapped["Country"] = relationship("Country", foreign_keys=[country_id])
+
+    def __repr__(self) -> str:
+        return f"<City {self.name_en}>"
 
 
 class User(Base):
@@ -74,13 +106,39 @@ class User(Base):
     username: Mapped[str] = mapped_column(String(30), unique=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
 
+    # password action fields are used for password reset/change flows; they are cleared after the action is completed
+
+    password_action_token_hash: Mapped[str | None] = mapped_column(String, nullable=True)
+    password_action_type: Mapped[PasswordActionType | None] = mapped_column(
+        SAEnum(PasswordActionType), nullable=True
+    )
+    password_action_expires_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
+    # pending password hash is used to store the new password hash during a password change flow, until the user confirms the change
+    pending_password_hash: Mapped[str | None] = mapped_column(String, nullable=True)
+
+
     phone_country_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True), ForeignKey("countries.id"), nullable=True
     )
     # local number without the dial code, e.g. 501234567
     phone_number: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
 
-    city: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    # country of residence — independent of phone_country_id (dial code can differ from where the user lives)
+    country_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("countries.id"), nullable=True
+    )
+    # city is picked from the cities lookup table, not free text
+    city_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("cities.id"), nullable=True
+    )
+    job_title: Mapped[Optional[str]] = mapped_column(String(150), nullable=True)
+    bio: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    years_of_experience: Mapped[Optional[ExperienceRange]] = mapped_column(
+        SAEnum(ExperienceRange, values_callable=lambda x: [e.value for e in x]), nullable=True
+    )
     industry_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True), ForeignKey("industries.id"), nullable=True
     )
@@ -112,12 +170,34 @@ class User(Base):
     phone_country: Mapped[Optional["Country"]] = relationship(
         "Country", back_populates="users", foreign_keys=[phone_country_id]
     )
+    country: Mapped[Optional["Country"]] = relationship(
+        "Country", foreign_keys=[country_id]
+    )
+    city: Mapped[Optional["City"]] = relationship(
+        "City", foreign_keys=[city_id]
+    )
     otp_logs: Mapped[list["AuthenticaOTPLog"]] = relationship(
         "AuthenticaOTPLog", back_populates="user", cascade="all, delete-orphan"
     )
 
     def __repr__(self) -> str:
         return f"<User {self.username} ({self.email})>"
+
+
+class RefreshToken(Base):
+    """Tracks issued refresh tokens by jti so they can be revoked server-side
+    (e.g. after a password reset/change) despite JWTs being self-verifying."""
+    __tablename__ = "refresh_tokens"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
+    jti: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    revoked_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    def __repr__(self) -> str:
+        return f"<RefreshToken user={self.user_id} revoked={self.revoked_at is not None}>"
 
 
 class AuthenticaOTPLog(Base):

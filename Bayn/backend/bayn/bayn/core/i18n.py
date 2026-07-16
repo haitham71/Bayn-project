@@ -30,7 +30,7 @@ def _load_locale(feature_name: str, locale: str) -> dict:
         return json.load(f)
 
 
-def t(feature_name: str, key: str, locale: str = DEFAULT_LOCALE) -> str:
+def t(feature_name: str, key: str, locale: str = DEFAULT_LOCALE, **kwargs: object) -> str:
     if locale not in SUPPORTED_LOCALES:
         locale = DEFAULT_LOCALE
 
@@ -42,7 +42,10 @@ def t(feature_name: str, key: str, locale: str = DEFAULT_LOCALE) -> str:
         value = _get_nested(_load_locale(feature_name, DEFAULT_LOCALE), key)
 
     # return the key itself if no translation exists — makes gaps visible
-    return value if value is not None else key
+    if value is None:
+        return key
+
+    return value.format(**kwargs) if kwargs else value
 
 
 def _get_nested(data: dict, key: str) -> str | None:
@@ -69,3 +72,7 @@ def get_locale(
     lang_code = primary.split("-")[0].strip().lower()
 
     return lang_code if lang_code in SUPPORTED_LOCALES else DEFAULT_LOCALE
+
+
+def localized_name(name_en: str, name_ar: str, locale: str) -> str:
+    return name_ar if locale == "ar" else name_en

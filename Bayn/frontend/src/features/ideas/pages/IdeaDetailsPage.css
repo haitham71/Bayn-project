@@ -1,0 +1,412 @@
+/* Idea details — full view of one idea with owner + join panel.
+   Shares the fixed floating sidebar with the other dashboard screens. */
+.id {
+  min-height: 100vh;
+  background: var(--bg-surface-primary, #ebe5dc);
+}
+
+.id__main {
+  padding-block: 22px 40px;
+  padding-inline: 108px 40px;
+}
+
+.id__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 18px;
+  border: none;
+  background: none;
+  padding: 0;
+  font-family: var(--font-sans);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--btn-primary-default, #295e4d);
+  cursor: pointer;
+}
+
+[dir='rtl'] .id__back {
+  font-family: var(--font-ar);
+}
+
+[dir='rtl'] .id__back svg {
+  transform: scaleX(-1);
+}
+
+.id__state {
+  margin-top: 40px;
+  text-align: center;
+  color: var(--text-supporting, #786c57);
+}
+
+.id__grid {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  align-items: start;
+  gap: 24px;
+}
+
+/* ---- Main card ---- */
+.id__card {
+  position: relative;
+  border: 1px solid var(--bg-surface-secondary, #d7cbb9);
+  border-radius: 8px;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+  padding: 32px;
+}
+
+.id__card-actions {
+  position: absolute;
+  top: 24px;
+  inset-inline-end: 24px;
+  display: flex;
+  gap: 10px;
+}
+
+.id__icon-btn {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--bg-surface-secondary, #d7cbb9);
+  border-radius: 50%;
+  background: var(--bg-surface-primary, #ebe5dc);
+  color: var(--text-title, #0f3d2e);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.id__icon-btn:hover {
+  background: var(--bg-surface-secondary, #d7cbb9);
+}
+
+.id__title {
+  margin: 0 72px 12px 0;
+  font-family: var(--font-sans);
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: -0.6px;
+  color: var(--text-title, #0f3d2e);
+}
+
+[dir='rtl'] .id__title {
+  margin: 0 0 12px 72px;
+  font-family: var(--font-ar);
+}
+
+.id__lead {
+  margin: 0 0 20px;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text-supporting, #786c57);
+}
+
+.id__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.id__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 20px;
+  background: var(--bg-surface-secondary, #d7cbb9);
+  color: var(--text-title, #0f3d2e);
+  font-size: 13px;
+}
+
+.id__pill--stage {
+  background: var(--color-primary-200, #76c3a9);
+}
+
+.id__section {
+  margin-bottom: 20px;
+}
+
+.id__section-title {
+  margin: 0 0 8px;
+  font-family: var(--font-sans);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-title, #0f3d2e);
+}
+
+.id__section-body {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-body-2, #463e31);
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+/* Rich-text idea description (bold, lists, line breaks from the editor). */
+.id__richtext {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-body-2, #463e31);
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.id__richtext p {
+  margin: 0 0 8px;
+}
+
+.id__richtext b,
+.id__richtext strong {
+  font-weight: 600;
+  color: var(--text-title, #0f3d2e);
+}
+
+.id__richtext ul,
+.id__richtext ol {
+  margin: 8px 0;
+  padding-inline-start: 22px;
+}
+
+.id__richtext li {
+  margin: 2px 0;
+}
+
+.id__richtext a {
+  color: var(--btn-primary-default, #295e4d);
+  overflow-wrap: anywhere;
+}
+
+.id__divider {
+  width: 100%;
+  height: 1px;
+  border: none;
+  margin: 20px 0;
+  background: var(--bg-surface-secondary, #d7cbb9);
+}
+
+.id__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.id__tag {
+  padding: 5px 14px;
+  border-radius: 20px;
+  background: rgba(118, 195, 169, 0.28);
+  color: var(--text-title, #0f3d2e);
+  font-size: 12px;
+}
+
+/* ---- Side panels ---- */
+.id__side {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.id__panel {
+  border: 1px solid var(--bg-surface-secondary, #d7cbb9);
+  border-radius: 8px;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+  padding: 20px;
+}
+
+.id__panel-title {
+  margin: 0 0 16px;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-title, #0f3d2e);
+}
+
+[dir='rtl'] .id__panel-title {
+  font-family: var(--font-ar);
+}
+
+/* Owner */
+.id__owner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.id__owner-avatar {
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 1px solid var(--bg-surface-secondary, #d7cbb9);
+  color: var(--text-title, #0f3d2e);
+  flex: 0 0 auto;
+  overflow: hidden;
+}
+
+.id__owner-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.id__owner-name {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-title, #0f3d2e);
+}
+
+.id__owner-role {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--text-supporting, #786c57);
+}
+
+.id__owner-stats {
+  display: flex;
+  gap: 32px;
+  margin-bottom: 16px;
+}
+
+.id__stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.id__stat-num {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-sans);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-title, #0f3d2e);
+}
+
+.id__stat-label {
+  font-size: 12px;
+  color: var(--text-supporting, #786c57);
+}
+
+.id__view-profile.bayn-btn {
+  width: 100%;
+}
+
+/* Join — available slot picker */
+.id__slots {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.id__slot {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--bg-surface-secondary, #d7cbb9);
+  border-radius: 8px;
+  background: var(--bg-surface-primary, #ebe5dc);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--text-title, #0f3d2e);
+  text-align: start;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.id__slot:hover {
+  background: var(--bg-surface-secondary, #d7cbb9);
+}
+
+.id__slot--active {
+  border-color: var(--btn-primary-default, #295e4d);
+  background: var(--color-primary-200, #76c3a9);
+}
+
+.id__no-slots {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-supporting, #786c57);
+}
+
+/* Join — optional message to the owner */
+.id__note.bayn-input {
+  width: 100%;
+  margin-top: 16px;
+}
+
+.id__note .bayn-input__support {
+  text-align: end;
+}
+
+/* Fixed height — the panel is too narrow to resize into. */
+.id__note .bayn-input__native {
+  resize: none;
+  min-height: 96px;
+  font-size: 14px;
+}
+
+.id__join.bayn-btn {
+  width: 100%;
+  margin-top: 16px;
+}
+
+.id__error {
+  margin: 12px 0 0;
+  font-size: 13px;
+  color: var(--text-error, #900000);
+}
+
+.id__success {
+  margin: 12px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--btn-primary-default, #295e4d);
+}
+
+/* What happens next */
+.id__steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  counter-reset: step;
+}
+
+.id__step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: var(--text-body-2, #463e31);
+}
+
+.id__step svg {
+  color: var(--btn-primary-default, #295e4d);
+  flex: 0 0 auto;
+}
+
+@media (max-width: 1000px) {
+  .id__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .id__main {
+    padding-inline: 24px;
+  }
+}

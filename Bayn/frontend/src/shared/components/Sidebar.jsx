@@ -7,24 +7,29 @@ import Video from '@/assets/icons/video.svg?react';
 import UserPlus from '@/assets/icons/user-plus.svg?react';
 import UserRound from '@/assets/icons/user-round.svg?react';
 import Settings from '@/assets/icons/settings.svg?react';
+import Languages from '@/assets/icons/languages.svg?react';
 import LogOut from '@/assets/icons/log-out.svg?react';
 import Pin from '@/assets/icons/pin.svg?react';
 import PinOff from '@/assets/icons/pin-off.svg?react';
-import logoUrl from '@/assets/logo/Bayn-svg.svg?url';
+import BaynLogo from '@/assets/logo/Bayn-svg.svg?react';
+import { logout } from '@/features/identity/services/authService';
 import './Sidebar.css';
 
+// `page` is the app page an item navigates to. Items without a page yet are
+// inert until their destination exists.
 const defaultItems = [
-  { key: 'home', labelKey: 'sidebar.home', icon: House },
-  { key: 'ideas', labelKey: 'sidebar.ideas', icon: Lightbulb },
-  { key: 'projects', labelKey: 'sidebar.projects', icon: Presentation },
-  { key: 'meetings', labelKey: 'sidebar.meetings', icon: Video },
+  { key: 'home', page: 'home', labelKey: 'sidebar.home', icon: House },
+  { key: 'ideas', page: 'ideas', labelKey: 'sidebar.ideas', icon: Lightbulb },
+  { key: 'projects', page: 'myprojects', labelKey: 'sidebar.projects', icon: Presentation },
+  { key: 'meetings', page: 'meetings', labelKey: 'sidebar.meetings', icon: Video },
   { key: 'profiles', labelKey: 'sidebar.profiles', icon: UserPlus },
-  { key: 'profile', labelKey: 'sidebar.profile', icon: UserRound },
+  { key: 'profile', page: 'myprofile', labelKey: 'sidebar.profile', icon: UserRound },
 ];
 
 const defaultFooter = [
     { key: 'settings', labelKey: 'sidebar.settings', icon: Settings },
-	{ key: 'logout', labelKey: 'sidebar.logout', icon: LogOut },
+	{ key: 'language', labelKey: 'app.switchLanguage', icon: Languages, action: 'toggleLanguage' },
+	{ key: 'logout', labelKey: 'sidebar.logout', icon: LogOut, action: 'logout' },
 ];
 
 export default function Sidebar({
@@ -34,19 +39,36 @@ export default function Sidebar({
   defaultActiveKey = 'projects',
   onNavigate,
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [internalActive, setInternalActive] = useState(defaultActiveKey);
   const active = activeKey ?? internalActive;
   const [pinned, setPinned] = useState(false);
 
-  function handleNavigate(key) {
-    if (activeKey === undefined) setInternalActive(key);
-    onNavigate?.(key);
+  function handleNavigate(item) {
+    if (activeKey === undefined) setInternalActive(item.key);
+    if (item.page) onNavigate?.(item.page);
+  }
+
+  function toggleLanguage() {
+    i18n.changeLanguage(i18n.language === 'ar' ? 'en' : 'ar');
+  }
+
+  // Clears the stored tokens and sends the user back to the login page.
+  function handleLogout() {
+    logout();
+    onNavigate?.('login');
+  }
+
+  function handleItemClick(item) {
+    if (item.action === 'toggleLanguage') return toggleLanguage();
+    if (item.action === 'logout') return handleLogout();
+    return handleNavigate(item);
   }
 
   function renderItem(item) {
     const Icon = item.icon;
-    const isActive = item.key === active;
+    const isAction = Boolean(item.action);
+    const isActive = !isAction && item.key === active;
     const label = item.labelKey ? t(item.labelKey) : item.label;
     return (
       <li key={item.key}>
@@ -54,7 +76,7 @@ export default function Sidebar({
           type="button"
           className={`bayn-sidebar__item${isActive ? ' bayn-sidebar__item--active' : ''}`}
           aria-current={isActive ? 'page' : undefined}
-          onClick={() => handleNavigate(item.key)}
+          onClick={() => handleItemClick(item)}
         >
           <span className="bayn-sidebar__icon">
             <span className="bayn-sidebar__icon-tile">
@@ -73,11 +95,7 @@ export default function Sidebar({
       aria-label={t('sidebar.primaryNav')}
     >
       <div className="bayn-sidebar__brand">
-        <span
-          className="bayn-sidebar__logo"
-          style={{ '--logo-src': `url(${logoUrl})` }}
-          aria-hidden="true"
-        />
+        <BaynLogo className="bayn-sidebar__logo" aria-hidden="true" />
       </div>
 
       <div className="bayn-sidebar__head">

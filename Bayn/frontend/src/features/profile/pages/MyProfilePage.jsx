@@ -1,0 +1,692 @@
+import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useQueryClient } from '@tanstack/react-query';
+import { getSaudiCountryId, getCities, searchSkills, uploadAvatar, updateProfile, requestPasswordChange as requestPasswordChangeApi } from '@/features/identity/services/authService';
+import { useProfile, profileQueryKey } from '@/shared/hooks/useProfile';
+import { getApiErrorMessage } from '@/shared/lib/apiError';
+import Sidebar from '@/shared/components/Sidebar';
+import Navbar from '@/shared/components/Navbar';
+import Input from '@/shared/components/Input';
+import Button from '@/shared/components/Button';
+import Select from '@/shared/components/Select';
+import SkillsInput from '@/shared/components/SkillsInput';
+import PasswordStrength from '@/shared/components/PasswordStrength';
+import ConfirmDialog from '@/shared/components/ConfirmDialog';
+import { validateName, validateUsername, validatePassword } from '@/features/identity/utils/validation';
+import Camera from '@/assets/icons/camera.svg?react';
+import MapPin from '@/assets/icons/map-pin.svg?react';
+import Eye from '@/assets/icons/eye.svg?react';
+import EyeOff from '@/assets/icons/eye-off.svg?react';
+import './MyProfilePage.css';
+
+const BIO_MAX = 200;
+
+const TABS = [
+  { key: 'account', labelKey: 'myProfile.tabAccount' },
+  { key: 'profile', labelKey: 'myProfile.tabProfile' },
+];
+
+// Values match the backend's ExperienceRange enum exactly.
+const EXPERIENCE_OPTIONS = [
+  { value: 'less_than_1', label: 'Less than 1 Year' },
+  { value: '1-2', label: '1-2 Years' },
+  { value: '2-3', label: '2-3 Years' },
+  { value: '3-4', label: '3-4 Years' },
+  { value: '5-10', label: '5-10 Years' },
+  { value: '10+', label: '10+ Years' },
+];
+
+// The Profile View starts empty and fills in from the loaded profile.
+const EMPTY_PREVIEW = {
+  username: '',
+  firstNameEn: '', lastNameEn: '', firstNameAr: '', lastNameAr: '',
+  shortTitle: '', bio: '', experience: '', location: '', skills: [],
+};
+
+// Small trailing eye toggle shared by the password fields.
+function eyeToggle(shown) {
+  return shown
+    ? <Eye width={20} height={20} aria-hidden="true" />
+    : <EyeOff width={20} height={20} aria-hidden="true" />;
+}
+
+export default function MyProfilePage({ onNavigate }) {
+  const { t, i18n } = useTranslation();
+  const { data: profile } = useProfile();
+  const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState('account');
+  // Pending confirm modal: { message, onConfirm } while awaiting a yes/no.
+  const [confirmState, setConfirmState] = useState(null);
+
+  // --- Avatar upload ---
+  const fileInputRef = useRef(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarError, setAvatarError] = useState('');
+  // A picked-but-not-yet-uploaded image: staged for preview until confirmed.
+  const [pendingFile, setPendingFile] = useState(null);
+  const [pendingPreview, setPendingPreview] = useState('');
+  const avatarUrl = profile?.avatar_url || '';
+
+  // Free the object URL when the preview changes or the page unmounts.
+  useEffect(() => () => {
+    if (pendingPreview) URL.revokeObjectURL(pendingPreview);
+  }, [pendingPreview]);
+
+  // --- Account information (loaded from the backend on mount) ---
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [accountErrors, setAccountErrors] = useState({});
+  const [accountSaving, setAccountSaving] = useState(false);
+  const [accountError, setAccountError] = useState('');
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [pwErrors, setPwErrors] = useState({});
+  const [pwSaving, setPwSaving] = useState(false);
+  const [pwSubmitError, setPwSubmitError] = useState('');
+  const [pwSuccess, setPwSuccess] = useState('');
+
+  // --- Profile information (four-part name in both languages) ---
+  // Names, experience and location load from the backend on mount.
+  const [firstNameEn, setFirstNameEn] = useState('');
+  const [secondNameEn, setSecondNameEn] = useState('');
+  const [thirdNameEn, setThirdNameEn] = useState('');
+  const [lastNameEn, setLastNameEn] = useState('');
+  const [firstNameAr, setFirstNameAr] = useState('');
+  const [secondNameAr, setSecondNameAr] = useState('');
+  const [thirdNameAr, setThirdNameAr] = useState('');
+  const [lastNameAr, setLastNameAr] = useState('');
+  const [shortTitle, setShortTitle] = useState('');
+  const [bio, setBio] = useState('');
+  const [experience, setExperience] = useState('');
+  const [location, setLocation] = useState('');
+  const [skills, setSkills] = useState([]);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileError, setProfileError] = useState('');
+  const [cityOptions, setCityOptions] = useState([]);
+  const [nameErrors, setNameErrors] = useState({});
+
+  // Built up as skill search results come in — resolves a chosen skill name
+  // back to the skill_id the backend needs when it's actually saved.
+  const [skillIdByName, setSkillIdByName] = useState({});
+
+  // Values shown in the Profile View — updated only when changes are confirmed
+  // (the mount effect below seeds it with the loaded profile).
+  const [committed, setCommitted] = useState(EMPTY_PREVIEW);
+
+  async function handleSkillQuery(q) {
+    const results = await searchSkills(q);
+    setSkillIdByName((prev) => {
+      const next = { ...prev };
+      results.forEach((r) => { next[r.name] = r.id; });
+      return next;
+    });
+    return results.map((r) => r.name);
+  }
+
+  // Seeds the form from the cached profile — the fields stay locally editable,
+  // so we mirror the server values in once the query resolves.
+  useEffect(() => {
+    if (!profile) return;
+    const u = profile;
+    setUsername(u.username || '');
+    setEmail(u.email || '');
+    setPhone(u.phone_number ? `+966 ${u.phone_number}` : '');
+    setFirstNameEn(u.first_name_en || '');
+    setSecondNameEn(u.second_name_en || '');
+    setThirdNameEn(u.third_name_en || '');
+    setLastNameEn(u.last_name_en || '');
+    setFirstNameAr(u.first_name_ar || '');
+    setSecondNameAr(u.second_name_ar || '');
+    setThirdNameAr(u.third_name_ar || '');
+    setLastNameAr(u.last_name_ar || '');
+    setShortTitle(u.job_title || '');
+    setBio(u.bio || '');
+    setExperience(u.years_of_experience || '');
+    setLocation(u.city_id || '');
+    setCommitted((c) => ({
+      ...c,
+      username: u.username || '',
+      firstNameEn: u.first_name_en || '',
+      lastNameEn: u.last_name_en || '',
+      firstNameAr: u.first_name_ar || '',
+      lastNameAr: u.last_name_ar || '',
+      shortTitle: u.job_title || '',
+      bio: u.bio || '',
+      experience: u.years_of_experience || '',
+      location: u.city_id || '',
+    }));
+  }, [profile]);
+
+  // The city dropdown options are looked up once for the form.
+  useEffect(() => {
+    getSaudiCountryId()
+      .then((saId) => (saId ? getCities(saId) : []))
+      .then((cities) => setCityOptions(cities.map((c) => ({ value: c.id, label: c.name_en }))))
+      .catch(() => {});
+  }, []);
+
+  // Dismiss the "no changes" note as soon as the user edits any profile field.
+  useEffect(() => {
+    setProfileError((e) => (e ? '' : e));
+  }, [shortTitle, bio, experience, location, skills, firstNameEn, lastNameEn, firstNameAr, lastNameAr]);
+
+  // Validates the picked image (matching the backend's rules) then stages it
+  // for a preview — the actual upload waits for the confirm button.
+  function handleAvatarChange(e) {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // let the same file be re-picked
+    if (!file) return;
+    setAvatarError('');
+
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setAvatarError(t('myProfile.avatarTypeError'));
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setAvatarError(t('myProfile.avatarSizeError'));
+      return;
+    }
+
+    setPendingFile(file);
+    setPendingPreview(URL.createObjectURL(file));
+  }
+
+  function cancelAvatarUpload() {
+    setPendingFile(null);
+    setPendingPreview('');
+    setAvatarError('');
+  }
+
+  // Uploads the confirmed image. The response is the fresh profile, so we write
+  // it into the cache — every page reading ['profile'] shows it immediately.
+  async function confirmAvatarUpload() {
+    if (!pendingFile) return;
+    setAvatarUploading(true);
+    setAvatarError('');
+    try {
+      const updated = await uploadAvatar(pendingFile);
+      queryClient.setQueryData(profileQueryKey, updated);
+      cancelAvatarUpload();
+    } catch (err) {
+      setAvatarError(getApiErrorMessage(err, t('myProfile.avatarUploadError')));
+    } finally {
+      setAvatarUploading(false);
+    }
+  }
+
+  const nameGroups = [
+    {
+      lng: 'en',
+      heading: t('profile.langEnglish'),
+      fields: [
+        { key: 'firstNameEn', label: 'firstName', value: firstNameEn, set: setFirstNameEn, lang: 'en', required: true },
+        { key: 'secondNameEn', label: 'secondName', value: secondNameEn, set: setSecondNameEn, lang: 'en', required: false },
+        { key: 'thirdNameEn', label: 'thirdName', value: thirdNameEn, set: setThirdNameEn, lang: 'en', required: false },
+        { key: 'lastNameEn', label: 'lastName', value: lastNameEn, set: setLastNameEn, lang: 'en', required: true },
+      ],
+    },
+    {
+      lng: 'ar',
+      heading: t('profile.langArabic'),
+      fields: [
+        { key: 'firstNameAr', label: 'firstName', value: firstNameAr, set: setFirstNameAr, lang: 'ar', required: true },
+        { key: 'secondNameAr', label: 'secondName', value: secondNameAr, set: setSecondNameAr, lang: 'ar', required: false },
+        { key: 'thirdNameAr', label: 'thirdName', value: thirdNameAr, set: setThirdNameAr, lang: 'ar', required: false },
+        { key: 'lastNameAr', label: 'lastName', value: lastNameAr, set: setLastNameAr, lang: 'ar', required: true },
+      ],
+    },
+  ];
+  const allNameFields = nameGroups.flatMap((g) => g.fields);
+
+
+  // Confirm actions — validate first, then open the confirm modal; the actual
+  // save runs only after the user confirms.
+  function requestAccountUpdate() {
+    const err = validateUsername(username);
+    setAccountErrors(err ? { username: err } : {});
+    if (err) return;
+    // Nothing to save if the username matches the last saved value.
+    if (username.trim() === committed.username) {
+      setAccountError(t('myProfile.noChanges'));
+      return;
+    }
+    setConfirmState({ message: t('myProfile.confirmAccountMsg'), onConfirm: doAccountUpdate });
+  }
+
+  async function doAccountUpdate() {
+    setAccountSaving(true);
+    setAccountError('');
+    try {
+      // The backend lowercases the username and rejects one already taken.
+      const updated = await updateProfile({ username });
+      queryClient.setQueryData(profileQueryKey, updated);
+      setCommitted((c) => ({ ...c, username: updated.username || username }));
+    } catch (e) {
+      setAccountError(getApiErrorMessage(e, t('signup.errorGeneric')));
+    } finally {
+      setAccountSaving(false);
+    }
+  }
+
+  const accountFieldError = (field) =>
+    accountErrors[field] ? { error: true, errorText: t(`signup.${accountErrors[field]}`) } : {};
+
+  function requestPasswordChange() {
+    // Same rules the sign-up form enforces, plus a current-password check
+    // and a new/confirm match.
+    const next = {};
+    if (!currentPassword) next.current = 'errRequired';
+    const pass = validatePassword(newPassword);
+    if (pass) next.new = pass;
+    else if (newPassword === currentPassword) next.new = 'errSamePassword';
+    if (!next.new && confirmNewPassword !== newPassword) next.confirm = 'errorPassword';
+    setPwErrors(next);
+    if (Object.values(next).some(Boolean)) return;
+    setPwSubmitError('');
+    setPwSuccess('');
+    setConfirmState({ message: t('myProfile.confirmPasswordMsg'), onConfirm: doPasswordChange });
+  }
+
+  // The backend stages the new password and emails a confirmation link; the
+  // change only takes effect once the user clicks that link.
+  async function doPasswordChange() {
+    setPwSaving(true);
+    setPwSubmitError('');
+    try {
+      await requestPasswordChangeApi(currentPassword, newPassword);
+      setPwSuccess(t('myProfile.passwordEmailSent'));
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmNewPassword('');
+    } catch (e) {
+      setPwSubmitError(getApiErrorMessage(e, t('signup.errorGeneric')));
+    } finally {
+      setPwSaving(false);
+    }
+  }
+
+  // Runs the pending action, then closes the modal.
+  function handleConfirm() {
+    const action = confirmState?.onConfirm;
+    setConfirmState(null);
+    action?.();
+  }
+
+  // Clears a single password field's error once the user edits it.
+  function clearPwError(field) {
+    setPwErrors((prev) => (prev[field] ? { ...prev, [field]: undefined } : prev));
+  }
+
+  const pwFieldError = (field) =>
+    pwErrors[field] ? { error: true, errorText: t(`signup.${pwErrors[field]}`) } : {};
+
+  function clearNameError(field) {
+    setNameErrors((prev) => (prev[field] ? { ...prev, [field]: undefined } : prev));
+  }
+
+  const nameFieldError = (field) =>
+    nameErrors[field] ? { error: true, errorText: t(`signup.${nameErrors[field]}`) } : {};
+
+  function requestProfileUpdate() {
+    const next = {};
+    allNameFields.forEach((f) => {
+      const err = validateName(f.value, { lang: f.lang, required: f.required });
+      if (err) next[f.key] = err;
+    });
+    setNameErrors(next);
+    if (Object.values(next).some(Boolean)) return;
+    // Nothing to save if every field still matches the last saved snapshot.
+    const unchanged =
+      firstNameEn === committed.firstNameEn &&
+      lastNameEn === committed.lastNameEn &&
+      firstNameAr === committed.firstNameAr &&
+      lastNameAr === committed.lastNameAr &&
+      shortTitle === committed.shortTitle &&
+      bio === committed.bio &&
+      experience === committed.experience &&
+      location === committed.location &&
+      skills.length === committed.skills.length &&
+      skills.every((s, i) => s === committed.skills[i]);
+    if (unchanged) {
+      setProfileError(t('myProfile.noChanges'));
+      return;
+    }
+    setConfirmState({ message: t('myProfile.confirmProfileMsg'), onConfirm: doProfileUpdate });
+  }
+
+  async function doProfileUpdate() {
+    setProfileSaving(true);
+    setProfileError('');
+    try {
+      const updated = await updateProfile({
+        job_title: shortTitle || null,
+        years_of_experience: experience || null,
+        city_id: location || null,
+        bio: bio || null,
+      });
+      // Refresh the shared cache so the preview and navbar reflect the save.
+      queryClient.setQueryData(profileQueryKey, updated);
+      setCommitted((c) => ({
+        ...c,
+        firstNameEn, lastNameEn, firstNameAr, lastNameAr,
+        shortTitle, bio, experience, location, skills,
+      }));
+    } catch (err) {
+      setProfileError(getApiErrorMessage(err, t('signup.errorGeneric')));
+    } finally {
+      setProfileSaving(false);
+    }
+  }
+
+  // Preview name follows the active language (Arabic names on the AR UI).
+  const previewName = (i18n.language === 'ar'
+    ? [committed.firstNameAr, committed.lastNameAr]
+    : [committed.firstNameEn, committed.lastNameEn]
+  ).filter(Boolean).join(' ');
+  // The Selects store raw value codes (a city id, an enum code) — resolve the
+  // committed ones back to display labels for the read-only preview panel.
+  const locationLabel = cityOptions.find((o) => o.value === committed.location)?.label || '';
+  const experienceLabel = EXPERIENCE_OPTIONS.find((o) => o.value === committed.experience)?.label || '';
+
+  return (
+    <div className="myp bayn-scroll">
+      <Sidebar activeKey="profile" onNavigate={onNavigate} />
+
+      <div className="myp__main">
+        <Navbar userName={previewName} />
+
+        <main className="myp__body">
+          {/* Editable form with tabs */}
+          <section className="myp__card myp__form">
+            <h1 className="myp__card-title">{t('myProfile.title')}</h1>
+
+            <div className="myp__tabs" role="tablist">
+              {TABS.map((tab) => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === tab.key}
+                  className={`myp__tab${activeTab === tab.key ? ' myp__tab--active' : ''}`}
+                  onClick={() => setActiveTab(tab.key)}
+                >
+                  {t(tab.labelKey)}
+                </button>
+              ))}
+            </div>
+
+            {activeTab === 'account' && (
+              <div className="myp__panel" role="tabpanel">
+                <div className="myp__grid">
+                  <Input
+                    label={t('signup.username')}
+                    value={username}
+                    onChange={(e) => {
+                      setUsername(e.target.value);
+                      setAccountErrors((p) => (p.username ? {} : p));
+                      setAccountError('');
+                    }}
+                    className="myp__input"
+                    {...accountFieldError('username')}
+                  />
+                  <Input
+                    label={t('signup.email')}
+                    value={email}
+                    disabled
+                    className="myp__input"
+                  />
+                  <Input
+                    label={t('signup.phone')}
+                    value={phone}
+                    disabled
+                    className="myp__input"
+                  />
+                </div>
+
+                {accountError && <p className="myp__form-error">{accountError}</p>}
+
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="sm"
+                  className="myp__submit"
+                  onClick={requestAccountUpdate}
+                  disabled={accountSaving}
+                >
+                  {t('myProfile.confirmAccountUpdate')}
+                </Button>
+
+                <h2 className="myp__section-title">{t('myProfile.changePassword')}</h2>
+
+                <Input
+                  label={t('myProfile.currentPassword')}
+                  type={showCurrent ? 'text' : 'password'}
+                  value={currentPassword}
+                  onChange={(e) => { setCurrentPassword(e.target.value); clearPwError('current'); }}
+                  trailingIcon={eyeToggle(showCurrent)}
+                  onTrailingClick={() => setShowCurrent((p) => !p)}
+                  className="myp__input myp__input--full"
+                  {...pwFieldError('current')}
+                />
+
+                <div className="myp__grid">
+                  <Input
+                    label={t('myProfile.newPassword')}
+                    type={showNew ? 'text' : 'password'}
+                    value={newPassword}
+                    onChange={(e) => { setNewPassword(e.target.value); clearPwError('new'); }}
+                    trailingIcon={eyeToggle(showNew)}
+                    onTrailingClick={() => setShowNew((p) => !p)}
+                    className="myp__input"
+                    {...pwFieldError('new')}
+                  />
+                  <Input
+                    label={t('myProfile.confirmNewPassword')}
+                    type={showConfirm ? 'text' : 'password'}
+                    value={confirmNewPassword}
+                    onChange={(e) => { setConfirmNewPassword(e.target.value); clearPwError('confirm'); }}
+                    trailingIcon={eyeToggle(showConfirm)}
+                    onTrailingClick={() => setShowConfirm((p) => !p)}
+                    className="myp__input"
+                    {...pwFieldError('confirm')}
+                  />
+                </div>
+
+                <PasswordStrength password={newPassword} />
+
+                {pwSubmitError && <p className="myp__form-error">{pwSubmitError}</p>}
+                {pwSuccess && <p className="myp__form-success">{pwSuccess}</p>}
+
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="sm"
+                  className="myp__submit"
+                  onClick={requestPasswordChange}
+                  disabled={pwSaving}
+                >
+                  {t('myProfile.confirmPasswordChange')}
+                </Button>
+              </div>
+            )}
+
+            {activeTab === 'profile' && (
+              <div className="myp__panel" role="tabpanel">
+                {nameGroups.map((group) => (
+                  <div key={group.lng} className="myp__names-group">
+                    <p className="myp__names-lang">{group.heading}</p>
+                    <div className="myp__grid">
+                      {group.fields.map((f) => (
+                        <Input
+                          key={f.key}
+                          label={t(`signup.${f.label}`)}
+                          value={f.value}
+                          onChange={(e) => { f.set(e.target.value); clearNameError(f.key); }}
+                          disabled
+                          className="myp__input"
+                          {...nameFieldError(f.key)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+
+                <Input
+                  label={t('profile.title')}
+                  supportingText={t('profile.titleHint')}
+                  value={shortTitle}
+                  onChange={(e) => setShortTitle(e.target.value)}
+                  className="myp__input myp__input--full"
+                />
+
+                <Input
+                  label={t('profile.bio')}
+                  multiline
+                  rows={4}
+                  maxLength={BIO_MAX}
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  supportingText={`${bio.length}/${BIO_MAX}`}
+                  className="myp__input myp__input--full myp__bio"
+                />
+
+                <div className="myp__grid">
+                  <Select
+                    label={t('profile.experience')}
+                    value={experience}
+                    onChange={setExperience}
+                    options={EXPERIENCE_OPTIONS}
+                    className="myp__input"
+                  />
+                  <Select
+                    label={t('profile.location')}
+                    value={location}
+                    onChange={setLocation}
+                    options={cityOptions}
+                    className="myp__input"
+                  />
+                </div>
+
+                <SkillsInput
+                  label={t('profile.skills')}
+                  value={skills}
+                  onChange={setSkills}
+                  onQuery={handleSkillQuery}
+                  max={7}
+                  className="myp__input--full"
+                />
+
+                {profileError && <p className="myp__form-error">{profileError}</p>}
+
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="sm"
+                  className="myp__submit"
+                  onClick={requestProfileUpdate}
+                  disabled={profileSaving}
+                >
+                  {t('myProfile.confirmProfileUpdate')}
+                </Button>
+              </div>
+            )}
+          </section>
+
+          {/* Read-only preview */}
+          <aside className="myp__card myp__preview">
+            <h2 className="myp__card-title">{t('myProfile.previewTitle')}</h2>
+
+            <div className="myp__avatar-wrap">
+              {pendingPreview ? (
+                <img src={pendingPreview} alt="" className="myp__avatar myp__avatar--img" />
+              ) : avatarUrl ? (
+                <img src={avatarUrl} alt="" className="myp__avatar myp__avatar--img" />
+              ) : (
+                <span className="myp__avatar" aria-hidden="true">
+                  {previewName.trim().charAt(0).toUpperCase()}
+                </span>
+              )}
+              <button
+                type="button"
+                className="myp__avatar-btn"
+                aria-label={t('myProfile.changePhoto')}
+                onClick={() => fileInputRef.current?.click()}
+                disabled={avatarUploading}
+              >
+                <Camera width={24} height={24} aria-hidden="true" />
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                hidden
+                onChange={handleAvatarChange}
+              />
+            </div>
+            {avatarError && <p className="myp__avatar-error">{avatarError}</p>}
+            {pendingFile && (
+              <div className="myp__avatar-actions">
+                <Button
+                  type="button"
+                  variant="primary"
+                  size="sm"
+                  onClick={confirmAvatarUpload}
+                  disabled={avatarUploading}
+                >
+                  {avatarUploading ? t('myProfile.avatarUploading') : t('myProfile.avatarConfirm')}
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={cancelAvatarUpload}
+                  disabled={avatarUploading}
+                >
+                  {t('myProfile.avatarCancel')}
+                </Button>
+              </div>
+            )}
+
+            <p className="myp__preview-name">{previewName}</p>
+            <p className="myp__preview-username">{committed.username}</p>
+            <p className="myp__preview-role">{committed.shortTitle}</p>
+            <p className="myp__preview-location">
+              <MapPin width={18} height={18} aria-hidden="true" />
+              {locationLabel}
+            </p>
+
+            <hr className="myp__preview-divider" />
+
+            <h3 className="myp__preview-heading">{t('myProfile.sectionBio')}</h3>
+            <p className="myp__preview-bio">{committed.bio}</p>
+
+            <h3 className="myp__preview-heading">{t('myProfile.sectionExperience')}</h3>
+            <p className="myp__preview-exp">{experienceLabel}</p>
+
+            <h3 className="myp__preview-heading">{t('myProfile.sectionSkills')}</h3>
+            <ul className="myp__preview-skills">
+              {committed.skills.map((skill) => (
+                <li key={skill} className="myp__pill">{skill}</li>
+              ))}
+            </ul>
+          </aside>
+        </main>
+      </div>
+
+      <ConfirmDialog
+        open={!!confirmState}
+        title={t('myProfile.confirmTitle')}
+        message={confirmState?.message}
+        confirmLabel={t('myProfile.confirmYes')}
+        cancelLabel={t('myProfile.confirmCancel')}
+        onConfirm={handleConfirm}
+        onCancel={() => setConfirmState(null)}
+      />
+    </div>
+  );
+}

@@ -1,0 +1,195 @@
+/* Profile setup — final account-creation step, rendered inside IdentityLayout.
+   Mirrors the sign-up form column so the flow stays visually consistent. */
+.identity-layout__content.ps__content {
+  max-width: 720px;
+  justify-content: flex-start;
+  padding-block: 0;
+  min-height: 0;
+  margin-top: -30px;
+}
+
+.ps__error {
+  margin: 0;
+  font-size: 13px;
+  color: #900000;
+}
+
+.ps__title {
+  margin: 0 0 15px;
+  font-family: var(--font-sans);
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-title, #0f3d2e);
+  text-align: center;
+}
+
+.ps__stepper {
+  margin: 0 0 8px;
+}
+
+.ps__form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  flex: 1;
+  min-height: 0;
+}
+
+.ps__subtitle {
+  margin: 8px 0 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-title, #0f3d2e);
+  text-align: center;
+}
+
+/* Names section: both language groups (English + Arabic) stacked, each with
+   its four name fields. First/last names are locked (carried from sign-up). */
+.ps__names {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.ps__names-group {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ps__names-lang {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-supporting, #786c57);
+}
+
+.ps__names-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 20px;
+  row-gap: 24px;
+}
+
+.ps__input.bayn-input,
+.ps__input.bayn-select {
+  width: 100%;
+  position: relative;
+}
+
+/* Float the helper/error line into the gap below each field so it never pushes
+   the following fields — keeps the two columns aligned. */
+.ps__input .bayn-input__support {
+  position: absolute;
+  top: 100%;
+  inset-inline-start: 0;
+  margin: 3px 0 0;
+}
+
+/* Separates the name block from the rest of the profile fields. */
+.ps__divider {
+  width: 100%;
+  height: 1px;
+  border: none;
+  margin: 0;
+  background: var(--bg-surface-thirdary, #c9baa1);
+}
+
+/* Bio: character counter sits at the trailing end below the field. */
+.ps__bio.bayn-input {
+  width: 100%;
+}
+
+/* Lock the bio field to a fixed height — no user resizing. */
+.ps__bio .bayn-input__native {
+  resize: none;
+}
+
+.ps__bio .bayn-input__support {
+  text-align: end;
+  margin-top: 6px;
+}
+
+/* Skills: input plus the added-skill chips beneath it. */
+.ps__skills {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ps__chips {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.ps__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding-block: 6px;
+  padding-inline: 14px 8px;
+  border-radius: 18px;
+  background: var(--color-secondary-500, #d7cbb9);
+  color: var(--text-title, #0f3d2e);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.ps__chip-x {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-supporting, #786c57);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.ps__chip-x:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: var(--text-title, #0f3d2e);
+}
+
+.ps__action-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.ps__submit.bayn-btn {
+  width: 80%;
+  justify-content: center;
+}
+
+.ps__back-link {
+  color: #295e4d;
+  font-weight: 700;
+  text-decoration: underline;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.ps__back-link:hover {
+  opacity: 0.75;
+}
+
+@media (max-width: 900px) {
+  .ps__names-grid {
+    grid-template-columns: 1fr;
+  }
+}
