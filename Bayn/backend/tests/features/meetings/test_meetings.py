@@ -10,10 +10,10 @@ import pytest_asyncio
 from httpx import AsyncClient
 from sqlalchemy import select
 
-from bayn.core.security import create_access_token, hash_password
-from bayn.features.identity.models import User
-from bayn.integrations.daily import DailyError
-from bayn.features.meetings.models import MeetingRequest
+from Bayn.backend.src.core.security import create_access_token, hash_password
+from Bayn.backend.src.features.identity.models import User
+from Bayn.backend.src.integrations.daily import DailyError
+from Bayn.backend.src.features.meetings.models import MeetingRequest
 from bayn.features.projects.models import (
     Project,
     ProjectMeetingSlot,

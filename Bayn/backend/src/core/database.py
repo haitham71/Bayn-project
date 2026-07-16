@@ -12,7 +12,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
-from bayn.core.config import settings
+from Bayn.backend.src.core.config import settings
 
 
 
@@ -71,8 +71,8 @@ async def get_db() -> AsyncSession:
         finally:
             await session.close()
 
-from bayn.features.identity import models as identity_models
-from bayn.features.catalog import models as catalog_models
-from bayn.features.projects import models as projects_models
-from bayn.features.meetings import models as meetings_models
-from bayn.features.contracts import models as contracts_models
+from Bayn.backend.src.features.identity import models as identity_models
+from Bayn.backend.src.features.catalog import models as catalog_models
+from src.features.projects import models as projects_models
+from Bayn.backend.src.features.meetings import models as meetings_models
+from Bayn.backend.src.features.contracts import models as contracts_models

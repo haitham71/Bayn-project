@@ -17,11 +17,11 @@ from sqlalchemy import event
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
 
-from bayn.common.exceptions import NotFoundError
-from bayn.core.database import Base, get_db
-from bayn.core.security import create_access_token, hash_password
-from bayn.features.identity.models import City, Country, User
-from bayn.main import app
+from Bayn.backend.src.common.exceptions import NotFoundError
+from Bayn.backend.src.core.database import Base, get_db
+from Bayn.backend.src.core.security import create_access_token, hash_password
+from Bayn.backend.src.features.identity.models import City, Country, User
+from Bayn.backend.src.main import app
 
 
 # in-memory SQLite avoids needing a running Postgres for tests

@@ -17,13 +17,13 @@ import pytest
 import pytest_asyncio
 from httpx import AsyncClient
 
-from bayn.common.exceptions import IncompleteProfileError, UserAlreadyExistsError
-from bayn.core.security import create_signup_pending_token, hash_password
-from bayn.features.catalog.models import Skill, UserSkill
-from bayn.features.identity import service
-from bayn.features.identity.dependencies import require_complete_profile
-from bayn.features.identity.models import City, Country, ExperienceRange, User
-from bayn.features.identity.schemas import UserLogin, UserSignup
+from Bayn.backend.src.common.exceptions import IncompleteProfileError, UserAlreadyExistsError
+from Bayn.backend.src.core.security import create_signup_pending_token, hash_password
+from Bayn.backend.src.features.catalog.models import Skill, UserSkill
+from Bayn.backend.src.features.identity import service
+from Bayn.backend.src.features.identity.dependencies import require_complete_profile
+from Bayn.backend.src.features.identity.models import City, Country, ExperienceRange, User
+from Bayn.backend.src.features.identity.schemas import UserLogin, UserSignup
 
 
 # ═══════════════════════════════════════════════════════
@@ -565,7 +565,7 @@ class TestOTP:
         mock_authentica,
     ):
 
-        from bayn.integrations.authentica import AuthenticaOTPInvalid
+        from Bayn.backend.src.integrations.authentica import AuthenticaOTPInvalid
         mock_authentica.verify_email_otp.side_effect = AuthenticaOTPInvalid("Invalid OTP")
 
 
