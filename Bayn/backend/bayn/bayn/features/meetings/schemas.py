@@ -94,6 +94,11 @@ class MeetingResponse(BaseModel):
     participants: list[ParticipantInfo] = []
 
 
+class MeetingJoinResponse(BaseModel):
+    """A ready-to-open join URL with the caller's Daily token appended."""
+    url: str
+
+
 class MeetingAttendanceUpdate(BaseModel):
     status: AttendanceStatus
 

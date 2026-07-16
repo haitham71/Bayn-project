@@ -174,6 +174,7 @@ def mock_daily():
     # patch the singleton so tests never hit the real Daily.co API
     with patch("bayn.features.meetings.service.daily_client") as mock:
         mock.create_room = AsyncMock(return_value={"url": "https://bayn.daily.co/test-room"})
+        mock.create_meeting_token = AsyncMock(return_value="test-token")
         yield mock
 
 

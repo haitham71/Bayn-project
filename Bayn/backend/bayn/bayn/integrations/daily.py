@@ -79,6 +79,53 @@ class DailyClient:
 
         return response.json()
 
+    async def create_meeting_token(
+        self,
+        room_name: str,
+        user_name: str,
+        exp_epoch_seconds: int | None = None,
+        is_owner: bool = False,
+    ) -> str:
+        """
+        Mint a single-use meeting token that joins `room_name` as `user_name`.
+
+        POST /meeting-tokens
+
+        Joining via {room_url}?t={token} makes Daily use `user_name` for the
+        participant instead of prompting for one — so a joiner enters under
+        their real platform name and can't type someone else's.
+
+        Args:
+            user_name: the display name Daily shows for this participant.
+            exp_epoch_seconds: the token stops working after this time; align it
+                with the room's own exp so a leaked token can't outlive the room.
+            is_owner: grant Daily owner privileges (kick, mute) to this token.
+
+        Returns:
+            The token string, to append as the `?t=` query parameter.
+
+        Raises:
+            DailyError: on any non-2xx response or a connection failure
+        """
+        properties = {"room_name": room_name, "user_name": user_name, "is_owner": is_owner}
+        if exp_epoch_seconds is not None:
+            properties["exp"] = exp_epoch_seconds
+
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.post(
+                    f"{self._base_url}/meeting-tokens",
+                    headers=self._headers(),
+                    json={"properties": properties},
+                )
+            except httpx.HTTPError as exc:
+                raise DailyError(f"Could not reach Daily.co: {exc}") from exc
+
+        if not response.is_success:
+            raise DailyError(f"Failed to create Daily meeting token: {response.text}")
+
+        return response.json()["token"]
+
     async def delete_room(self, name: str) -> None:
         async with httpx.AsyncClient() as client:
             response = await client.delete(

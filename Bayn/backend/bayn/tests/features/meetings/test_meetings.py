@@ -378,6 +378,44 @@ class TestMeetingsAndAttendance:
         assert data["status"] == "present"
         assert data["joined_at"] is not None
 
+    @pytest.mark.asyncio
+    async def test_join_link_carries_a_token(
+        self, client: AsyncClient, project_with_member: Project, member: User, owner: User,
+        mock_daily, mock_calcom, mock_nda,
+    ):
+        meeting_id = await _schedule_meeting(client, project_with_member.id, member, owner, mock_nda)
+
+        response = await client.get(f"/meetings/{meeting_id}/join", headers=auth_headers_for(member))
+        assert response.status_code == 200
+        # the plain room link plus the personalising token
+        assert response.json()["url"] == "https://bayn.daily.co/test-room?t=test-token"
+
+        # the token is minted for whoever asks, under their own name
+        args = mock_daily.create_meeting_token.call_args.kwargs
+        assert args["room_name"] == "test-room"
+        assert args["user_name"] == f"{member.first_name_en} {member.last_name_en}"
+        # the requester is not the host, so no moderator rights
+        assert args["is_owner"] is False
+
+    @pytest.mark.asyncio
+    async def test_owner_gets_moderator_token(
+        self, client: AsyncClient, project_with_member: Project, member: User, owner: User,
+        mock_daily, mock_calcom, mock_nda,
+    ):
+        meeting_id = await _schedule_meeting(client, project_with_member.id, member, owner, mock_nda)
+        await client.get(f"/meetings/{meeting_id}/join", headers=auth_headers_for(owner))
+        assert mock_daily.create_meeting_token.call_args.kwargs["is_owner"] is True
+
+    @pytest.mark.asyncio
+    async def test_non_participant_cannot_get_a_join_link(
+        self, client: AsyncClient, project_with_member: Project, member: User, owner: User,
+        outsider: User, mock_daily, mock_calcom, mock_nda,
+    ):
+        meeting_id = await _schedule_meeting(client, project_with_member.id, member, owner, mock_nda)
+        response = await client.get(f"/meetings/{meeting_id}/join", headers=auth_headers_for(outsider))
+        assert response.status_code == 403
+        mock_daily.create_meeting_token.assert_not_called()
+
 
 # ═══════════════════════════════════════════════════════
 # Join flow: apply → NDA → meeting → owner's final call

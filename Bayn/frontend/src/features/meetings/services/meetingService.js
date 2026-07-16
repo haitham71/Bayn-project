@@ -25,3 +25,9 @@ export const finalizeMeetingRequest = (requestId, approve) =>
 // My confirmed meetings.
 export const listMeetings = () =>
   api.get(API.meetings.base).then((r) => r.data);
+
+// A personalised join URL — the room link plus a Daily token carrying the
+// caller's name, so they join under their real name without being asked to type
+// one. Minted per click, so call this on the join action, not ahead of time.
+export const getMeetingJoinLink = (meetingId) =>
+  api.get(`${API.meetings.base}/${meetingId}/join`).then((r) => r.data.url);

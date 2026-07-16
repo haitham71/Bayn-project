@@ -6,6 +6,7 @@ import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
 import { useNow } from '@/shared/hooks/useNow';
 import { listMeetings } from '@/features/meetings/services/meetingService';
 import { canJoin, minutesUntilOpen } from '@/features/meetings/lib/joinWindow';
+import { openJoinLink } from '@/features/meetings/lib/openJoinLink';
 import Video from '@/assets/icons/video.svg?react';
 import './MeetingsPage.css';
 
@@ -56,10 +57,10 @@ export default function MeetingsPage({ onNavigate }) {
       joinCell = <span className="mt__ended">{joinable ? '' : t('meetings.ended')}</span>;
     } else if (canJoin(m, now)) {
       joinCell = (
-        <a className="mt__join" href={m.video_link} target="_blank" rel="noopener noreferrer">
+        <button type="button" className="mt__join" onClick={() => openJoinLink(m.id)}>
           <Video width={18} height={18} aria-hidden="true" />
           {t('meetings.join')}
-        </a>
+        </button>
       );
     } else {
       const mins = minutesUntilOpen(m, now);

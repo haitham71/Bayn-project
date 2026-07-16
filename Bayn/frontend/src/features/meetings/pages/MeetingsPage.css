@@ -247,6 +247,7 @@
   gap: 6px;
   flex: 0 0 auto;
   padding: 8px 18px;
+  border: none;
   border-radius: 8px;
   background: var(--btn-primary-default, #295e4d);
   color: var(--btn-text, #ebe5dc);
@@ -254,6 +255,7 @@
   font-size: 14px;
   font-weight: 600;
   text-decoration: none;
+  cursor: pointer;
   transition: background-color 0.15s ease;
 }
 

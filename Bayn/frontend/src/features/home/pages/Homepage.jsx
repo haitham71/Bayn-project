@@ -7,6 +7,7 @@ import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
 import { useNow } from '@/shared/hooks/useNow';
 import { listMeetings } from '@/features/meetings/services/meetingService';
 import { canJoin, minutesUntilOpen } from '@/features/meetings/lib/joinWindow';
+import { openJoinLink } from '@/features/meetings/lib/openJoinLink';
 import './Homepage.css';
 
 // Accent colours cycled across the upcoming-meeting rows.
@@ -175,14 +176,13 @@ export default function HomePage({ onNavigate }) {
                           <span className="home__meeting-name">{m.title || t('home.meeting')}</span>
                           <People participants={m.participants} />
                           {m.video_link && (canJoin(m, now) ? (
-                            <a
+                            <button
+                              type="button"
                               className="home__meeting-join"
-                              href={m.video_link}
-                              target="_blank"
-                              rel="noopener noreferrer"
+                              onClick={() => openJoinLink(m.id)}
                             >
                               {t('home.joinMeeting')}
-                            </a>
+                            </button>
                           ) : (
                             <span className="home__meeting-locked">
                               {minutesUntilOpen(m, now) <= 60

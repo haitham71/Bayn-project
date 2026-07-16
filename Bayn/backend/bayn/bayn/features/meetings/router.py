@@ -16,6 +16,7 @@ from bayn.features.meetings.schemas import (
     JoinRequestCreate,
     MeetingAttendanceResponse,
     MeetingAttendanceUpdate,
+    MeetingJoinResponse,
     MeetingRequestCreate,
     MeetingRequestFinalize,
     MeetingRequestResponse,
@@ -169,6 +170,21 @@ async def get_meeting(
     resp = MeetingResponse.model_validate(meeting)
     resp.participants = (await service.participants_map(db, [meeting])).get(meeting.id, [])
     return resp
+
+
+@router.get(
+    "/{meeting_id}/join",
+    response_model=MeetingJoinResponse,
+    summary="Get a personalised join link that carries the caller's name",
+)
+async def join_meeting(
+    meeting_id: uuid.UUID,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+    locale: str = Depends(get_locale),
+) -> MeetingJoinResponse:
+    url = await service.create_meeting_join_link(db, meeting_id, current_user.id, locale)
+    return MeetingJoinResponse(url=url)
 
 
 @router.patch(

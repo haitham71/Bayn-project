@@ -328,10 +328,15 @@
 .home__meeting-join {
   align-self: flex-start;
   margin-top: 4px;
+  padding: 0;
+  border: none;
+  background: none;
+  font-family: inherit;
   font-size: 12px;
   font-weight: 600;
   color: var(--btn-primary-default, #295e4d);
   text-decoration: underline;
+  cursor: pointer;
 }
 
 /* Shown instead of the join link until the room opens. */

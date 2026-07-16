@@ -663,6 +663,50 @@ async def get_meeting(
     return meeting
 
 
+def _display_name(user: User, locale: str) -> str:
+    """The name Daily shows for this participant, in their own language."""
+    if locale == "ar":
+        name = f"{user.first_name_ar} {user.last_name_ar}".strip()
+    else:
+        name = f"{user.first_name_en} {user.last_name_en}".strip()
+    return name or user.username
+
+
+async def create_meeting_join_link(
+    db: AsyncSession, meeting_id: uuid.UUID, user_id: uuid.UUID, locale: str = DEFAULT_LOCALE
+) -> str:
+    """A personalised join URL: the room link plus a Daily token that carries
+    the user's platform name, so they join under it without being asked to type
+    one (and can't type someone else's).
+
+    The token is minted per click rather than stored: it's short-lived, tied to
+    this user, and there's no benefit to reusing it.
+    """
+    meeting = await get_meeting(db, meeting_id, user_id, locale)  # 404/403 if not a participant
+    if not meeting.video_link:
+        raise ValidationError(t("meetings", "meeting.no_room", locale))
+
+    user = await db.get(User, user_id)
+    # room name is the last path segment of the stored join URL
+    room_name = meeting.video_link.rstrip("/").rsplit("/", 1)[-1]
+    # match the room's own exp (end + 1h, set in _schedule_meeting) so the token
+    # can't outlive the room it opens
+    exp = int(_ensure_aware(meeting.end_time).timestamp()) + 3600
+
+    try:
+        token = await daily_client.create_meeting_token(
+            room_name=room_name,
+            user_name=_display_name(user, locale),
+            exp_epoch_seconds=exp,
+            # the project owner (counterpart) hosts, so they get moderator rights
+            is_owner=(user_id == meeting.counterpart_id),
+        )
+    except DailyError:
+        raise ValidationError(t("meetings", "meeting.join_link_failed", locale))
+
+    return f"{meeting.video_link}?t={token}"
+
+
 async def list_meetings(
     db: AsyncSession, user_id: uuid.UUID, project_id: uuid.UUID | None = None, locale: str = DEFAULT_LOCALE
 ) -> list[Meeting]:

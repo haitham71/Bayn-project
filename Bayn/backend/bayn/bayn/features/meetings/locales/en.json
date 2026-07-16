@@ -17,7 +17,9 @@
   },
   "meeting": {
     "not_found": "Meeting not found",
-    "not_a_participant": "You're not a participant in this meeting"
+    "not_a_participant": "You're not a participant in this meeting",
+    "no_room": "This meeting doesn't have a video room yet",
+    "join_link_failed": "Couldn't prepare the join link. Please try again."
   },
   "attendance": {
     "not_found": "Attendance record not found"
