@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
-import { getSaudiCountryId, getCities, searchSkills, uploadAvatar, updateProfile, requestPasswordChange as requestPasswordChangeApi } from '@/features/identity/services/authService';
+import { getSaudiCountryId, getCities, searchSkills, getMySkills, addSkillToProfile, removeSkillFromProfile, getAllSpecializations, getMySpecializations, addSpecializationToProfile, removeSpecializationFromProfile, uploadAvatar, updateProfile, requestPasswordChange as requestPasswordChangeApi } from '@/features/identity/services/authService';
 import { useProfile, profileQueryKey } from '@/shared/hooks/useProfile';
 import { getApiErrorMessage } from '@/shared/lib/apiError';
 import Sidebar from '@/shared/components/Sidebar';
@@ -40,7 +40,7 @@ const EXPERIENCE_OPTIONS = [
 const EMPTY_PREVIEW = {
   username: '',
   firstNameEn: '', lastNameEn: '', firstNameAr: '', lastNameAr: '',
-  shortTitle: '', bio: '', experience: '', location: '', skills: [],
+  bio: '', experience: '', location: '', skills: [], specializations: [],
 };
 
 // Small trailing eye toggle shared by the password fields.
@@ -100,11 +100,13 @@ export default function MyProfilePage({ onNavigate }) {
   const [secondNameAr, setSecondNameAr] = useState('');
   const [thirdNameAr, setThirdNameAr] = useState('');
   const [lastNameAr, setLastNameAr] = useState('');
-  const [shortTitle, setShortTitle] = useState('');
   const [bio, setBio] = useState('');
   const [experience, setExperience] = useState('');
   const [location, setLocation] = useState('');
   const [skills, setSkills] = useState([]);
+  const [specializations, setSpecializations] = useState([]);
+  // The full catalog list, used as the (fixed) options for the dropdown.
+  const [specializationOptions, setSpecializationOptions] = useState([]);
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileError, setProfileError] = useState('');
   const [cityOptions, setCityOptions] = useState([]);
@@ -113,6 +115,13 @@ export default function MyProfilePage({ onNavigate }) {
   // Built up as skill search results come in — resolves a chosen skill name
   // back to the skill_id the backend needs when it's actually saved.
   const [skillIdByName, setSkillIdByName] = useState({});
+  // Maps an already-saved skill name to its UserSkill row id, so removing a
+  // skill on save knows which row to DELETE.
+  const [skillRowIdByName, setSkillRowIdByName] = useState({});
+  // Same two maps for specializations: name -> Specialization id (to add) and
+  // name -> UserSpecialization row id (to remove).
+  const [specIdByName, setSpecIdByName] = useState({});
+  const [specRowIdByName, setSpecRowIdByName] = useState({});
 
   // Values shown in the Profile View — updated only when changes are confirmed
   // (the mount effect below seeds it with the loaded profile).
@@ -144,7 +153,6 @@ export default function MyProfilePage({ onNavigate }) {
     setSecondNameAr(u.second_name_ar || '');
     setThirdNameAr(u.third_name_ar || '');
     setLastNameAr(u.last_name_ar || '');
-    setShortTitle(u.job_title || '');
     setBio(u.bio || '');
     setExperience(u.years_of_experience || '');
     setLocation(u.city_id || '');
@@ -155,7 +163,6 @@ export default function MyProfilePage({ onNavigate }) {
       lastNameEn: u.last_name_en || '',
       firstNameAr: u.first_name_ar || '',
       lastNameAr: u.last_name_ar || '',
-      shortTitle: u.job_title || '',
       bio: u.bio || '',
       experience: u.years_of_experience || '',
       location: u.city_id || '',
@@ -166,14 +173,65 @@ export default function MyProfilePage({ onNavigate }) {
   useEffect(() => {
     getSaudiCountryId()
       .then((saId) => (saId ? getCities(saId) : []))
-      .then((cities) => setCityOptions(cities.map((c) => ({ value: c.id, label: c.name_en }))))
+      .then((cities) => setCityOptions(cities.map((c) => ({ value: c.id, label: c.name }))))
+      .catch(() => {});
+  }, []);
+
+  // Load the user's saved skills once, seeding both the editable field and the
+  // preview, plus the name->id maps used to add/remove on save.
+  useEffect(() => {
+    getMySkills()
+      .then((rows) => {
+        const names = rows.map((r) => r.skill.name);
+        setSkills(names);
+        setCommitted((c) => ({ ...c, skills: names }));
+        setSkillIdByName((prev) => {
+          const next = { ...prev };
+          rows.forEach((r) => { next[r.skill.name] = r.skill_id; });
+          return next;
+        });
+        setSkillRowIdByName(Object.fromEntries(rows.map((r) => [r.skill.name, r.id])));
+      })
+      .catch(() => {});
+  }, []);
+
+  // The full specialization catalog — the fixed options for the dropdown, plus
+  // the name->id map needed to save a pick.
+  useEffect(() => {
+    getAllSpecializations()
+      .then((list) => {
+        setSpecializationOptions(list.map((s) => s.name));
+        setSpecIdByName((prev) => {
+          const next = { ...prev };
+          list.forEach((s) => { next[s.name] = s.id; });
+          return next;
+        });
+      })
+      .catch(() => {});
+  }, []);
+
+  // Load the user's saved specializations once — seeds the field, the preview,
+  // and the name->row-id map used to remove on save.
+  useEffect(() => {
+    getMySpecializations()
+      .then((rows) => {
+        const names = rows.map((r) => r.specialization.name);
+        setSpecializations(names);
+        setCommitted((c) => ({ ...c, specializations: names }));
+        setSpecIdByName((prev) => {
+          const next = { ...prev };
+          rows.forEach((r) => { next[r.specialization.name] = r.specialization_id; });
+          return next;
+        });
+        setSpecRowIdByName(Object.fromEntries(rows.map((r) => [r.specialization.name, r.id])));
+      })
       .catch(() => {});
   }, []);
 
   // Dismiss the "no changes" note as soon as the user edits any profile field.
   useEffect(() => {
     setProfileError((e) => (e ? '' : e));
-  }, [shortTitle, bio, experience, location, skills, firstNameEn, lastNameEn, firstNameAr, lastNameAr]);
+  }, [specializations, bio, experience, location, skills, firstNameEn, lastNameEn, firstNameAr, lastNameAr]);
 
   // Validates the picked image (matching the backend's rules) then stages it
   // for a preview — the actual upload waits for the confirm button.
@@ -346,12 +404,13 @@ export default function MyProfilePage({ onNavigate }) {
       lastNameEn === committed.lastNameEn &&
       firstNameAr === committed.firstNameAr &&
       lastNameAr === committed.lastNameAr &&
-      shortTitle === committed.shortTitle &&
       bio === committed.bio &&
       experience === committed.experience &&
       location === committed.location &&
       skills.length === committed.skills.length &&
-      skills.every((s, i) => s === committed.skills[i]);
+      skills.every((s, i) => s === committed.skills[i]) &&
+      specializations.length === committed.specializations.length &&
+      specializations.every((s, i) => s === committed.specializations[i]);
     if (unchanged) {
       setProfileError(t('myProfile.noChanges'));
       return;
@@ -364,17 +423,56 @@ export default function MyProfilePage({ onNavigate }) {
     setProfileError('');
     try {
       const updated = await updateProfile({
-        job_title: shortTitle || null,
         years_of_experience: experience || null,
         city_id: location || null,
         bio: bio || null,
       });
+
+      // Persist skill changes: add the newly-chosen ones, remove the dropped
+      // ones. Diff against the last committed (server-backed) list.
+      const addedSkills = skills.filter((s) => !committed.skills.includes(s));
+      const removedSkills = committed.skills.filter((s) => !skills.includes(s));
+      const skillRowIds = { ...skillRowIdByName };
+      await Promise.all([
+        ...addedSkills.map(async (name) => {
+          const skillId = skillIdByName[name];
+          if (!skillId) return;
+          const row = await addSkillToProfile(skillId).catch(() => null);
+          if (row) skillRowIds[name] = row.id;
+        }),
+        ...removedSkills.map(async (name) => {
+          const rowId = skillRowIdByName[name];
+          if (rowId) await removeSkillFromProfile(rowId).catch(() => {});
+          delete skillRowIds[name];
+        }),
+      ]);
+      setSkillRowIdByName(skillRowIds);
+
+      // Same add/remove diff for specializations.
+      const addedSpecs = specializations.filter((s) => !committed.specializations.includes(s));
+      const removedSpecs = committed.specializations.filter((s) => !specializations.includes(s));
+      const specRowIds = { ...specRowIdByName };
+      await Promise.all([
+        ...addedSpecs.map(async (name) => {
+          const specId = specIdByName[name];
+          if (!specId) return;
+          const row = await addSpecializationToProfile(specId).catch(() => null);
+          if (row) specRowIds[name] = row.id;
+        }),
+        ...removedSpecs.map(async (name) => {
+          const rowId = specRowIdByName[name];
+          if (rowId) await removeSpecializationFromProfile(rowId).catch(() => {});
+          delete specRowIds[name];
+        }),
+      ]);
+      setSpecRowIdByName(specRowIds);
+
       // Refresh the shared cache so the preview and navbar reflect the save.
       queryClient.setQueryData(profileQueryKey, updated);
       setCommitted((c) => ({
         ...c,
         firstNameEn, lastNameEn, firstNameAr, lastNameAr,
-        shortTitle, bio, experience, location, skills,
+        bio, experience, location, skills, specializations,
       }));
     } catch (err) {
       setProfileError(getApiErrorMessage(err, t('signup.errorGeneric')));
@@ -536,12 +634,15 @@ export default function MyProfilePage({ onNavigate }) {
                   </div>
                 ))}
 
-                <Input
-                  label={t('profile.title')}
-                  supportingText={t('profile.titleHint')}
-                  value={shortTitle}
-                  onChange={(e) => setShortTitle(e.target.value)}
-                  className="myp__input myp__input--full"
+                <SkillsInput
+                  label={t('profile.specializations')}
+                  value={specializations}
+                  onChange={setSpecializations}
+                  options={specializationOptions}
+                  max={1}
+                  removeLabelKey="profile.removeSpecialization"
+                  removeLabelParam="specialization"
+                  className="myp__input--full"
                 />
 
                 <Input
@@ -654,7 +755,7 @@ export default function MyProfilePage({ onNavigate }) {
 
             <p className="myp__preview-name">{previewName}</p>
             <p className="myp__preview-username">{committed.username}</p>
-            <p className="myp__preview-role">{committed.shortTitle}</p>
+            <p className="myp__preview-role">{committed.specializations.join('، ')}</p>
             <p className="myp__preview-location">
               <MapPin width={18} height={18} aria-hidden="true" />
               {locationLabel}

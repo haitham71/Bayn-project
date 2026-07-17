@@ -41,12 +41,27 @@ async def get_all_specializations(db: AsyncSession) -> list[Specialization]:
 
 
 async def search_skills(db: AsyncSession, query: str) -> list[Skill]:
-    # is_approved filter hides unvetted user submissions; limit feeds a dropdown
+    # is_approved filter hides unvetted user submissions. The cap is generous so
+    # an empty query shows the whole curated list (the dropdown itself scrolls),
+    # while still guarding against an unbounded result set as skills grow.
     result = await db.execute(
         select(Skill)
         .where(Skill.name.ilike(f"%{query}%"), Skill.is_approved == True)
         .order_by(Skill.name)
-        .limit(20)
+        .limit(100)
+    )
+    return result.scalars().all()
+
+
+async def get_user_skills(db: AsyncSession, user_id: uuid.UUID) -> list[UserSkill]:
+    # Returns the user's chosen skills (with each Skill loaded) so the profile
+    # can show them and resolve names back to the row IDs needed for removal.
+    result = await db.execute(
+        select(UserSkill)
+        .join(Skill, UserSkill.skill_id == Skill.id)
+        .where(UserSkill.user_id == user_id)
+        .options(selectinload(UserSkill.skill))
+        .order_by(Skill.name)
     )
     return result.scalars().all()
 
@@ -93,6 +108,39 @@ async def remove_skill_from_user(
     )
     if not link:
         raise NotFoundError(t("catalog", "skill.not_in_profile", locale))
+
+    await db.delete(link)
+    await db.commit()
+
+
+async def get_user_specializations(db: AsyncSession, user_id: uuid.UUID) -> list[UserSpecialization]:
+    # Mirrors get_user_skills: returns the user's specializations (each loaded)
+    # so the profile can show them and resolve names back to removable row IDs.
+    result = await db.execute(
+        select(UserSpecialization)
+        .join(Specialization, UserSpecialization.specialization_id == Specialization.id)
+        .where(UserSpecialization.user_id == user_id)
+        .options(selectinload(UserSpecialization.specialization))
+        .order_by(Specialization.name_en)
+    )
+    return result.scalars().all()
+
+
+async def remove_specialization_from_user(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    user_specialization_id: uuid.UUID,
+    locale: str = DEFAULT_LOCALE,
+) -> None:
+    # user_id filter prevents deleting another user's row by guessing its ID
+    link = await db.scalar(
+        select(UserSpecialization).where(
+            UserSpecialization.id == user_specialization_id,
+            UserSpecialization.user_id == user_id,
+        )
+    )
+    if not link:
+        raise NotFoundError(t("catalog", "specialization.not_in_profile", locale))
 
     await db.delete(link)
     await db.commit()

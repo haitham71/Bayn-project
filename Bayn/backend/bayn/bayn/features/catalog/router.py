@@ -77,7 +77,9 @@ async def list_specializations(
 
 @catalog_router.get("/skills/search", response_model=list[SkillResponse], summary="Skill autocomplete")
 async def search_skills(
-    q: str = Query(..., min_length=1, description="Search query"),
+    # Empty q is allowed: it returns the first slice of skills so the field can
+    # show a browsable list on focus, before the user types anything.
+    q: str = Query("", description="Search query"),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> list[SkillResponse]:
@@ -85,6 +87,14 @@ async def search_skills(
 
 
 profile_router = APIRouter(prefix="/profile", tags=["Profile"])
+
+
+@profile_router.get("/skills", response_model=list[UserSkillResponse], summary="List current user's skills")
+async def list_my_skills(
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> list[UserSkillResponse]:
+    return await service.get_user_skills(db, current_user.id)
 
 
 @profile_router.post("/skills", response_model=UserSkillResponse, status_code=201, summary="Add skill to profile")
@@ -106,6 +116,39 @@ async def remove_skill(
     locale: str = Depends(get_locale),
 ) -> None:
     await service.remove_skill_from_user(db, current_user.id, user_skill_id, locale)
+
+
+@profile_router.get("/specializations", response_model=list[UserSpecializationResponse], summary="List current user's specializations")
+async def list_my_specializations(
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+    locale: str = Depends(get_locale),
+) -> list[UserSpecializationResponse]:
+    links = await service.get_user_specializations(db, current_user.id)
+    return [
+        UserSpecializationResponse(
+            id=link.id,
+            specialization_id=link.specialization_id,
+            specialization=SpecializationResponse(
+                id=link.specialization.id,
+                name=localized_name(link.specialization.name_en, link.specialization.name_ar, locale),
+                is_approved=link.specialization.is_approved,
+            ),
+            created_at=link.created_at,
+        )
+        for link in links
+    ]
+
+
+# user_specialization_id is the UserSpecialization row ID, not the Specialization ID
+@profile_router.delete("/specializations/{user_specialization_id}", status_code=204, summary="Remove specialization from profile")
+async def remove_specialization(
+    user_specialization_id: uuid.UUID,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+    locale: str = Depends(get_locale),
+) -> None:
+    await service.remove_specialization_from_user(db, current_user.id, user_specialization_id, locale)
 
 
 @profile_router.post("/specializations", response_model=UserSpecializationResponse, status_code=201, summary="Add specialization to profile")

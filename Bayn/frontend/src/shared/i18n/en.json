@@ -48,6 +48,8 @@
     "bio": "Bio",
     "skills": "Add your skills",
     "removeSkill": "Remove {{skill}}",
+    "specializations": "Add your specialization",
+    "removeSpecialization": "Remove {{specialization}}",
     "finish": "Finish",
     "back": "Back"
   },
@@ -68,6 +70,7 @@
     "sectionBio": "Bio",
     "sectionExperience": "Years of Experience",
     "sectionSkills": "Skills",
+    "sectionSpecializations": "Specializations",
     "changePhoto": "Change photo",
     "avatarTypeError": "Unsupported format. Use JPG, PNG, or WebP.",
     "avatarSizeError": "Image exceeds the 5MB limit.",

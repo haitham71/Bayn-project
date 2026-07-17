@@ -48,6 +48,8 @@
     "bio": "نبذة تعريفية",
     "skills": "أضف مهاراتك",
     "removeSkill": "إزالة {{skill}}",
+    "specializations": "أضف تخصصك",
+    "removeSpecialization": "إزالة {{specialization}}",
     "finish": "إنهاء",
     "back": "رجوع"
   },
@@ -68,6 +70,7 @@
     "sectionBio": "نبذة تعريفية",
     "sectionExperience": "سنوات الخبرة",
     "sectionSkills": "المهارات",
+    "sectionSpecializations": "التخصصات",
     "changePhoto": "تغيير الصورة",
     "avatarTypeError": "الصيغة غير مدعومة. استخدم JPG أو PNG أو WebP.",
     "avatarSizeError": "حجم الصورة يتجاوز 5 ميجابايت.",

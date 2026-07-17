@@ -25,6 +25,7 @@ export const API = {
     countries: '/catalog/countries',
     cities: '/catalog/cities',
     industries: '/catalog/industries',
+    specializations: '/catalog/specializations',
     skillsSearch: '/catalog/skills/search',
   },
   profile: {

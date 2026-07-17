@@ -27,6 +27,10 @@ export default function SkillsInput({
   onQuery,
   // Optional cap on how many skills may be selected at once.
   max,
+  // Lets a caller reuse this field for another entity (e.g. specializations) by
+  // pointing the chip's "remove" aria-label at a different translation key.
+  removeLabelKey = 'profile.removeSkill',
+  removeLabelParam = 'skill',
   className = '',
 }) {
   const { t } = useTranslation();
@@ -41,20 +45,20 @@ export default function SkillsInput({
   const query = input.trim().toLowerCase();
 
   useEffect(() => {
-    if (!onQuery || !query) {
-      setRemoteOptions([]);
-      return undefined;
-    }
+    // Fetch once the field is open — including an empty query, which asks the
+    // backend for a starter list so options show on focus. Debounce only while
+    // typing; the initial (empty) fetch fires immediately.
+    if (!onQuery || !open) return undefined;
     let cancelled = false;
     const timer = setTimeout(async () => {
       const results = await onQuery(query).catch(() => []);
       if (!cancelled) setRemoteOptions(results || []);
-    }, 250);
+    }, query ? 250 : 0);
     return () => {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [query, onQuery]);
+  }, [query, onQuery, open]);
 
   const filtered = (onQuery ? remoteOptions : options).filter(
     (o) => !selected.has(o.toLowerCase()) && (onQuery || o.toLowerCase().includes(query)),
@@ -153,7 +157,7 @@ export default function SkillsInput({
                 type="button"
                 className="skills__chip-x"
                 onClick={() => removeSkill(i)}
-                aria-label={t('profile.removeSkill', { skill })}
+                aria-label={t(removeLabelKey, { [removeLabelParam]: skill })}
               >
                 <X width={14} height={14} aria-hidden="true" />
               </button>
