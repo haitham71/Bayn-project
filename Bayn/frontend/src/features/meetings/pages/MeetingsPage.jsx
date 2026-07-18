@@ -87,7 +87,6 @@ export default function MeetingsPage({ onNavigate }) {
           </div>
           <p className="mt__meta">
             {timeRange(m)}
-            {m.video_link ? ` · ${t('meetings.dailyRoom')}` : ''}
           </p>
         </div>
 

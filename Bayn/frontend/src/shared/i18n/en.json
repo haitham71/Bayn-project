@@ -235,7 +235,16 @@
     "mute": "Mute",
     "unmute": "Unmute",
     "cameraOn": "Turn camera on",
-    "cameraOff": "Turn camera off"
+    "cameraOff": "Turn camera off",
+    "share": "Share screen",
+    "stopShare": "Stop sharing",
+    "muteParticipant": "Mute participant",
+    "removeParticipant": "Remove from meeting",
+    "chat": "Chat",
+    "closeChat": "Close chat",
+    "chatEmpty": "No messages yet. Say hello!",
+    "chatPlaceholder": "Type a message…",
+    "send": "Send"
   },
   "ideaDetails": {
     "back": "Back to Ideas",

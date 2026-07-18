@@ -235,7 +235,16 @@
     "mute": "كتم المايك",
     "unmute": "تشغيل المايك",
     "cameraOn": "تشغيل الكاميرا",
-    "cameraOff": "إيقاف الكاميرا"
+    "cameraOff": "إيقاف الكاميرا",
+    "share": "مشاركة الشاشة",
+    "stopShare": "إيقاف المشاركة",
+    "muteParticipant": "كتم المشارك",
+    "removeParticipant": "إزالة من الاجتماع",
+    "chat": "المحادثة",
+    "closeChat": "إغلاق المحادثة",
+    "chatEmpty": "لا رسائل بعد. ابدأ بالتحية!",
+    "chatPlaceholder": "اكتب رسالة...",
+    "send": "إرسال"
   },
   "ideaDetails": {
     "back": "العودة للأفكار",
