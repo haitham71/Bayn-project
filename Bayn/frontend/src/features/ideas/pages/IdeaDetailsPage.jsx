@@ -167,6 +167,17 @@ export default function IdeaDetailsPage({ onNavigate }) {
                   </div>
                 )}
 
+                {idea.skills?.length > 0 && (
+                  <div className="id__section">
+                    <h2 className="id__section-title">{t('ideaDetails.requiredSkills')}</h2>
+                    <div className="id__tags">
+                      {idea.skills.map((s) => (
+                        <span key={s.id} className="id__tag">{s.name}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {industryName && (
                   <>
                     <hr className="id__divider" />

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { getIndustries } from '@/features/identity/services/authService';
+import { getIndustries, searchSkills } from '@/features/identity/services/authService';
 import { createProject } from '@/features/projects/services/projectService';
 import { getApiErrorMessage } from '@/shared/lib/apiError';
 import Sidebar from '@/shared/components/Sidebar';
@@ -75,6 +75,8 @@ export default function CreateIdeaPage({ onNavigate }) {
   const [industryOptions, setIndustryOptions] = useState([]);
   const [publishing, setPublishing] = useState(false);
   const [publishError, setPublishError] = useState('');
+  // Resolves a chosen skill name back to the skill_id sent with the project.
+  const [skillIdByName, setSkillIdByName] = useState({});
 
   // Categories come from the industries catalog (value = industry id).
   useEffect(() => {
@@ -82,6 +84,18 @@ export default function CreateIdeaPage({ onNavigate }) {
       .then((rows) => setIndustryOptions(rows.map((r) => ({ value: r.id, label: r.name }))))
       .catch(() => {});
   }, []);
+
+  // Skill suggestions come from the backend catalog (same source as the
+  // profile pages), so the list stays in sync instead of a hardcoded one.
+  async function handleSkillQuery(q) {
+    const results = await searchSkills(q).catch(() => []);
+    setSkillIdByName((prev) => {
+      const next = { ...prev };
+      results.forEach((r) => { next[r.name] = r.id; });
+      return next;
+    });
+    return results.map((r) => r.name);
+  }
 
   async function handlePublish() {
     setPublishError('');
@@ -101,8 +115,9 @@ export default function CreateIdeaPage({ onNavigate }) {
         team_members_needed: Number(teamSize),
         is_hidden: visibility === 'private',
         slots: meetingsToSlots(meetings),
-        // NOTE: skills and the join-request toggle aren't sent yet — the create
-        // endpoint doesn't support them. Wire once the backend does.
+        skill_ids: skills.map((name) => skillIdByName[name]).filter(Boolean),
+        // NOTE: the join-request toggle isn't sent yet — the create endpoint
+        // doesn't support it. Wire once the backend does.
       });
       onNavigate?.('myprojects');
       return project;
@@ -159,6 +174,7 @@ export default function CreateIdeaPage({ onNavigate }) {
                 supportingText={t('createIdea.step3Placeholder')}
                 value={skills}
                 onChange={setSkills}
+                onQuery={handleSkillQuery}
               />
             </Step>
 

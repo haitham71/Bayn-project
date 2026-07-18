@@ -5,6 +5,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from bayn.features.catalog.schemas import SkillResponse
 from bayn.features.projects.models import ProjectMembershipRole, ProjectStage, SlotStatus
 
 
@@ -37,6 +38,7 @@ class ProjectCreateRequest(BaseModel):
     stage: ProjectStage
     team_members_needed: int = Field(ge=1, le=12)
     slots: list[MeetingSlotInput] = Field(default_factory=list)
+    skill_ids: list[uuid.UUID] = Field(default_factory=list)
 
 
 class ProjectUpdateRequest(BaseModel):
@@ -75,6 +77,7 @@ class ProjectResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     owner: OwnerInfo | None = None
+    skills: list[SkillResponse] = Field(default_factory=list)
 
 
 class ProjectMembershipResponse(BaseModel):

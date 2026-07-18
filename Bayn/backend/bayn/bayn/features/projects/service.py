@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from bayn.common.exceptions import ConflictError, ForbiddenError, NotFoundError, ValidationError
 from bayn.core.i18n import DEFAULT_LOCALE, t
+from bayn.features.catalog.models import Skill
 from bayn.features.identity.models import User
 from bayn.features.projects.models import (
     Project,
@@ -70,7 +71,16 @@ async def create_project(
     if await _count_memberships(db, owner_user_id) >= MAX_MEMBERSHIPS_PER_USER:
         raise ConflictError(t("projects", "membership.limit_reached", locale))
 
-    project = Project(**payload.model_dump(exclude={"slots"}))
+    # Fetch chosen skills up front and attach them while the project is still a
+    # transient object — assigning the collection after it's persisted would
+    # trigger a (sync) lazy load and blow up under async. Unknown ids are dropped.
+    skills: list[Skill] = []
+    if payload.skill_ids:
+        result = await db.execute(select(Skill).where(Skill.id.in_(payload.skill_ids)))
+        skills = result.scalars().all()
+
+    project = Project(**payload.model_dump(exclude={"slots", "skill_ids"}))
+    project.skills = skills
     db.add(project)
     await db.flush()  # assigns project.id without ending the transaction
 
@@ -79,9 +89,10 @@ async def create_project(
         db.add(ProjectMeetingSlot(
             project_id=project.id, start_time=slot.start_time, end_time=slot.end_time,
         ))
+
     await db.commit()
-    await db.refresh(project)
-    return project
+    # Re-fetch so the selectin skills relationship is loaded (not expired post-commit).
+    return await get_project(db, project.id, locale)
 
 
 async def list_available_slots(db: AsyncSession, project_id: uuid.UUID) -> list[ProjectMeetingSlot]:
@@ -189,8 +200,8 @@ async def update_project(
         setattr(project, field, value)
 
     await db.commit()
-    await db.refresh(project)
-    return project
+    # Re-fetch so the selectin skills relationship is loaded (not expired post-commit).
+    return await get_project(db, project_id, locale)
 
 
 async def list_members(db: AsyncSession, project_id: uuid.UUID) -> list[ProjectMembership]:

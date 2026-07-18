@@ -4,11 +4,21 @@ import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, CheckConstraint, DateTime, Enum, ForeignKey, Integer, String, Text, UniqueConstraint, func
+from sqlalchemy import Boolean, CheckConstraint, Column, DateTime, Enum, ForeignKey, Integer, String, Table, Text, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from bayn.core.database import Base
+
+
+# Skills the owner wants for a project — surfaced to users as "required skills".
+# A plain association table: no extra columns, the (project, skill) pair is the row.
+project_skills = Table(
+    "project_skills",
+    Base.metadata,
+    Column("project_id", UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), primary_key=True),
+    Column("skill_id", UUID(as_uuid=True), ForeignKey("skills.id", ondelete="CASCADE"), primary_key=True),
+)
 
 
 class ProjectMembershipRole(str, enum.Enum):
@@ -74,6 +84,11 @@ class Project(Base):
     )
     meeting_slots: Mapped[list["ProjectMeetingSlot"]] = relationship(
         "ProjectMeetingSlot", back_populates="project", cascade="all, delete-orphan"
+    )
+    # selectin: skills load automatically on every project read, so responses can
+    # include them without each query having to ask.
+    skills: Mapped[list["Skill"]] = relationship(
+        "Skill", secondary=project_skills, lazy="selectin", order_by="Skill.name"
     )
 
     def __repr__(self) -> str:
