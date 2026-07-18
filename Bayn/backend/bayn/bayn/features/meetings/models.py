@@ -73,6 +73,10 @@ class MeetingRequest(Base):
     proposed_end_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     message: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
+    # Optional title the owner sets when accepting; used as the meeting's title
+    # (falls back to the project title when left blank).
+    meeting_title: Mapped[str | None] = mapped_column(String(200), nullable=True)
+
     # Set when this request comes from a joiner picking a published slot. Its
     # presence marks the request as a "join request": accepting it also adds the
     # requester to the project and marks the slot taken.
@@ -115,7 +119,8 @@ class Meeting(Base):
     counterpart_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     project_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("projects.id"), nullable=False)
 
-    title: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    # Long enough for a composed "<owner title> - <project title>" (each up to 200).
+    title: Mapped[str | None] = mapped_column(String(420), nullable=True)
     start_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     end_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 

@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next';
 import Sidebar from '@/shared/components/Sidebar';
 import Navbar from '@/shared/components/Navbar';
 import Button from '@/shared/components/Button';
+import Input from '@/shared/components/Input';
+import ConfirmDialog from '@/shared/components/ConfirmDialog';
 import MeetingScheduler from '@/shared/components/MeetingScheduler';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
 import {
@@ -78,6 +80,9 @@ export default function JoinRequestsPage({ onNavigate }) {
   const [requests, setRequests] = useState([]);
   const [actioningId, setActioningId] = useState(null);
   const [actionError, setActionError] = useState('');
+  // The pending request whose accept dialog is open, plus its (optional) title.
+  const [acceptId, setAcceptId] = useState(null);
+  const [acceptTitle, setAcceptTitle] = useState('');
   // The finalize button only unlocks once the meeting has ended, so the page
   // needs a clock rather than whatever time it happened to render at.
   const now = useNow();
@@ -142,7 +147,12 @@ export default function JoinRequestsPage({ onNavigate }) {
     }
   }
 
-  const handleAccept = (id) => runAction(id, () => acceptMeetingRequest(id));
+  const openAccept = (id) => { setAcceptId(id); setAcceptTitle(''); };
+  function confirmAccept() {
+    const id = acceptId;
+    setAcceptId(null);
+    runAction(id, () => acceptMeetingRequest(id, acceptTitle.trim() || null));
+  }
   const handleReject = (id) => runAction(id, () => rejectMeetingRequest(id));
   const handleFinalize = (id, approve) => runAction(id, () => finalizeMeetingRequest(id, approve));
 
@@ -262,7 +272,7 @@ export default function JoinRequestsPage({ onNavigate }) {
                     <div className="jr__req-actions">
                       {r.status === 'pending' && (
                         <>
-                          <Button variant="primary" size="sm" onClick={() => handleAccept(r.id)} disabled={actioningId === r.id}>
+                          <Button variant="primary" size="sm" onClick={() => openAccept(r.id)} disabled={actioningId === r.id}>
                             {t('joinRequests.accept')}
                           </Button>
                           <Button variant="secondary" size="sm" onClick={() => handleReject(r.id)} disabled={actioningId === r.id}>
@@ -357,6 +367,23 @@ export default function JoinRequestsPage({ onNavigate }) {
           </aside>
         </main>
       </div>
+
+      <ConfirmDialog
+        open={acceptId != null}
+        title={t('joinRequests.acceptTitle')}
+        message={t('joinRequests.acceptMsg')}
+        confirmLabel={t('joinRequests.accept')}
+        cancelLabel={t('joinRequests.cancel')}
+        onConfirm={confirmAccept}
+        onCancel={() => setAcceptId(null)}
+      >
+        <Input
+          label={t('joinRequests.meetingTitle')}
+          supportingText={t('joinRequests.meetingTitleHint')}
+          value={acceptTitle}
+          onChange={(e) => setAcceptTitle(e.target.value.slice(0, 200))}
+        />
+      </ConfirmDialog>
     </div>
   );
 }

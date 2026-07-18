@@ -380,7 +380,11 @@ async def _has_prior_meeting(
 
 
 async def accept_meeting_request(
-    db: AsyncSession, request_id: uuid.UUID, owner_id: uuid.UUID, locale: str = DEFAULT_LOCALE
+    db: AsyncSession,
+    request_id: uuid.UUID,
+    owner_id: uuid.UUID,
+    locale: str = DEFAULT_LOCALE,
+    meeting_title: str | None = None,
 ) -> MeetingRequest:
     """Owner takes the proposed slot. This does not schedule anything.
 
@@ -406,6 +410,11 @@ async def accept_meeting_request(
         raise ConflictError(t("meetings", "request.daily_limit_reached", locale))
 
     await contracts_service.create_nda_for_request(db, request, locale)
+
+    # Remember the owner's chosen meeting title (if any); used when the meeting
+    # is built after signing.
+    title = (meeting_title or "").strip()
+    request.meeting_title = title or None
 
     request.status = MeetingRequestStatus.awaiting_signatures
 
@@ -447,11 +456,20 @@ async def _schedule_meeting(
 
     calcom_booking_id = await _try_create_calcom_booking(db, request)
 
+    # The meeting title always ends with the project name so members can tell
+    # which project it belongs to: "<owner's title> - <project>". With no custom
+    # title it's just the project name.
+    project_title = project.title if project else None
+    if request.meeting_title and project_title:
+        meeting_title = f"{request.meeting_title} - {project_title}"
+    else:
+        meeting_title = request.meeting_title or project_title
+
     meeting = Meeting(
         user_id=request.requester_id,
         counterpart_id=request.owner_id,
         project_id=request.project_id,
-        title=project.title if project else None,
+        title=meeting_title,
         start_time=request.proposed_start_time,
         end_time=request.proposed_end_time,
         is_initial_meeting=is_initial,

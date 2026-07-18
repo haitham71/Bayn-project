@@ -18,6 +18,7 @@ from bayn.features.meetings.schemas import (
     MeetingAttendanceUpdate,
     MeetingJoinResponse,
     MeetingRequestCreate,
+    MeetingRequestAccept,
     MeetingRequestFinalize,
     MeetingRequestResponse,
     MeetingResponse,
@@ -87,12 +88,15 @@ async def list_meeting_requests(
 )
 async def accept_meeting_request(
     request_id: uuid.UUID,
+    payload: MeetingRequestAccept | None = None,
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
     locale: str = Depends(get_locale),
 ) -> MeetingRequestResponse:
     """Does not schedule the meeting — that happens once both parties sign."""
-    return await service.accept_meeting_request(db, request_id, current_user.id, locale)
+    return await service.accept_meeting_request(
+        db, request_id, current_user.id, locale, meeting_title=payload.title if payload else None
+    )
 
 
 @router.post(

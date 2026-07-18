@@ -44,6 +44,12 @@ class SignatureState(BaseModel):
     owner_signed: bool
 
 
+class MeetingRequestAccept(BaseModel):
+    """Optional title the owner gives the meeting when accepting; blank falls
+    back to the project title."""
+    title: str | None = Field(default=None, max_length=200)
+
+
 class MeetingRequestFinalize(BaseModel):
     """The owner's post-meeting call — approve registers the requester as a
     project member, decline leaves them out."""

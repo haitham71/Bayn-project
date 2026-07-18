@@ -13,6 +13,8 @@ export default function ConfirmDialog({
   cancelLabel,
   onConfirm,
   onCancel,
+  confirmDisabled = false,
+  children,
 }) {
   useEffect(() => {
     if (!open) return undefined;
@@ -36,11 +38,12 @@ export default function ConfirmDialog({
       >
         <h2 id="confirm-title" className="confirm__title">{title}</h2>
         {message && <p className="confirm__message">{message}</p>}
+        {children && <div className="confirm__body">{children}</div>}
         <div className="confirm__actions">
           <Button type="button" variant="secondary" size="sm" onClick={onCancel}>
             {cancelLabel}
           </Button>
-          <Button type="button" variant="primary" size="sm" onClick={onConfirm}>
+          <Button type="button" variant="primary" size="sm" onClick={onConfirm} disabled={confirmDisabled}>
             {confirmLabel}
           </Button>
         </div>
