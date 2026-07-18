@@ -12,6 +12,7 @@ import MyProfilePage    from '@/features/profile/pages/MyProfilePage';
 import MyProjectsPage   from '@/features/projects/pages/MyProjectsPage';
 import JoinRequestsPage from '@/features/projects/pages/JoinRequestsPage';
 import CreateIdeaPage   from '@/features/ideas/pages/CreateIdeaPage';
+import EditIdeaPage    from '@/features/ideas/pages/EditIdeaPage';
 import IdeasMarketplacePage from '@/features/ideas/pages/IdeasMarketplacePage';
 import IdeaDetailsPage from '@/features/ideas/pages/IdeaDetailsPage';
 import MeetingsPage from '@/features/meetings/pages/MeetingsPage';
@@ -81,6 +82,7 @@ export default function App() {
       <Route path="/join-requests" element={<ProtectedRoute><JoinRequestsPage onNavigate={goTo} /></ProtectedRoute>} />
       <Route path="/join-requests/:projectId" element={<ProtectedRoute><JoinRequestsPage onNavigate={goTo} /></ProtectedRoute>} />
       <Route path="/create-idea" element={<ProtectedRoute><CreateIdeaPage onNavigate={goTo} /></ProtectedRoute>} />
+      <Route path="/edit-idea/:id" element={<ProtectedRoute><EditIdeaPage onNavigate={goTo} /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );

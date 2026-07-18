@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from bayn.common.exceptions import ConflictError, ForbiddenError, NotFoundError, ValidationError
 from bayn.core.i18n import DEFAULT_LOCALE, t
@@ -145,7 +146,16 @@ async def replace_slots(db, project_id, user_id, slots, locale: str = DEFAULT_LO
 
 
 async def get_project(db: AsyncSession, project_id: uuid.UUID, locale: str = DEFAULT_LOCALE) -> Project:
-    project = await db.get(Project, project_id)
+    # A real SELECT with populate_existing refreshes any expired attributes on an
+    # instance still in the session (e.g. updated_at / skills right after a write),
+    # so the returned project is safe to serialize without a late lazy load.
+    result = await db.execute(
+        select(Project)
+        .where(Project.id == project_id)
+        .options(selectinload(Project.skills))
+        .execution_options(populate_existing=True)
+    )
+    project = result.scalar_one_or_none()
     if not project:
         raise NotFoundError(t("projects", "project.not_found", locale))
     return project
@@ -196,8 +206,16 @@ async def update_project(
     project = await get_project(db, project_id, locale)
     await _require_owner(db, project_id, user_id, locale)
 
-    for field, value in payload.model_dump(exclude_unset=True).items():
+    data = payload.model_dump(exclude_unset=True)
+    # skill_ids isn't a column — replace the relationship separately. project.skills
+    # is already loaded (selectin, above), so assigning it won't lazy-load.
+    skill_ids = data.pop("skill_ids", None)
+    for field, value in data.items():
         setattr(project, field, value)
+
+    if skill_ids is not None:
+        result = await db.execute(select(Skill).where(Skill.id.in_(skill_ids)))
+        project.skills = result.scalars().all()
 
     await db.commit()
     # Re-fetch so the selectin skills relationship is loaded (not expired post-commit).

@@ -80,6 +80,12 @@
   padding-inline-start: 53px;
 }
 
+/* Steps without a number (edit page) drop the number-width indent so the
+   body lines up under the title. */
+.ci__step--no-num .ci__step-body {
+  padding-inline-start: 0;
+}
+
 .ci__input.bayn-input {
   width: 100%;
 }
@@ -87,6 +93,34 @@
 /* Counter helper text sits at the trailing end. */
 .ci__input--counter .bayn-input__support {
   text-align: end;
+}
+
+/* Read-only display used in edit mode for title/description — shown as plain
+   content (like the idea view page) rather than editable fields. */
+.ci__readonly {
+  margin: 0;
+  color: var(--text-title, #0f3d2e);
+  font-family: var(--font-sans);
+}
+
+.ci__readonly--title {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.ci__richtext-view {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--text-body, #4a4030);
+  overflow-wrap: anywhere;
+}
+
+.ci__richtext-view :where(p, ul, ol) {
+  margin: 0 0 10px;
+}
+
+.ci__richtext-view :where(ul, ol) {
+  padding-inline-start: 20px;
 }
 
 .ci__row {
@@ -241,6 +275,13 @@
   text-align: center;
   font-size: 14px;
   color: #900000;
+}
+
+.ci__success {
+  margin: 12px 0 0;
+  text-align: center;
+  font-size: 14px;
+  color: var(--btn-primary-default, #295e4d);
 }
 
 .ci__actions {

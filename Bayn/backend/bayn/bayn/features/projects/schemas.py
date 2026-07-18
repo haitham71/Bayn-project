@@ -51,6 +51,8 @@ class ProjectUpdateRequest(BaseModel):
     is_hidden: bool | None = None
     stage: ProjectStage | None = None
     team_members_needed: int | None = Field(default=None, ge=1, le=12)
+    # When present, replaces the project's skill set wholesale (omit to leave as-is).
+    skill_ids: list[uuid.UUID] | None = None
 
 
 class OwnerInfo(BaseModel):

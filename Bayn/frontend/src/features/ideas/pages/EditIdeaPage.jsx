@@ -1,25 +1,20 @@
 import { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import DOMPurify from 'dompurify';
 import { getIndustries, searchSkills } from '@/features/identity/services/authService';
-import { createProject } from '@/features/projects/services/projectService';
+import { getProject, updateProject } from '@/features/projects/services/projectService';
 import { getApiErrorMessage } from '@/shared/lib/apiError';
 import Sidebar from '@/shared/components/Sidebar';
 import Navbar from '@/shared/components/Navbar';
 import Input from '@/shared/components/Input';
 import Select from '@/shared/components/Select';
 import SkillsInput from '@/shared/components/SkillsInput';
-import RichTextEditor from '@/shared/components/RichTextEditor';
 import Button from '@/shared/components/Button';
-import ConfirmDialog from '@/shared/components/ConfirmDialog';
-import MeetingScheduler from '@/shared/components/MeetingScheduler';
 import Eye from '@/assets/icons/eye.svg?react';
-import UserPlus from '@/assets/icons/user-plus.svg?react';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
 import IdeaStep from '../components/IdeaStep';
 import './CreateIdeaPage.css';
-
-const TITLE_MAX = 100;
-const DESC_MAX = 2000;
 
 const TEAM_OPTIONS = Array.from({ length: 8 }, (_, i) => ({ value: String(i + 1), label: String(i + 1) }));
 // Values match the backend's ProjectStage enum; labels are translated at render.
@@ -29,26 +24,14 @@ const STAGE_OPTIONS = [
   { value: 'launching', labelKey: 'createIdea.stageLaunching' },
 ];
 
-// Flatten the scheduler's [{ date, slots:[{start,end}] }] into backend meeting
-// slots ({ start_time, end_time } ISO) by combining each day with its times.
-function meetingsToSlots(days) {
-  const out = [];
-  (days || []).forEach((d) => {
-    const date = d.date instanceof Date ? d.date : new Date(d.date);
-    (d.slots || []).forEach((s) => {
-      const [sh, sm] = s.start.split(':').map(Number);
-      const [eh, em] = s.end.split(':').map(Number);
-      const start = new Date(date.getFullYear(), date.getMonth(), date.getDate(), sh, sm);
-      const end = new Date(date.getFullYear(), date.getMonth(), date.getDate(), eh, em);
-      out.push({ start_time: start.toISOString(), end_time: end.toISOString() });
-    });
-  });
-  return out;
-}
-
-export default function CreateIdeaPage({ onNavigate }) {
+// Owner-facing editor for an existing idea/project. Title and description are
+// shown read-only (as on the idea view page); the rest of the announcement —
+// skills, team size, roles, category, stage, visibility — stays editable and is
+// saved via PATCH. Meeting slots have their own editor and aren't touched here.
+export default function EditIdeaPage({ onNavigate }) {
   const { t } = useTranslation();
   const { fullName } = useCurrentUser();
+  const { id } = useParams();
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -57,15 +40,16 @@ export default function CreateIdeaPage({ onNavigate }) {
   const [roles, setRoles] = useState('');
   const [category, setCategory] = useState('');
   const [stage, setStage] = useState('');
-  const [meetings, setMeetings] = useState([]);
   const [visibility, setVisibility] = useState('public');
-  const [joinOpen, setJoinOpen] = useState(true);
   const [industryOptions, setIndustryOptions] = useState([]);
-  const [publishing, setPublishing] = useState(false);
-  const [publishError, setPublishError] = useState('');
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  // Resolves a chosen skill name back to the skill_id sent with the project.
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [saveMsg, setSaveMsg] = useState('');
+  // Resolves a chosen skill name back to the skill_id sent on save.
   const [skillIdByName, setSkillIdByName] = useState({});
+  // Snapshot of the editable fields as loaded, to detect "nothing changed".
+  const [committed, setCommitted] = useState(null);
 
   // Categories come from the industries catalog (value = industry id).
   useEffect(() => {
@@ -74,8 +58,40 @@ export default function CreateIdeaPage({ onNavigate }) {
       .catch(() => {});
   }, []);
 
-  // Skill suggestions come from the backend catalog (same source as the
-  // profile pages), so the list stays in sync instead of a hardcoded one.
+  // Load the project once and prefill every field, including the chosen skills
+  // and their name->id map (so a save can resend skill_ids).
+  useEffect(() => {
+    if (!id) return;
+    getProject(id)
+      .then((p) => {
+        setTitle(p.title || '');
+        setDescription(p.description || '');
+        setRoles(p.more_info || '');
+        setCategory(p.industry_id || '');
+        setStage(p.stage || '');
+        setTeamSize(p.team_members_needed ? String(p.team_members_needed) : '');
+        setVisibility(p.is_hidden ? 'private' : 'public');
+        const skillNames = (p.skills || []).map((s) => s.name);
+        setSkills(skillNames);
+        setSkillIdByName((prev) => {
+          const next = { ...prev };
+          (p.skills || []).forEach((s) => { next[s.name] = s.id; });
+          return next;
+        });
+        setCommitted({
+          roles: p.more_info || '',
+          category: p.industry_id || '',
+          stage: p.stage || '',
+          teamSize: p.team_members_needed ? String(p.team_members_needed) : '',
+          visibility: p.is_hidden ? 'private' : 'public',
+          skills: skillNames,
+        });
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  // Skill suggestions come from the backend catalog (same source as everywhere).
   async function handleSkillQuery(q) {
     const results = await searchSkills(q).catch(() => []);
     setSkillIdByName((prev) => {
@@ -86,44 +102,52 @@ export default function CreateIdeaPage({ onNavigate }) {
     return results.map((r) => r.name);
   }
 
-  // Validate first, then open the confirm dialog — publishing itself waits for
-  // the user's confirmation.
-  function requestPublish() {
-    setPublishError('');
-    if (!title.trim() || !teamSize || !stage) {
-      setPublishError(t('createIdea.requiredFields'));
+  // True when every editable field still matches what was loaded.
+  const sameSkills = (a, b) =>
+    a.length === b.length && [...a].sort().join('|') === [...b].sort().join('|');
+  const unchanged =
+    committed
+    && roles === committed.roles
+    && category === committed.category
+    && stage === committed.stage
+    && teamSize === committed.teamSize
+    && visibility === committed.visibility
+    && sameSkills(skills, committed.skills);
+
+  async function handleSave() {
+    setSaveError('');
+    setSaveMsg('');
+    if (!teamSize || !stage) {
+      setSaveError(t('createIdea.requiredFields'));
       return;
     }
-    setConfirmOpen(true);
-  }
+    if (unchanged) {
+      setSaveMsg(t('createIdea.noChanges'));
+      return;
+    }
 
-  async function doPublish() {
-    setConfirmOpen(false);
-    setPublishing(true);
+    setSaving(true);
     try {
-      // Hold the "publishing" state for at least a second so it reads as a real
-      // step rather than a flash.
+      // Keep the "saving" state up for at least a second so it doesn't flash by
+      // on a fast response.
       await Promise.all([
-        createProject({
-          title: title.trim(),
-          description: description || null,
+        updateProject(id, {
           more_info: roles || null,
           industry_id: category || null,
           stage,
           team_members_needed: Number(teamSize),
           is_hidden: visibility === 'private',
-          slots: meetingsToSlots(meetings),
           skill_ids: skills.map((name) => skillIdByName[name]).filter(Boolean),
-          // NOTE: the join-request toggle isn't sent yet — the create endpoint
-          // doesn't support it. Wire once the backend does.
         }),
         new Promise((resolve) => setTimeout(resolve, 1000)),
       ]);
-      onNavigate?.('myprojects');
+      // Stay on the page after saving; refresh the baseline and confirm.
+      setCommitted({ roles, category, stage, teamSize, visibility, skills });
+      setSaveMsg(t('createIdea.saved'));
     } catch (err) {
-      setPublishError(getApiErrorMessage(err, t('createIdea.publishError')));
+      setSaveError(getApiErrorMessage(err, t('createIdea.publishError')));
     } finally {
-      setPublishing(false);
+      setSaving(false);
     }
   }
 
@@ -137,36 +161,18 @@ export default function CreateIdeaPage({ onNavigate }) {
         <main className="ci__body">
           {/* Numbered form */}
           <section className="ci__card ci__form">
-            <IdeaStep n={1} title={t('createIdea.step1Title')} note={t('createIdea.step1Note')}>
-              <Input
-                label={t('createIdea.step1Placeholder')}
-                value={title}
-                onChange={(e) => setTitle(e.target.value.slice(0, TITLE_MAX))}
-                supportingText={`${title.length}/${TITLE_MAX}`}
-                className="ci__input ci__input--counter"
+            <IdeaStep title={t('createIdea.step1Title')}>
+              <p className="ci__readonly ci__readonly--title">{title}</p>
+            </IdeaStep>
+
+            <IdeaStep title={t('createIdea.step2Title')}>
+              <div
+                className="ci__readonly ci__richtext-view"
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(description) }}
               />
             </IdeaStep>
 
-            <IdeaStep
-              n={2}
-              title={t('createIdea.step2Title')}
-              note={
-                <>
-                  {t('createIdea.step2NotePrefix')}
-                  <span className="ci__note-em">{t('createIdea.step2NoteEmphasis')}</span>
-                </>
-              }
-            >
-              <RichTextEditor
-                placeholder={t('createIdea.step2Placeholder')}
-                value={description}
-                onChange={setDescription}
-                maxLength={DESC_MAX}
-                className="ci__input"
-              />
-            </IdeaStep>
-
-            <IdeaStep n={3} title={t('createIdea.step3Title')} note={t('createIdea.step3Note')}>
+            <IdeaStep title={t('createIdea.step3Title')}>
               <SkillsInput
                 label={t('createIdea.step3Label')}
                 supportingText={t('createIdea.step3Placeholder')}
@@ -176,7 +182,7 @@ export default function CreateIdeaPage({ onNavigate }) {
               />
             </IdeaStep>
 
-            <IdeaStep n={4} title={t('createIdea.step4Title')}>
+            <IdeaStep title={t('createIdea.step4Title')}>
               <div className="ci__row">
                 <Select
                   label={t('createIdea.teamMembers')}
@@ -194,7 +200,7 @@ export default function CreateIdeaPage({ onNavigate }) {
               </div>
             </IdeaStep>
 
-            <IdeaStep n={5} title={t('createIdea.step5Title')}>
+            <IdeaStep title={t('createIdea.step5Title')}>
               <div className="ci__row">
                 <Select
                   label={t('createIdea.category')}
@@ -214,7 +220,7 @@ export default function CreateIdeaPage({ onNavigate }) {
             </IdeaStep>
           </section>
 
-          {/* Idea summary */}
+          {/* Summary + visibility */}
           <aside className="ci__summary">
             <h2 className="ci__summary-title">{t('createIdea.summaryTitle')}</h2>
             <p className="ci__summary-ready">{t('createIdea.summaryReady')}</p>
@@ -241,60 +247,25 @@ export default function CreateIdeaPage({ onNavigate }) {
                   </button>
                 </div>
               </li>
-
-              <li className="ci__summary-row">
-                <UserPlus width={22} height={22} aria-hidden="true" />
-                <span className="ci__summary-label">{t('createIdea.joinRequest')}</span>
-                <div className="ci__toggle" role="group" aria-label={t('createIdea.joinRequest')}>
-                  <button
-                    type="button"
-                    className={`ci__toggle-opt${joinOpen ? ' ci__toggle-opt--active' : ''}`}
-                    onClick={() => setJoinOpen(true)}
-                  >
-                    {t('createIdea.joinRequestValue')}
-                  </button>
-                  <button
-                    type="button"
-                    className={`ci__toggle-opt${!joinOpen ? ' ci__toggle-opt--active' : ''}`}
-                    onClick={() => setJoinOpen(false)}
-                  >
-                    {t('createIdea.joinRequestOff')}
-                  </button>
-                </div>
-              </li>
             </ul>
 
-            <MeetingScheduler onChange={setMeetings} />
-
-            {publishError && <p className="ci__error">{publishError}</p>}
+            {saveError && <p className="ci__error">{saveError}</p>}
+            {saveMsg && <p className="ci__success">{saveMsg}</p>}
 
             <div className="ci__actions">
               <Button
                 variant="primary"
                 size="sm"
                 className="ci__publish"
-                onClick={requestPublish}
-                disabled={publishing}
+                onClick={handleSave}
+                disabled={saving || loading}
               >
-                {publishing ? t('createIdea.publishing') : t('createIdea.publish')}
-              </Button>
-              <Button variant="secondary" size="sm" className="ci__draft">
-                {t('createIdea.saveDraft')}
+                {saving ? t('createIdea.saving') : t('createIdea.saveChanges')}
               </Button>
             </div>
           </aside>
         </main>
       </div>
-
-      <ConfirmDialog
-        open={confirmOpen}
-        title={t('createIdea.confirmTitle')}
-        message={t('createIdea.confirmMsg')}
-        confirmLabel={t('createIdea.confirmYes')}
-        cancelLabel={t('createIdea.confirmCancel')}
-        onConfirm={doPublish}
-        onCancel={() => setConfirmOpen(false)}
-      />
     </div>
   );
 }
