@@ -1,13 +1,21 @@
-/* In-app meeting room: a slim top bar + the embedded Daily call filling the
-   rest of the viewport. */
-.mr {
+/* Custom in-app call UI: top bar + video grid + control bar, all in Bayn's
+   palette. */
+.cr {
   display: flex;
   flex-direction: column;
   height: 100vh;
   background: var(--text-title, #0f3d2e);
+  color: #fff;
 }
 
-.mr__bar {
+.cr--center {
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+/* Top bar */
+.cr__bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -15,9 +23,10 @@
   padding: 12px 24px;
   background: var(--bg-surface-primary, #ebe5dc);
   border-bottom: 1px solid var(--bg-surface-secondary, #d7cbb9);
+  flex: 0 0 auto;
 }
 
-.mr__back {
+.cr__back {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -30,19 +39,19 @@
   cursor: pointer;
 }
 
-[dir='rtl'] .mr__back {
+[dir='rtl'] .cr__back {
   font-family: var(--font-ar);
 }
 
-[dir='rtl'] .mr__back svg {
+[dir='rtl'] .cr__back svg {
   transform: scaleX(-1);
 }
 
-.mr__back:hover {
+.cr__back:hover {
   opacity: 0.75;
 }
 
-.mr__brand {
+.cr__brand {
   font-family: var(--font-sans);
   font-size: 20px;
   font-weight: 700;
@@ -50,39 +59,153 @@
   color: var(--text-title, #0f3d2e);
 }
 
-.mr__stage {
+/* Stage + grid */
+.cr__stage {
   position: relative;
   flex: 1;
   min-height: 0;
+  padding: 16px;
 }
 
-.mr__frame {
-  position: absolute;
-  inset: 0;
-}
-
-.mr__frame iframe {
-  display: block;
-  width: 100%;
-  height: 100%;
-  border: 0;
-}
-
-/* Sits behind the iframe — visible only until the call renders (or on error). */
-.mr__state {
+.cr__state {
   position: absolute;
   inset: 0;
   z-index: 0;
   display: grid;
   place-items: center;
   margin: 0;
-  padding: 24px;
   text-align: center;
   font-size: 16px;
   color: rgba(255, 255, 255, 0.85);
 }
 
-.mr__state--error {
+.cr--center .cr__state {
+  position: static;
+}
+
+.cr__state--error {
   z-index: 2;
   color: #ffb4a8;
+}
+
+.cr__grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 12px;
+  width: 100%;
+  height: 100%;
+  grid-template-columns: 1fr;
+}
+
+.cr__grid[data-count='2'],
+.cr__grid[data-count='3'],
+.cr__grid[data-count='4'] {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.cr__grid[data-count='3'],
+.cr__grid[data-count='4'] {
+  grid-template-rows: repeat(2, 1fr);
+}
+
+/* Tile */
+.cr__tile {
+  position: relative;
+  overflow: hidden;
+  min-height: 0;
+  border-radius: 12px;
+  background: #0a2a20;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.cr__video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cr__tile-off {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+.cr__avatar {
+  display: grid;
+  place-items: center;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  background: var(--btn-primary-default, #295e4d);
+  color: #fff;
+}
+
+.cr__name {
+  position: absolute;
+  inset-inline-start: 12px;
+  inset-block-end: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: calc(100% - 24px);
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.5);
+  font-size: 13px;
+  color: #fff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cr__name-mute {
+  flex: 0 0 auto;
+  color: #ffb4a8;
+}
+
+/* Control bar */
+.cr__controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 16px;
+  flex: 0 0 auto;
+}
+
+.cr__ctrl {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 0.15s ease, opacity 0.15s ease;
+}
+
+.cr__ctrl:hover {
+  background: rgba(255, 255, 255, 0.24);
+}
+
+/* Toggled-off (muted mic / camera off) reads as an active red state. */
+.cr__ctrl--off {
+  background: #b23b2e;
+}
+
+.cr__ctrl--off:hover {
+  background: #cc4a3a;
+}
+
+.cr__ctrl--leave {
+  background: #b23b2e;
+  width: 60px;
+}
+
+.cr__ctrl--leave:hover {
+  background: #cc4a3a;
 }

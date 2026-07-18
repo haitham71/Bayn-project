@@ -1,90 +1,190 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import DailyIframe from '@daily-co/daily-js';
+import {
+  DailyProvider,
+  DailyVideo,
+  DailyAudio,
+  useDaily,
+  useDailyEvent,
+  useParticipantIds,
+  useLocalSessionId,
+  useVideoTrack,
+  useAudioTrack,
+  useParticipantProperty,
+} from '@daily-co/daily-react';
 import { getMeetingJoinLink } from '@/features/meetings/services/meetingService';
 import ArrowLeft from '@/assets/icons/arrow-left.svg?react';
+import Mic from '@/assets/icons/mic.svg?react';
+import MicOff from '@/assets/icons/mic-off.svg?react';
+import VideoIcon from '@/assets/icons/video.svg?react';
+import VideoOff from '@/assets/icons/video-off.svg?react';
+import PhoneOff from '@/assets/icons/phone-off.svg?react';
+import UserRound from '@/assets/icons/user-round.svg?react';
 import './MeetingRoomPage.css';
 
-// Daily Prebuilt theme in Bayn's palette, so the embedded call matches the app.
-const THEME = {
-  colors: {
-    accent: '#295E4D',
-    accentText: '#FFFFFF',
-    background: '#EBE5DC',
-    backgroundAccent: '#D7CBB9',
-    baseText: '#0F3D2E',
-    border: '#D7CBB9',
-    mainAreaBg: '#0F3D2E',
-    mainAreaBgAccent: '#295E4D',
-    mainAreaText: '#FFFFFF',
-    supportiveText: '#786C57',
-  },
-};
-
-// The meeting happens inside the app now: we embed Daily Prebuilt in an iframe
-// instead of opening the room in a new tab. The personalised join URL (room +
-// per-user token) is fetched on mount and the frame joins it.
-export default function MeetingRoomPage({ onNavigate }) {
+// One participant's video tile — shows their camera, or an avatar + name when
+// the camera is off.
+function Tile({ sessionId, isLocal }) {
   const { t } = useTranslation();
-  const { id } = useParams();
-  const holderRef = useRef(null);
-  const frameRef = useRef(null);
+  const videoState = useVideoTrack(sessionId);
+  const audioState = useAudioTrack(sessionId);
+  const name = useParticipantProperty(sessionId, 'user_name') || t('meetingRoom.guest');
+
+  return (
+    <div className="cr__tile">
+      {videoState.isOff ? (
+        <div className="cr__tile-off">
+          <span className="cr__avatar"><UserRound width={40} height={40} aria-hidden="true" /></span>
+        </div>
+      ) : (
+        <DailyVideo
+          sessionId={sessionId}
+          type="video"
+          automirror={isLocal}
+          fit="cover"
+          className="cr__video"
+        />
+      )}
+
+      <span className="cr__name">
+        {name}{isLocal ? ` (${t('meetingRoom.you')})` : ''}
+        {audioState.isOff && <MicOff width={14} height={14} aria-hidden="true" className="cr__name-mute" />}
+      </span>
+    </div>
+  );
+}
+
+// Bottom control bar: mic / camera toggles + leave.
+function Controls() {
+  const { t } = useTranslation();
+  const daily = useDaily();
+  const localId = useLocalSessionId();
+  const mic = useAudioTrack(localId);
+  const cam = useVideoTrack(localId);
+
+  return (
+    <div className="cr__controls">
+      <button
+        type="button"
+        className={`cr__ctrl${mic.isOff ? ' cr__ctrl--off' : ''}`}
+        onClick={() => daily?.setLocalAudio(mic.isOff)}
+        aria-label={t(mic.isOff ? 'meetingRoom.unmute' : 'meetingRoom.mute')}
+      >
+        {mic.isOff ? <MicOff width={22} height={22} /> : <Mic width={22} height={22} />}
+      </button>
+
+      <button
+        type="button"
+        className={`cr__ctrl${cam.isOff ? ' cr__ctrl--off' : ''}`}
+        onClick={() => daily?.setLocalVideo(cam.isOff)}
+        aria-label={t(cam.isOff ? 'meetingRoom.cameraOn' : 'meetingRoom.cameraOff')}
+      >
+        {cam.isOff ? <VideoOff width={22} height={22} /> : <VideoIcon width={22} height={22} />}
+      </button>
+
+      <button
+        type="button"
+        className="cr__ctrl cr__ctrl--leave"
+        onClick={() => daily?.leave()}
+        aria-label={t('meetingRoom.leave')}
+      >
+        <PhoneOff width={22} height={22} />
+      </button>
+    </div>
+  );
+}
+
+// Inner room (inside the DailyProvider): joins the preset room and renders the
+// custom call UI.
+function Room({ onLeave }) {
+  const { t } = useTranslation();
+  const daily = useDaily();
+  const participantIds = useParticipantIds();
+  const localId = useLocalSessionId();
   const [status, setStatus] = useState('connecting'); // connecting | joined | error
 
   useEffect(() => {
-    if (frameRef.current || !holderRef.current) return undefined;
+    if (!daily) return;
+    // Guard against StrictMode's double-invoke: only join from the fresh state.
+    if (daily.meetingState() === 'new') {
+      daily.join().then(() => setStatus('joined')).catch(() => setStatus('error'));
+    }
+  }, [daily]);
 
-    const frame = DailyIframe.createFrame(holderRef.current, {
-      showLeaveButton: true,
-      showFullscreenButton: true,
-      iframeStyle: { width: '100%', height: '100%', border: '0' },
-      theme: THEME,
-    });
-    frameRef.current = frame;
-
-    const goBack = () => onNavigate?.('meetings');
-    frame.on('left-meeting', goBack);
-
-    let cancelled = false;
-    (async () => {
-      try {
-        const url = await getMeetingJoinLink(id);
-        if (cancelled) return;
-        await frame.join({ url });
-        if (!cancelled) setStatus('joined');
-      } catch {
-        if (!cancelled) setStatus('error');
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-      frame.off('left-meeting', goBack);
-      frame.destroy();
-      frameRef.current = null;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  useDailyEvent('left-meeting', useCallback(() => onLeave(), [onLeave]));
+  useDailyEvent('error', useCallback(() => setStatus('error'), []));
 
   return (
-    <div className="mr">
-      <header className="mr__bar">
-        <button type="button" className="mr__back" onClick={() => onNavigate?.('meetings')}>
+    <div className="cr">
+      <header className="cr__bar">
+        <button type="button" className="cr__back" onClick={() => (daily ? daily.leave() : onLeave())}>
           <ArrowLeft width={20} height={20} aria-hidden="true" />
           {t('meetingRoom.leave')}
         </button>
-        <span className="mr__brand">Bayn</span>
+        <span className="cr__brand">Bayn</span>
       </header>
 
-      <div className="mr__stage">
-        <div ref={holderRef} className="mr__frame" />
+      <div className="cr__stage">
         {status !== 'joined' && (
-          <p className={`mr__state${status === 'error' ? ' mr__state--error' : ''}`}>
+          <p className={`cr__state${status === 'error' ? ' cr__state--error' : ''}`}>
             {status === 'error' ? t('meetingRoom.error') : t('meetingRoom.connecting')}
           </p>
         )}
+        <div className="cr__grid" data-count={Math.min(participantIds.length, 4)}>
+          {participantIds.map((sid) => (
+            <Tile key={sid} sessionId={sid} isLocal={sid === localId} />
+          ))}
+        </div>
       </div>
+
+      <Controls />
+      {/* Renders the audio for every remote participant. */}
+      <DailyAudio />
     </div>
+  );
+}
+
+// The meeting happens inside the app with our own call UI. We fetch the
+// personalised join URL (room + per-user token), hand it to DailyProvider
+// (which owns the call object's lifecycle, StrictMode-safe), and join.
+export default function MeetingRoomPage({ onNavigate }) {
+  const { t } = useTranslation();
+  const { id } = useParams();
+  const [url, setUrl] = useState(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    getMeetingJoinLink(id)
+      .then((u) => { if (!cancelled) setUrl(u); })
+      .catch(() => { if (!cancelled) setFailed(true); });
+    return () => { cancelled = true; };
+  }, [id]);
+
+  if (failed) {
+    return (
+      <div className="cr cr--center">
+        <p className="cr__state cr__state--error">{t('meetingRoom.error')}</p>
+        <button type="button" className="cr__back" onClick={() => onNavigate?.('meetings')}>
+          <ArrowLeft width={20} height={20} aria-hidden="true" />
+          {t('meetingRoom.leave')}
+        </button>
+      </div>
+    );
+  }
+
+  if (!url) {
+    return (
+      <div className="cr cr--center">
+        <p className="cr__state">{t('meetingRoom.connecting')}</p>
+      </div>
+    );
+  }
+
+  return (
+    <DailyProvider url={url}>
+      <Room onLeave={() => onNavigate?.('meetings')} />
+    </DailyProvider>
   );
 }
