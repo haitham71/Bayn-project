@@ -226,6 +226,11 @@
     "meeting": "Meeting",
     "empty": "No meetings yet."
   },
+  "meetingRoom": {
+    "leave": "Leave meeting",
+    "connecting": "Connecting to the meeting…",
+    "error": "Couldn't connect to the meeting. It may not be open yet."
+  },
   "ideaDetails": {
     "back": "Back to Ideas",
     "loading": "Loading…",
