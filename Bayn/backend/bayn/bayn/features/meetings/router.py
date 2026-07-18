@@ -187,8 +187,8 @@ async def join_meeting(
     db: AsyncSession = Depends(get_db),
     locale: str = Depends(get_locale),
 ) -> MeetingJoinResponse:
-    url = await service.create_meeting_join_link(db, meeting_id, current_user.id, locale)
-    return MeetingJoinResponse(url=url)
+    url, ends_at = await service.create_meeting_join_link(db, meeting_id, current_user.id, locale)
+    return MeetingJoinResponse(url=url, ends_at=ends_at)
 
 
 @router.patch(

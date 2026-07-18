@@ -443,7 +443,9 @@ async def _schedule_meeting(
     is_initial = not await _has_prior_meeting(db, request.requester_id, request.owner_id, request.project_id)
 
     room_name = f"meeting-{uuid.uuid4().hex}"
-    exp = int(_ensure_aware(request.proposed_end_time).timestamp()) + 3600
+    # Room expires exactly at the meeting's end — Daily then closes it for
+    # everyone, so a call can't run past its scheduled time.
+    exp = int(_ensure_aware(request.proposed_end_time).timestamp())
     nbf = int((_ensure_aware(request.proposed_start_time) - JOIN_WINDOW).timestamp())
     try:
         room = await daily_client.create_room(
@@ -692,7 +694,7 @@ def _display_name(user: User, locale: str) -> str:
 
 async def create_meeting_join_link(
     db: AsyncSession, meeting_id: uuid.UUID, user_id: uuid.UUID, locale: str = DEFAULT_LOCALE
-) -> str:
+) -> tuple[str, datetime]:
     """A personalised join URL: the room link plus a Daily token that carries
     the user's platform name, so they join under it without being asked to type
     one (and can't type someone else's).
@@ -707,9 +709,8 @@ async def create_meeting_join_link(
     user = await db.get(User, user_id)
     # room name is the last path segment of the stored join URL
     room_name = meeting.video_link.rstrip("/").rsplit("/", 1)[-1]
-    # match the room's own exp (end + 1h, set in _schedule_meeting) so the token
-    # can't outlive the room it opens
-    exp = int(_ensure_aware(meeting.end_time).timestamp()) + 3600
+    # match the room's own exp (the meeting's end) so the token can't outlive it
+    exp = int(_ensure_aware(meeting.end_time).timestamp())
 
     try:
         token = await daily_client.create_meeting_token(
@@ -722,7 +723,7 @@ async def create_meeting_join_link(
     except DailyError:
         raise ValidationError(t("meetings", "meeting.join_link_failed", locale))
 
-    return f"{meeting.video_link}?t={token}"
+    return f"{meeting.video_link}?t={token}", meeting.end_time
 
 
 async def list_meetings(

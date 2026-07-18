@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Sidebar from '@/shared/components/Sidebar';
 import Navbar from '@/shared/components/Navbar';
@@ -14,7 +13,6 @@ const WEEK_MS = 7 * 86400000;
 
 export default function MeetingsPage({ onNavigate }) {
   const { t, i18n } = useTranslation();
-  const navigate = useNavigate();
   const { fullName } = useCurrentUser();
   const locale = i18n.language === 'ar' ? 'ar' : 'en';
 
@@ -58,7 +56,7 @@ export default function MeetingsPage({ onNavigate }) {
       joinCell = <span className="mt__ended">{joinable ? '' : t('meetings.ended')}</span>;
     } else if (canJoin(m, now)) {
       joinCell = (
-        <button type="button" className="mt__join" onClick={() => navigate(`/meeting/${m.id}`)}>
+        <button type="button" className="mt__join" onClick={() => window.open(`/meeting/${m.id}`, '_blank')}>
           <Video width={18} height={18} aria-hidden="true" />
           {t('meetings.join')}
         </button>

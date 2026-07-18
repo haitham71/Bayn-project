@@ -244,7 +244,15 @@
     "closeChat": "Close chat",
     "chatEmpty": "No messages yet. Say hello!",
     "chatPlaceholder": "Type a message…",
-    "send": "Send"
+    "send": "Send",
+    "ended": "The meeting has ended.",
+    "backToMeetings": "Back to meetings",
+    "timeLeft": "Time remaining",
+    "confirmLeaveTitle": "Leave the meeting?",
+    "confirmLeaveMsg": "You can rejoin while the meeting is still on.",
+    "stay": "Stay",
+    "fullscreen": "Fullscreen",
+    "exitFullscreen": "Exit fullscreen"
   },
   "ideaDetails": {
     "back": "Back to Ideas",

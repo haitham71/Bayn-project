@@ -30,7 +30,12 @@ import UserX from '@/assets/icons/user-x.svg?react';
 import MessageSquareText from '@/assets/icons/message-square-text.svg?react';
 import SendHorizontal from '@/assets/icons/send-horizontal.svg?react';
 import X from '@/assets/icons/x.svg?react';
+import Clock from '@/assets/icons/clock.svg?react';
+import Maximize from '@/assets/icons/maximize.svg?react';
+import Minimize from '@/assets/icons/minimize.svg?react';
 import logoUrl from '@/assets/logo/Bayn-svg.svg?url';
+import BaynLogo from '@/assets/logo/Bayn-svg.svg?react';
+import ConfirmDialog from '@/shared/components/ConfirmDialog';
 import './MeetingRoomPage.css';
 
 // Ask the camera for 720p — Daily's default capture is low-res (~360p), which
@@ -40,6 +45,16 @@ const CAMERA_CONSTRAINTS = {
   height: { ideal: 720 },
   frameRate: { ideal: 30 },
 };
+
+// Milliseconds -> "M:SS" (or "H:MM:SS" past an hour) for the countdown.
+function formatRemaining(ms) {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  const pad = (n) => String(n).padStart(2, '0');
+  return h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${m}:${pad(s)}`;
+}
 
 // One participant's video tile — shows their camera, or an avatar + name when
 // the camera is off. When the local user is the host, remote tiles expose
@@ -108,7 +123,7 @@ function Tile({ sessionId, isLocal, isHost }) {
 }
 
 // Bottom control bar: mic / camera / screen-share / chat toggles + leave.
-function Controls({ chatOpen, unread, onToggleChat }) {
+function Controls({ chatOpen, unread, onToggleChat, onRequestLeave }) {
   const { t } = useTranslation();
   const daily = useDaily();
   const localId = useLocalSessionId();
@@ -158,7 +173,7 @@ function Controls({ chatOpen, unread, onToggleChat }) {
       <button
         type="button"
         className="cr__ctrl cr__ctrl--leave"
-        onClick={() => daily?.leave()}
+        onClick={onRequestLeave}
         aria-label={t('meetingRoom.leave')}
       >
         <PhoneOff width={22} height={22} />
@@ -228,7 +243,7 @@ function ChatPanel({ open, messages, onSend, onClose }) {
 
 // Inner room (inside the DailyProvider): joins the preset room and renders the
 // custom call UI.
-function Room({ onLeave }) {
+function Room({ onLeave, endsAt }) {
   const { t } = useTranslation();
   const daily = useDaily();
   const participantIds = useParticipantIds();
@@ -239,7 +254,11 @@ function Room({ onLeave }) {
   const isHost = Boolean(useParticipantProperty(localId, 'owner'));
   const localName = useParticipantProperty(localId, 'user_name');
   const { user } = useCurrentUser();
-  const [status, setStatus] = useState('connecting'); // connecting | joined | error
+  const [status, setStatus] = useState('connecting'); // connecting | joined | error | ended
+  // Set when we end the call ourselves at the scheduled time, so the auto
+  // 'left-meeting' doesn't bounce the user away before they see the notice.
+  const endedRef = useRef(false);
+  const [confirmLeaveOpen, setConfirmLeaveOpen] = useState(false);
 
   // ── Live chat (Daily data channel, not persisted) ──
   const [messages, setMessages] = useState([]);
@@ -296,18 +315,90 @@ function Room({ onLeave }) {
     }
   }, [daily]);
 
-  useDailyEvent('left-meeting', useCallback(() => onLeave(), [onLeave]));
+  // Fullscreen for the shared screen: request it on the screens wrapper so the
+  // shared content fills the whole display.
+  const screensRef = useRef(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  useEffect(() => {
+    const onChange = () => setIsFullscreen(document.fullscreenElement === screensRef.current);
+    document.addEventListener('fullscreenchange', onChange);
+    return () => document.removeEventListener('fullscreenchange', onChange);
+  }, []);
+  const toggleFullscreen = useCallback(() => {
+    if (document.fullscreenElement) document.exitFullscreen?.();
+    else screensRef.current?.requestFullscreen?.();
+  }, []);
+
+  // Live countdown to the scheduled end, ticking once a second.
+  const [remaining, setRemaining] = useState(null);
+  useEffect(() => {
+    if (status !== 'joined' || !endsAt) return undefined;
+    const tick = () => setRemaining(new Date(endsAt).getTime() - Date.now());
+    tick();
+    const iv = setInterval(tick, 1000);
+    return () => clearInterval(iv);
+  }, [status, endsAt]);
+
+  // Close the call for this client when the scheduled end time arrives. Daily
+  // also expires the room server-side at the same moment (backend), so the
+  // meeting ends for everyone; this just makes it graceful.
+  useEffect(() => {
+    if (status !== 'joined' || !endsAt) return undefined;
+    const end = () => {
+      endedRef.current = true;
+      setStatus('ended');
+      daily?.leave();
+    };
+    const ms = new Date(endsAt).getTime() - Date.now();
+    if (ms <= 0) { end(); return undefined; }
+    const timer = setTimeout(end, ms);
+    return () => clearTimeout(timer);
+  }, [status, endsAt, daily]);
+
+  // Leaving navigates back — unless we ended on schedule, where we hold on the
+  // "meeting ended" notice instead.
+  useDailyEvent('left-meeting', useCallback(() => {
+    if (!endedRef.current) onLeave();
+  }, [onLeave]));
   useDailyEvent('error', useCallback(() => setStatus('error'), []));
+
+  const requestLeave = useCallback(() => setConfirmLeaveOpen(true), []);
+  const doLeave = useCallback(() => {
+    setConfirmLeaveOpen(false);
+    if (daily) daily.leave(); else onLeave();
+  }, [daily, onLeave]);
+
+  if (status === 'ended') {
+    return (
+      <div className="cr cr--center">
+        <BaynLogo className="cr__logo-mark" aria-hidden="true" />
+        <p className="cr__state">{t('meetingRoom.ended')}</p>
+        <button type="button" className="cr__back cr__back--light" onClick={onLeave}>
+          <ArrowLeft width={20} height={20} aria-hidden="true" />
+          {t('meetingRoom.backToMeetings')}
+        </button>
+      </div>
+    );
+  }
 
   const sharing = screens.length > 0;
 
   return (
     <div className="cr">
       <header className="cr__bar">
-        <button type="button" className="cr__back" onClick={() => (daily ? daily.leave() : onLeave())}>
+        <button type="button" className="cr__back" onClick={requestLeave}>
           <ArrowLeft width={20} height={20} aria-hidden="true" />
           {t('meetingRoom.leave')}
         </button>
+        {remaining != null && (
+          <span
+            className={`cr__timer${remaining <= 60000 ? ' cr__timer--low' : ''}`}
+            title={t('meetingRoom.timeLeft')}
+          >
+            <Clock width={16} height={16} aria-hidden="true" />
+            {formatRemaining(remaining)}
+          </span>
+        )}
         <img src={logoUrl} alt="Bayn" className="cr__logo" />
       </header>
 
@@ -320,7 +411,7 @@ function Room({ onLeave }) {
           )}
 
           {sharing && (
-            <div className="cr__screens">
+            <div className="cr__screens" ref={screensRef}>
               {screens.map((s) => (
                 <DailyVideo
                   key={s.screenId}
@@ -330,6 +421,15 @@ function Room({ onLeave }) {
                   className="cr__screen-video"
                 />
               ))}
+              <button
+                type="button"
+                className="cr__fs-btn"
+                onClick={toggleFullscreen}
+                aria-label={t(isFullscreen ? 'meetingRoom.exitFullscreen' : 'meetingRoom.fullscreen')}
+                title={t(isFullscreen ? 'meetingRoom.exitFullscreen' : 'meetingRoom.fullscreen')}
+              >
+                {isFullscreen ? <Minimize width={20} height={20} /> : <Maximize width={20} height={20} />}
+              </button>
             </div>
           )}
 
@@ -352,9 +452,20 @@ function Room({ onLeave }) {
         chatOpen={chatOpen}
         unread={unread}
         onToggleChat={() => setChatOpen((o) => !o)}
+        onRequestLeave={requestLeave}
       />
       {/* Renders the audio for every remote participant. */}
       <DailyAudio />
+
+      <ConfirmDialog
+        open={confirmLeaveOpen}
+        title={t('meetingRoom.confirmLeaveTitle')}
+        message={t('meetingRoom.confirmLeaveMsg')}
+        confirmLabel={t('meetingRoom.leave')}
+        cancelLabel={t('meetingRoom.stay')}
+        onConfirm={doLeave}
+        onCancel={() => setConfirmLeaveOpen(false)}
+      />
     </div>
   );
 }
@@ -365,13 +476,13 @@ function Room({ onLeave }) {
 export default function MeetingRoomPage({ onNavigate }) {
   const { t } = useTranslation();
   const { id } = useParams();
-  const [url, setUrl] = useState(null);
+  const [join, setJoin] = useState(null); // { url, ends_at }
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     getMeetingJoinLink(id)
-      .then((u) => { if (!cancelled) setUrl(u); })
+      .then((data) => { if (!cancelled) setJoin(data); })
       .catch(() => { if (!cancelled) setFailed(true); });
     return () => { cancelled = true; };
   }, [id]);
@@ -388,7 +499,7 @@ export default function MeetingRoomPage({ onNavigate }) {
     );
   }
 
-  if (!url) {
+  if (!join) {
     return (
       <div className="cr cr--center">
         <p className="cr__state">{t('meetingRoom.connecting')}</p>
@@ -396,9 +507,20 @@ export default function MeetingRoomPage({ onNavigate }) {
     );
   }
 
+  // The backend returns "<room>?t=<token>". In call-object mode the token in the
+  // query string isn't applied automatically (unlike Prebuilt), so split it out
+  // and hand it to Daily explicitly — otherwise everyone joins as "Guest".
+  const parsed = new URL(join.url);
+  const token = parsed.searchParams.get('t') || undefined;
+  const roomUrl = parsed.origin + parsed.pathname;
+
   return (
-    <DailyProvider url={url} dailyConfig={{ userMediaVideoConstraints: CAMERA_CONSTRAINTS }}>
-      <Room onLeave={() => onNavigate?.('meetings')} />
+    <DailyProvider
+      url={roomUrl}
+      token={token}
+      dailyConfig={{ userMediaVideoConstraints: CAMERA_CONSTRAINTS }}
+    >
+      <Room onLeave={() => onNavigate?.('meetings')} endsAt={join.ends_at} />
     </DailyProvider>
   );
 }

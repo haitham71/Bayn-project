@@ -103,6 +103,8 @@ class MeetingResponse(BaseModel):
 class MeetingJoinResponse(BaseModel):
     """A ready-to-open join URL with the caller's Daily token appended."""
     url: str
+    # when the meeting is scheduled to end, so the client can leave gracefully
+    ends_at: datetime
 
 
 class MeetingAttendanceUpdate(BaseModel):
