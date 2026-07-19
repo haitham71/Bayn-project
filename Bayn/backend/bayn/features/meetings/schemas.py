@@ -22,6 +22,16 @@ class JoinRequestCreate(BaseModel):
     message: str | None = Field(default=None, max_length=500)
 
 
+class TeamMeetingCreate(BaseModel):
+    """The owner scheduling a meeting for their project with hand-picked members."""
+    project_id: uuid.UUID
+    title: str | None = Field(default=None, max_length=200)
+    start_time: datetime
+    end_time: datetime
+    # project members to invite (the owner is added as host automatically)
+    participant_ids: list[uuid.UUID] = Field(default_factory=list)
+
+
 class RequesterInfo(BaseModel):
     """Public info about the person who sent a request."""
     id: uuid.UUID

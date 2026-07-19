@@ -22,6 +22,7 @@ from bayn.features.meetings.schemas import (
     MeetingRequestFinalize,
     MeetingRequestResponse,
     MeetingResponse,
+    TeamMeetingCreate,
 )
 
 router = APIRouter(prefix="/meetings", tags=["Meetings"])
@@ -145,6 +146,33 @@ async def cancel_meeting_request(
 
 
 # ── Meetings ─────────────────────────────────────────────────────────────────
+
+@router.post(
+    "/team",
+    response_model=MeetingResponse,
+    status_code=201,
+    summary="Owner schedules a project meeting with selected members",
+)
+async def create_team_meeting(
+    payload: TeamMeetingCreate,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+    locale: str = Depends(get_locale),
+) -> MeetingResponse:
+    meeting = await service.create_team_meeting(
+        db,
+        owner_id=current_user.id,
+        project_id=payload.project_id,
+        title=payload.title,
+        start_time=payload.start_time,
+        end_time=payload.end_time,
+        participant_ids=payload.participant_ids,
+        locale=locale,
+    )
+    resp = MeetingResponse.model_validate(meeting)
+    resp.participants = (await service.participants_map(db, [meeting])).get(meeting.id, [])
+    return resp
+
 
 @router.get("", response_model=list[MeetingResponse], summary="List my confirmed meetings")
 async def list_meetings(

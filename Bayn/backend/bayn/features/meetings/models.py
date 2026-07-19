@@ -4,7 +4,7 @@ import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, String, func
+from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, String, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -119,6 +119,13 @@ class Meeting(Base):
     counterpart_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     project_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("projects.id"), nullable=False)
 
+    # The slot this meeting was booked on, when it came from a join request.
+    # Requests that pick the *same* slot for the same project fold into one
+    # shared meeting (all applicants + owner) instead of one meeting each.
+    slot_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("project_meeting_slots.id"), nullable=True
+    )
+
     # Long enough for a composed "<owner title> - <project title>" (each up to 200).
     title: Mapped[str | None] = mapped_column(String(420), nullable=True)
     start_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
@@ -141,9 +148,44 @@ class Meeting(Base):
     attendances: Mapped[list["MeetingAttendance"]] = relationship(
         "MeetingAttendance", back_populates="meeting", cascade="all, delete-orphan"
     )
+    # Named to avoid clashing with the MeetingResponse.participants schema field
+    # (Pydantic's from_attributes would otherwise lazy-load this relationship
+    # during model_validate and hit MissingGreenlet). The response's participant
+    # list is built separately by participants_map().
+    participant_links: Mapped[list["MeetingParticipant"]] = relationship(
+        "MeetingParticipant", back_populates="meeting", cascade="all, delete-orphan"
+    )
 
     def __repr__(self) -> str:
         return f"<Meeting {self.user_id} <-> {self.counterpart_id} @ {self.start_time}>"
+
+
+class MeetingParticipant(Base):
+    """A user taking part in a meeting.
+
+    The original user_id/counterpart_id pair only models a 1:1 meeting. This is
+    the unified attendee list that lets a meeting hold more than two people —
+    owner-scheduled team meetings, and same-slot applicant meetings — while the
+    legacy pair keeps working for older 1:1 rows.
+    """
+    __tablename__ = "meeting_participants"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    meeting_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("meetings.id", ondelete="CASCADE"), nullable=False
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    # the project owner hosts (Daily moderator rights)
+    is_host: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    meeting: Mapped["Meeting"] = relationship("Meeting", back_populates="participant_links")
+
+    __table_args__ = (UniqueConstraint("meeting_id", "user_id", name="uq_meeting_participant"),)
+
+    def __repr__(self) -> str:
+        return f"<MeetingParticipant meeting={self.meeting_id} user={self.user_id} host={self.is_host}>"
 
 
 class MeetingAttendance(Base):
