@@ -181,11 +181,40 @@
 .mp__side {
   display: flex;
   flex-direction: column;
-  gap: 9px;
+  gap: 16px;
   padding: 12px;
   border: 1px solid var(--bg-surface-secondary, #d7cbb9);
   border-radius: 10px;
   box-shadow: 0 0 8px rgba(0, 0, 0, 0.25);
+}
+
+.mp__box {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.mp__box + .mp__box {
+  padding-top: 16px;
+  border-top: 1px solid var(--bg-surface-secondary, #d7cbb9);
+}
+
+.mp__box-title {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-title, #0f3d2e);
+}
+
+[dir='rtl'] .mp__box-title {
+  font-family: var(--font-ar);
+}
+
+.mp__box-empty {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-supporting, #786c57);
 }
 
 .mp__meetings {

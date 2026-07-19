@@ -35,6 +35,9 @@ const MEETING_ACCENTS = [
 
 const AVATAR_COLORS = ['#0f3d2e', '#295e4d', '#5ca18a', '#c9baa1', '#463e31'];
 const MAX_AVATARS = 3;
+// A user can belong to at most this many projects (owner + member) — mirrors
+// MyProjectsPage / the backend's MAX_MEMBERSHIPS_PER_USER.
+const MAX_PROJECTS = 2;
 
 function greetingKey() {
   const hour = new Date().getHours();
@@ -102,6 +105,8 @@ export default function HomePage({ onNavigate }) {
   }
 
   const ownedProjects = myProjects.filter((p) => p.role === 'owner');
+  // myProjects holds every membership, so its length is what counts toward the cap.
+  const atProjectLimit = myProjects.length >= MAX_PROJECTS;
   const statusProject = ownedProjects.find((p) => p.id === statusProjectId) || null;
   function nextStatusProject() {
     if (ownedProjects.length < 2) return;
@@ -126,12 +131,6 @@ export default function HomePage({ onNavigate }) {
     month: 'long',
     day: 'numeric',
   }).format(new Date());
-
-  const pills = [
-    { key: 'requests', label: t('home.requests') },
-    { key: 'projects', label: t('home.projects') },
-    { key: 'meeting', label: t('home.meeting') },
-  ];
 
   const tiles = [
     t('home.teamLabel'),
@@ -191,15 +190,19 @@ export default function HomePage({ onNavigate }) {
             </div>
 
             <div className="home__actions">
-              {pills.map((pill) => (
-                <button key={pill.key} type="button" className="home__pill">
-                  {pill.label}
-                </button>
-              ))}
+              <button
+                type="button"
+                className="home__pill"
+                onClick={() => onNavigate?.('myprojects')}
+              >
+                {t('home.projects')}
+              </button>
               <button
                 type="button"
                 className="home__pill home__pill--primary"
                 onClick={() => onNavigate?.('createidea')}
+                disabled={atProjectLimit}
+                title={atProjectLimit ? t('myProjects.limitReached') : undefined}
               >
                 {t('home.createIdea')}
               </button>

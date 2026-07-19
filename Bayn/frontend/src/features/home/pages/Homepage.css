@@ -79,6 +79,15 @@
   color: var(--color-neutral-100);
 }
 
+.home__pill:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.home__pill--primary:disabled:hover {
+  background: var(--color-primary-600);
+}
+
 /* Main / side split */
 .home__grid {
   display: flex;

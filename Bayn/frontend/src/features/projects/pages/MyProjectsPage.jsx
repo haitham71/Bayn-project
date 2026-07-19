@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { getMyProjects } from '@/features/projects/services/projectService';
+import { listMeetings } from '@/features/meetings/services/meetingService';
 import Sidebar from '@/shared/components/Sidebar';
 import Navbar from '@/shared/components/Navbar';
-import Radio from '@/shared/components/Radio';
-import Calendar from '@/shared/components/Calendar';
+import UpcomingMeetings from '@/features/meetings/components/UpcomingMeetings';
 import Flag from '@/assets/icons/flag.svg?react';
 import UserCheck from '@/assets/icons/user-check.svg?react';
 import List from '@/assets/icons/list.svg?react';
@@ -30,18 +30,15 @@ function daysSince(iso) {
   return Math.max(0, Math.floor(ms / 86400000));
 }
 
-// Meetings are still mock — not wired to the backend yet.
-const MEETINGS = [
-  { id: 'm1', project: 'AI-Powered Personal Finance Assistant', noteKey: 'meetingJoinRequest', date: new Date(2025, 8, 9), when: '9 Sep 2025 | 9:00am - 10:00am' },
-  { id: 'm2', project: 'AI-Powered Personal Finance Assistant', noteKey: 'meetingWeeklyTeam', date: new Date(2025, 8, 11), when: '11 Sep 2025 | 11:00am - 01:00pm' },
-  { id: 'm3', project: 'AI-Powered Personal Finance Assistant', noteKey: 'meetingJoinRequest', date: new Date(2025, 8, 13), when: '13 Sep 2025 | 04:00am - 05:00pm' },
-];
-
 export default function MyProjectsPage({ onNavigate }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [activeMeeting, setActiveMeeting] = useState('m1');
   const { fullName } = useCurrentUser();
+
+  const [meetings, setMeetings] = useState([]);
+  useEffect(() => {
+    listMeetings().then((rows) => setMeetings(rows || [])).catch(() => {});
+  }, []);
 
   // My projects, split by role: owned vs worked-on.
   const [owned, setOwned] = useState([]);
@@ -144,33 +141,17 @@ export default function MyProjectsPage({ onNavigate }) {
             </section>
           </div>
 
-          {/* Calendar + upcoming meetings */}
+          {/* Tasks + upcoming meetings */}
           <aside className="mp__side">
-            <Calendar
-              title={t('myProjects.calendarTitle')}
-              markedDates={MEETINGS.map((m) => m.date)}
-            />
+            <section className="mp__box">
+              <h2 className="mp__box-title">{t('myProjects.tasksTitle')}</h2>
+              <p className="mp__box-empty">{t('myProjects.tasksEmpty')}</p>
+            </section>
 
-            <ul className="mp__meetings">
-              {MEETINGS.map((m) => (
-                <li key={m.id}>
-                  <label className="mp__meeting">
-                    <Radio
-                      name="mp-meeting"
-                      value={m.id}
-                      checked={activeMeeting === m.id}
-                      onChange={() => setActiveMeeting(m.id)}
-                    />
-                    <span className="mp__meeting-body">
-                      <span className="mp__meeting-project">{m.project}</span>
-                      <span className="mp__meeting-note">
-                        {t(`myProjects.${m.noteKey}`)} {m.when}
-                      </span>
-                    </span>
-                  </label>
-                </li>
-              ))}
-            </ul>
+            <section className="mp__box">
+              <h2 className="mp__box-title">{t('myProjects.upcomingMeetings')}</h2>
+              <UpcomingMeetings meetings={meetings} />
+            </section>
           </aside>
         </main>
       </div>

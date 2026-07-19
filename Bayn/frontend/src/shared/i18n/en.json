@@ -146,6 +146,9 @@
     "opening": "{{count}} Opening",
     "postedDaysAgo": "Posted {{count}} days ago",
     "calendarTitle": "Your calendar",
+    "tasksTitle": "Tasks",
+    "tasksEmpty": "No tasks yet.",
+    "upcomingMeetings": "Upcoming meetings",
     "meetingJoinRequest": "Meeting for join request",
     "meetingWeeklyTeam": "Weekly team meeting"
   },
