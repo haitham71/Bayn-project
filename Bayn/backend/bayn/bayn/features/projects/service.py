@@ -18,7 +18,12 @@ from bayn.features.projects.models import (
     ProjectMembershipRole,
     SlotStatus,
 )
-from bayn.features.projects.schemas import OwnerInfo, ProjectCreateRequest, ProjectUpdateRequest
+from bayn.features.projects.schemas import (
+    OwnerInfo,
+    ProjectCreateRequest,
+    ProjectMemberResponse,
+    ProjectUpdateRequest,
+)
 from bayn.integrations.storage.cloudflare import StorageError, r2_client
 
 # a user can hold membership (owner or member) in at most this many projects at once
@@ -222,11 +227,31 @@ async def update_project(
     return await get_project(db, project_id, locale)
 
 
-async def list_members(db: AsyncSession, project_id: uuid.UUID) -> list[ProjectMembership]:
+async def list_members(db: AsyncSession, project_id: uuid.UUID) -> list[ProjectMemberResponse]:
+    # Members with the public info a team list needs (name, avatar, role).
     result = await db.execute(
-        select(ProjectMembership).where(ProjectMembership.project_id == project_id)
+        select(User, ProjectMembership.role)
+        .join(ProjectMembership, ProjectMembership.user_id == User.id)
+        .where(ProjectMembership.project_id == project_id)
+        .order_by(ProjectMembership.created_at)
     )
-    return result.scalars().all()
+    members = []
+    for user, role in result.all():
+        avatar_url = None
+        if user.avatar_key:
+            try:
+                avatar_url = r2_client.get_avatar_url(user.avatar_key)
+            except StorageError:
+                avatar_url = None
+        members.append(ProjectMemberResponse(
+            user_id=user.id,
+            name_en=f"{user.first_name_en} {user.last_name_en}".strip(),
+            name_ar=f"{user.first_name_ar} {user.last_name_ar}".strip(),
+            job_title=user.job_title,
+            avatar_url=avatar_url,
+            role=role,
+        ))
+    return members
 
 
 async def leave_project(

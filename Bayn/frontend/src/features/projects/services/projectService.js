@@ -9,6 +9,10 @@ export const createProject = (payload) =>
 export const getMyProjects = () =>
   api.get(API.projects.mine).then((r) => r.data);
 
+// A project's members with their public info (name, avatar, role).
+export const listProjectMembers = (id) =>
+  api.get(`${API.projects.base}/${id}/members`).then((r) => r.data);
+
 // All visible projects — the public ideas marketplace.
 export const listProjects = () =>
   api.get(API.projects.base).then((r) => r.data);
