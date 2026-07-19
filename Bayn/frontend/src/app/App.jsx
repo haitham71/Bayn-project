@@ -7,6 +7,7 @@ import ProfileSetupPage from '@/features/identity/pages/ProfileSetupPage';
 import ConfirmPasswordChangePage from '@/features/identity/pages/ConfirmPasswordChangePage';
 import ForgotPasswordPage from '@/features/identity/pages/ForgotPasswordPage';
 import ResetPasswordPage from '@/features/identity/pages/ResetPasswordPage';
+import LandingPage      from '@/features/landing/pages/LandingPage';
 import HomePage         from '@/features/home/pages/Homepage';
 import MyProfilePage    from '@/features/profile/pages/MyProfilePage';
 import MyProjectsPage   from '@/features/projects/pages/MyProjectsPage';
@@ -20,6 +21,7 @@ import MeetingsPage from '@/features/meetings/pages/MeetingsPage';
 // Lazy: pulls in the heavy Daily SDK only when a user actually opens a meeting.
 const MeetingRoomPage = lazy(() => import('@/features/meetings/pages/MeetingRoomPage'));
 import ProtectedRoute    from '@/shared/components/ProtectedRoute';
+import { isAuthenticated } from '@/shared/lib/authToken';
 
 // Pages navigate with short keys (onNavigate('home')); this maps each key to its
 // URL so the page components don't need to know about routing.
@@ -52,7 +54,8 @@ export default function App() {
 
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/home" replace />} />
+      {/* Public landing page; signed-in visitors go straight to their home. */}
+      <Route path="/" element={isAuthenticated() ? <Navigate to="/home" replace /> : <LandingPage />} />
       <Route path="/login" element={<LoginPage onNavigate={goTo} />} />
       <Route
         path="/signup"
