@@ -44,53 +44,28 @@
   color: var(--text-supporting, #786c57);
 }
 
-.pd__select {
+.pd__project {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
   align-items: flex-end;
+  text-align: end;
 }
 
-.pd__select-label {
+.pd__project-label {
   font-size: 12px;
   color: var(--text-supporting, #786c57);
 }
 
-.pd__select-control {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-}
-
-.pd__select-control select {
-  appearance: none;
-  min-width: 260px;
-  padding: 9px 34px 9px 14px;
-  border: 1px solid var(--bg-surface-secondary, #d7cbb9);
-  border-radius: 8px;
-  background: var(--color-neutral-100, #fff);
+.pd__project-name {
   font-family: var(--font-sans);
-  font-size: 13px;
-  font-weight: 550;
+  font-size: 20px;
+  font-weight: 700;
   color: var(--btn-primary-default, #295e4d);
-  cursor: pointer;
 }
 
-[dir='rtl'] .pd__select-control select {
+[dir='rtl'] .pd__project-name {
   font-family: var(--font-ar);
-  padding: 9px 14px 9px 34px;
-}
-
-.pd__select-control svg {
-  position: absolute;
-  inset-inline-end: 12px;
-  color: var(--btn-primary-default, #295e4d);
-  pointer-events: none;
-}
-
-[dir='rtl'] .pd__select-control svg {
-  inset-inline-end: auto;
-  inset-inline-start: 12px;
 }
 
 /* ---- Stat cards ---- */
@@ -107,7 +82,7 @@
   padding: 16px 18px;
   border: 1px solid var(--bg-surface-secondary, #d7cbb9);
   border-radius: 14px;
-  background: var(--color-neutral-100, #fff);
+  background: #f7f2ea;
   box-shadow: 0 0 8px rgba(0, 0, 0, 0.12);
 }
 
@@ -156,7 +131,7 @@
   padding: 20px;
   border: 1px solid var(--bg-surface-secondary, #d7cbb9);
   border-radius: 14px;
-  background: var(--color-neutral-100, #fff);
+  background: #f7f2ea;
   box-shadow: 0 0 8px rgba(0, 0, 0, 0.12);
 }
 
@@ -173,6 +148,83 @@
   font-size: 16px;
   font-weight: 600;
   color: var(--text-title, #0f3d2e);
+}
+
+/* Custom meeting picker in the team-attendance header. Native <select> can't
+   restyle its option hover in Chromium (stays blue), so this is a fully
+   controlled dropdown with a brand-green hover instead. */
+.pd__mpick {
+  position: relative;
+}
+
+.pd__mpick-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 190px;
+  padding: 6px 12px;
+  border: 1px solid var(--bg-surface-secondary, #d7cbb9);
+  border-radius: 8px;
+  background: var(--color-neutral-100, #fff);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 550;
+  color: var(--btn-primary-default, #295e4d);
+  cursor: pointer;
+}
+
+[dir='rtl'] .pd__mpick-trigger {
+  font-family: var(--font-ar);
+}
+
+.pd__mpick-trigger span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pd__mpick-trigger svg {
+  flex-shrink: 0;
+  color: var(--btn-primary-default, #295e4d);
+}
+
+.pd__mpick-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  inset-inline-end: 0;
+  z-index: 20;
+  min-width: 180px;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  border: 1px solid var(--bg-surface-secondary, #d7cbb9);
+  border-radius: 8px;
+  background: var(--color-neutral-100, #fff);
+  box-shadow: 0 8px 20px -8px rgba(4, 18, 14, 0.35);
+}
+
+.pd__mpick-option {
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--text-title, #0f3d2e);
+  text-align: start;
+  cursor: pointer;
+}
+
+[dir='rtl'] .pd__mpick-option {
+  font-family: var(--font-ar);
+}
+
+.pd__mpick-option:hover {
+  background: #e3efe9;
+  color: var(--btn-primary-default, #295e4d);
+}
+
+.pd__mpick-option.is-selected {
+  font-weight: 650;
+  color: var(--btn-primary-default, #295e4d);
 }
 
 .pd__panel-link {
@@ -197,10 +249,170 @@
   color: var(--text-supporting, #786c57);
 }
 
+/* ---- Schedule a meeting ---- */
+/* Sits beside the tasks board (the split's second column) with its fields
+   stacked vertically. */
+.pd__schedule-form {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 14px;
+  /* Cap the width so the calendar renders at its natural size (matching the
+     create-idea scheduler) instead of stretching across the whole column. */
+  max-width: 340px;
+}
+
+.pd__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pd__field--grow {
+  flex: initial;
+}
+
+.pd__field-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-supporting, #786c57);
+}
+
+.pd__field input {
+  padding: 10px 12px;
+  border: 1px solid var(--bg-surface-secondary, #d7cbb9);
+  border-radius: 8px;
+  background: var(--color-neutral-100, #fff);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--text-title, #0f3d2e);
+}
+
+[dir='rtl'] .pd__field input {
+  font-family: var(--font-ar);
+}
+
+.pd__field input:focus {
+  outline: none;
+  border-color: var(--btn-primary-default, #295e4d);
+}
+
+.pd__field {
+  position: relative;
+}
+
+/* Always-visible inline month calendar for the date field. */
+.pd__calendar-inline {
+  border-radius: 16px;
+}
+
+/* Confirmation of the chosen day under the calendar. */
+.pd__field-note {
+  margin: 2px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--btn-primary-default, #295e4d);
+}
+
+/* From / to time pickers side by side, reusing the shared Select so they match
+   the create-idea page's scheduler exactly. */
+.pd__time-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.pd__time-select.bayn-select {
+  flex: 1 1 0;
+  min-width: 0;
+  width: auto;
+}
+
+.pd__schedule-btn {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 8px;
+  background: var(--btn-primary-default, #295e4d);
+  color: #fff;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+[dir='rtl'] .pd__schedule-btn {
+  font-family: var(--font-ar);
+}
+
+.pd__schedule-btn:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.pd__schedule-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Member picker (checkbox chips) for the schedule form. */
+.pd__members {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pd__member {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--bg-surface-secondary, #d7cbb9);
+  border-radius: 8px;
+  background: var(--color-neutral-100, #fff);
+  font-size: 13px;
+  color: var(--text-title, #0f3d2e);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.pd__member.is-checked {
+  border-color: var(--btn-primary-default, #295e4d);
+  background: #e3efe9;
+}
+
+.pd__member input {
+  accent-color: var(--btn-primary-default, #295e4d);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.pd__field-note--muted {
+  color: var(--text-supporting, #786c57);
+  font-weight: 400;
+}
+
+.pd__schedule-error {
+  margin: 0;
+  font-size: 12px;
+  color: var(--input-error, #900000);
+}
+
 /* ---- Split: tasks board + team ---- */
 .pd__split {
   display: grid;
-  grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+  /* Tasks board takes the remaining width; the schedule column is sized to fit
+     its 340px form (+ the panel's 20px padding either side) so there's no empty
+     space inside the card. */
+  grid-template-columns: minmax(0, 1fr) 380px;
   gap: 20px;
   align-items: start;
 }
@@ -396,6 +608,23 @@
   color: var(--text-body-2, #463e31);
 }
 
+/* Join-request status badge — mirrors the home "Application's status" card. */
+.pd__req-stage {
+  flex: 0 0 auto;
+  margin-inline-start: auto;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.pd__req-stage--pending { background: #f4e3c7; color: #8a5a12; }
+.pd__req-stage--signing { background: #dfeafd; color: #285e9e; }
+.pd__req-stage--meeting { background: #ece3d3; color: var(--text-title, #0f3d2e); }
+.pd__req-stage--approved { background: var(--color-primary-300, #76c3a9); color: var(--text-title, #0f3d2e); }
+.pd__req-stage--rejected { background: #f3d9d5; color: #9a3b2e; }
+
 .pd__request-actions {
   display: flex;
   gap: 8px;
@@ -404,7 +633,7 @@
 /* ---- Row 3: recordings / meetings / applications ---- */
 .pd__row3 {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 20px;
   align-items: start;
 }
@@ -417,6 +646,13 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+/* Show ~4 meetings, then scroll for the rest. */
+.pd__meetings--scroll {
+  max-height: 336px;
+  overflow-y: auto;
+  padding-inline-end: 6px;
 }
 
 .pd__meeting-row {

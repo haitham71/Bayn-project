@@ -21,6 +21,12 @@
     "no_room": "This meeting doesn't have a video room yet",
     "join_link_failed": "Couldn't prepare the join link. Please try again."
   },
+  "team": {
+    "owner_only": "Only the project owner can schedule a team meeting",
+    "bad_time_range": "The end time must be after the start time",
+    "past_time": "The meeting time must be in the future",
+    "not_a_member": "You can only invite members of this project"
+  },
   "attendance": {
     "not_found": "Attendance record not found"
   },

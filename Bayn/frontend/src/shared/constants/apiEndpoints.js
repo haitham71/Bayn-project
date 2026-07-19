@@ -40,5 +40,6 @@ export const API = {
     base: '/meetings',
     requests: '/meetings/requests',
     joinRequests: '/meetings/join-requests',
+    team: '/meetings/team',
   },
 };

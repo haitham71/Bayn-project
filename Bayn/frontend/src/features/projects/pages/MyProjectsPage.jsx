@@ -133,7 +133,7 @@ export default function MyProjectsPage({ onNavigate }) {
                         <Flag width={14} height={14} aria-hidden="true" />
                         {t(STAGE_LABEL[p.stage] || STAGE_LABEL.planning)}
                       </span>
-                      <button type="button" className="mp__link">
+                      <button type="button" className="mp__link" onClick={() => navigate(`/projects/${p.id}/dashboard`)}>
                         {t('myProjects.dashboard')}
                         <LayoutDashboard width={20} height={20} aria-hidden="true" />
                       </button>

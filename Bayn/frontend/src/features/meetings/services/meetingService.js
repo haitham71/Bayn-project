@@ -26,6 +26,11 @@ export const finalizeMeetingRequest = (requestId, approve) =>
 export const listMeetings = () =>
   api.get(API.meetings.base).then((r) => r.data);
 
+// Owner schedules a meeting for a project and picks which members attend.
+// payload: { project_id, title, start_time, end_time, participant_ids }
+export const createTeamMeeting = (payload) =>
+  api.post(API.meetings.team, payload).then((r) => r.data);
+
 // A personalised join URL — the room link plus a Daily token carrying the
 // caller's name, so they join under their real name without being asked to type
 // one. Minted per click, so call this on the join action, not ahead of time.

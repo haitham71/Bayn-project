@@ -1,28 +1,19 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Sidebar from '@/shared/components/Sidebar';
 import Navbar from '@/shared/components/Navbar';
-import Button from '@/shared/components/Button';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
-import {
-  getMyProjects,
-  getProject,
-  getProjectTasks,
-  getProjectTaskProgress,
-} from '@/features/projects/services/projectService';
-import {
-  listMeetings,
-  listMeetingRequests,
-  acceptMeetingRequest,
-  rejectMeetingRequest,
-} from '@/features/meetings/services/meetingService';
 import CheckSquare from '@/assets/icons/check-square.svg?react';
 import Clock from '@/assets/icons/clock.svg?react';
 import Calendar from '@/assets/icons/calendar.svg?react';
 import Send from '@/assets/icons/send-horizontal.svg?react';
 import Plus from '@/assets/icons/plus.svg?react';
-import ChevronDown from '@/assets/icons/chevron-down.svg?react';
+import CalendarPicker from '@/shared/components/Calendar';
+import Select from '@/shared/components/Select';
+import { stageOf } from '@/features/meetings/lib/requestStatus';
+import { getMyProjects, getProject, listProjectMembers } from '@/features/projects/services/projectService';
+import { listMeetings, listMeetingRequests, createTeamMeeting } from '@/features/meetings/services/meetingService';
 import './ProjectDashboard.css';
 
 const WEEK_MS = 7 * 86400000;
@@ -41,102 +32,205 @@ const PRIORITY_LABEL_KEY = {
   high: 'projectDashboard.priorityHigh',
 };
 
+const NOW = Date.now();
+const DAY = 86400000;
+const iso = (offset) => new Date(NOW + offset).toISOString();
+
+// Tasks aren't wired to the backend yet (no live endpoint), so this card keeps
+// running on sample data — same as the contracts card — until it's ready.
+const MOCK_TASKS = [
+  { id: 't1', title: 'Design the dashboard layout', status: 'in_progress', priority: 'high', due_date: iso(2 * DAY) },
+  { id: 't2', title: 'Set up the authentication flow', status: 'done', priority: 'medium' },
+  { id: 't3', title: 'Write the API documentation', status: 'todo', priority: 'low', due_date: iso(-1 * DAY) },
+  { id: 't4', title: 'Integrate the payment gateway', status: 'todo', priority: 'high', due_date: iso(5 * DAY) },
+  { id: 't5', title: 'Run a user testing session', status: 'in_progress', priority: 'medium' },
+  { id: 't6', title: 'Deploy to staging', status: 'done', priority: 'high' },
+];
+
+// Half-hour slots across the day, as "HH:MM" 24h values (labels get localized
+// where they're rendered).
+const TIME_SLOTS = Array.from({ length: 48 }, (_, i) => {
+  const h = Math.floor(i / 2);
+  const m = i % 2 === 0 ? '00' : '30';
+  return `${String(h).padStart(2, '0')}:${m}`;
+});
+const STEP_MIN = 30;
+const MAX_MEETING_MIN = 120; // a meeting can run at most two hours
+const LAST_SLOT_MIN = 23 * 60 + 30; // 23:30, the latest slot
+const timeToMin = (hhmm) => {
+  const [h, m] = hhmm.split(':').map(Number);
+  return h * 60 + m;
+};
+
 export default function ProjectDashboardPage({ onNavigate }) {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const { fullName } = useCurrentUser();
+  const { user, fullName } = useCurrentUser();
   const { projectId: routeProjectId } = useParams();
   const locale = i18n.language === 'ar' ? 'ar' : 'en';
 
+  // Real project data. Tasks stay on sample data (no live endpoint yet).
   const [myProjects, setMyProjects] = useState([]);
   const [projectId, setProjectId] = useState(routeProjectId || '');
   const [project, setProject] = useState(null);
+  const [team, setTeam] = useState([]);
 
-  const [tasks, setTasks] = useState([]);
-  const [progress, setProgress] = useState(null);
-  const [tasksError, setTasksError] = useState(false);
+  const [tasks] = useState(MOCK_TASKS);
+  const [progress] = useState(null); // derived from tasks below
+  const [tasksError] = useState(false);
 
   const [meetings, setMeetings] = useState([]);
-  const [applications, setApplications] = useState([]);
-
   const [incomingRequests, setIncomingRequests] = useState([]);
-  const [actioningId, setActioningId] = useState(null);
 
-  // Whether the signed-in user owns the selected project (vs. just being a
-  // member on it) — decides which panels this dashboard shows, same split
-  // MyProjectsPage already uses ("you own" vs. "you work on").
-  // TEMP: forced to true so you can visually check the owner-view layout
-  // without needing real login data. Revert to the real check below before
-  // this goes anywhere near production:
-  //   const isOwner = myProjects.find((p) => p.id === projectId)?.role === 'owner';
-  const isOwner = true;
+  // "Schedule a team meeting" form: title/date/time + the members to invite.
+  const [scheduleForm, setScheduleForm] = useState({ title: '', date: '', from: '', to: '' });
+  const [selectedMembers, setSelectedMembers] = useState([]);
+  const [scheduling, setScheduling] = useState(false);
+  const [scheduleError, setScheduleError] = useState('');
 
-  // Load the user's projects once, to populate the project switcher. Defaults
-  // the selection to the route param, or the first project, if none chosen yet.
+  // Whether the signed-in user owns the selected project (vs. just working on
+  // it) — decides which panels this dashboard shows.
+  const isOwner = myProjects.find((p) => p.id === projectId)?.role === 'owner';
+
+  // Load my projects once, to resolve the selected project and my role in it.
   useEffect(() => {
     getMyProjects()
       .then((rows) => {
         setMyProjects(rows || []);
-        if (!routeProjectId && rows?.length) {
-          setProjectId(rows[0].id);
-        }
+        if (!routeProjectId && rows?.length) setProjectId(rows[0].id);
       })
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Keep the URL in sync when the user switches projects from the dropdown,
-  // without forcing a full page reload.
-  function handleProjectChange(id) {
-    setProjectId(id);
-    navigate(`/projects/${id}/dashboard`, { replace: true });
-  }
-
+  // Project details + team roster for the selected project.
   useEffect(() => {
     if (!projectId) return;
     getProject(projectId).then(setProject).catch(() => setProject(null));
-
-    setTasksError(false);
-    Promise.all([getProjectTasks(projectId), getProjectTaskProgress(projectId)])
-      .then(([taskRows, prog]) => {
-        setTasks(taskRows || []);
-        setProgress(prog || null);
-      })
-      .catch(() => {
-        // Tasks endpoint may not be live on the backend yet — degrade
-        // gracefully instead of breaking the whole dashboard.
-        setTasksError(true);
-        setTasks([]);
-        setProgress(null);
-      });
+    listProjectMembers(projectId).then((rows) => setTeam(rows || [])).catch(() => setTeam([]));
   }, [projectId]);
 
-  // Meetings and outgoing requests aren't project-scoped endpoints on the
-  // backend today, so we fetch the user's full lists and filter client-side.
+  // My confirmed meetings (not project-scoped on the backend, so fetch the full
+  // list and filter client-side).
   useEffect(() => {
     listMeetings().then((rows) => setMeetings(rows || [])).catch(() => {});
-    listMeetingRequests('outgoing').then((rows) => setApplications(rows || [])).catch(() => {});
   }, []);
 
-  // Owner-only: requests other people have sent in to join this project.
-  function loadIncomingRequests() {
-    if (!projectId) return;
+  // Owner-only: join requests other people have sent in for this project.
+  useEffect(() => {
+    if (!projectId || !isOwner) { setIncomingRequests([]); return; }
     listMeetingRequests('incoming', projectId)
       .then((rows) => setIncomingRequests(rows || []))
       .catch(() => setIncomingRequests([]));
-  }
-  useEffect(() => {
-    if (isOwner) loadIncomingRequests();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOwner, projectId]);
+  }, [projectId, isOwner]);
 
-  async function handleAccept(id) {
-    setActioningId(id);
-    try { await acceptMeetingRequest(id); loadIncomingRequests(); } catch { /* surfaced by refetch */ } finally { setActioningId(null); }
+  // Local "y-m-d" string <-> Date helpers (local time, so no UTC off-by-one).
+  const toDateStr = (d) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const parseDateStr = (s) => {
+    const [y, m, d] = s.split('-').map(Number);
+    return new Date(y, m - 1, d);
+  };
+  const formatDateStr = (s) =>
+    new Intl.DateTimeFormat(locale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(parseDateStr(s));
+
+  // Half-hour slots with localized, readable labels (e.g. "9:00 AM").
+  const timeOptions = useMemo(
+    () => TIME_SLOTS.map((v) => {
+      const [h, m] = v.split(':').map(Number);
+      return {
+        value: v,
+        label: new Intl.DateTimeFormat(locale, { hour: 'numeric', minute: '2-digit', hour12: true }).format(new Date(2000, 0, 1, h, m)),
+      };
+    }),
+    [locale],
+  );
+
+  // When the meeting is today, hide times that have already passed (future
+  // dates keep the full day). -1 means "no cutoff".
+  const cutoffFor = (dateStr) => {
+    if (!dateStr) return -1;
+    const d = parseDateStr(dateStr);
+    const today = new Date(NOW);
+    const sameDay =
+      d.getFullYear() === today.getFullYear() &&
+      d.getMonth() === today.getMonth() &&
+      d.getDate() === today.getDate();
+    return sameDay ? today.getHours() * 60 + today.getMinutes() : -1;
+  };
+  const nowCutoffMin = cutoffFor(scheduleForm.date);
+
+  // Start times: still to come today, and with room for at least one end.
+  const fromOptions = useMemo(
+    () => timeOptions.filter(
+      (o) => timeToMin(o.value) > nowCutoffMin && timeToMin(o.value) + STEP_MIN <= LAST_SLOT_MIN,
+    ),
+    [timeOptions, nowCutoffMin],
+  );
+  // End times are strictly after the chosen start and at most two hours later.
+  const toOptions = useMemo(() => {
+    if (!scheduleForm.from) return [];
+    const base = timeToMin(scheduleForm.from);
+    return timeOptions.filter((o) => {
+      const m = timeToMin(o.value);
+      return m > base && m <= base + MAX_MEETING_MIN;
+    });
+  }, [timeOptions, scheduleForm.from]);
+
+  // Picking a start clears an end that no longer fits (before it, or > 2h away).
+  function setFrom(v) {
+    setScheduleForm((f) => {
+      const end = timeToMin(f.to);
+      const start = timeToMin(v);
+      const keep = f.to && end > start && end <= start + MAX_MEETING_MIN;
+      return { ...f, from: v, to: keep ? f.to : '' };
+    });
   }
-  async function handleReject(id) {
-    setActioningId(id);
-    try { await rejectMeetingRequest(id); loadIncomingRequests(); } catch { /* ignore */ } finally { setActioningId(null); }
+
+  // Picking a day drops any start/end that would now sit in the past for it.
+  function setDate(d) {
+    const date = toDateStr(d);
+    const cutoff = cutoffFor(date);
+    setScheduleForm((f) => {
+      const from = f.from && timeToMin(f.from) > cutoff ? f.from : '';
+      const start = timeToMin(from);
+      const to = from && f.to && timeToMin(f.to) > start && timeToMin(f.to) <= start + MAX_MEETING_MIN ? f.to : '';
+      return { ...f, date, from, to };
+    });
+  }
+
+  const scheduleReady =
+    scheduleForm.title.trim() && scheduleForm.date && scheduleForm.from && scheduleForm.to && scheduleForm.from < scheduleForm.to;
+
+  const toggleMember = (userId) =>
+    setSelectedMembers((prev) =>
+      prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId],
+    );
+
+  async function handleSchedule(e) {
+    e.preventDefault();
+    if (!scheduleReady || scheduling) return;
+    setScheduling(true);
+    setScheduleError('');
+    try {
+      const start = new Date(`${scheduleForm.date}T${scheduleForm.from}`).toISOString();
+      const end = new Date(`${scheduleForm.date}T${scheduleForm.to}`).toISOString();
+      await createTeamMeeting({
+        project_id: projectId,
+        title: scheduleForm.title.trim(),
+        start_time: start,
+        end_time: end,
+        participant_ids: selectedMembers,
+      });
+      const rows = await listMeetings();
+      setMeetings(rows || []);
+      setScheduleForm({ title: '', date: '', from: '', to: '' });
+      setSelectedMembers([]);
+    } catch {
+      setScheduleError(t('projectDashboard.scheduleFailed'));
+    } finally {
+      setScheduling(false);
+    }
   }
 
   const requesterName = (r) =>
@@ -145,10 +239,6 @@ export default function ProjectDashboardPage({ onNavigate }) {
   const projectMeetings = useMemo(
     () => (projectId ? meetings.filter((m) => m.project_id === projectId) : meetings),
     [meetings, projectId],
-  );
-  const projectApplications = useMemo(
-    () => (projectId ? applications.filter((a) => a.project_id === projectId) : applications),
-    [applications, projectId],
   );
 
   const now = Date.now();
@@ -177,7 +267,6 @@ export default function ProjectDashboardPage({ onNavigate }) {
     (m) => new Date(m.start_time).getTime() <= now + WEEK_MS && new Date(m.end_time).getTime() >= now,
   ).length;
 
-  const pendingApplications = projectApplications.filter((a) => a.status === 'pending').length;
   const pendingIncoming = incomingRequests.filter((r) => r.status === 'pending').length;
 
   const stats = [
@@ -202,29 +291,20 @@ export default function ProjectDashboardPage({ onNavigate }) {
       flag: t('projectDashboard.thisWeekCount', { count: meetingsThisWeek }),
       flagTone: 'ok',
     },
-    isOwner ? {
+    // Join requests are an owner-only concern — members don't see this card.
+    ...(isOwner ? [{
       icon: Send,
       value: incomingRequests.length,
       label: t('projectDashboard.joinRequests'),
       flag: t('projectDashboard.pendingCount', { count: pendingIncoming }),
       flagTone: pendingIncoming > 0 ? 'warn' : 'ok',
-    } : {
-      icon: Send,
-      value: projectApplications.length,
-      label: t('projectDashboard.applicationsSent'),
-      flag: t('projectDashboard.pendingCount', { count: pendingApplications }),
-      flagTone: pendingApplications > 0 ? 'warn' : 'ok',
-    },
+    }] : []),
   ];
 
   const dayNum = (iso) => new Intl.DateTimeFormat(locale, { day: 'numeric' }).format(new Date(iso));
   const monthShort = (iso) => new Intl.DateTimeFormat(locale, { month: 'short' }).format(new Date(iso));
-  const daysAgo = (iso) => Math.max(0, Math.floor((now - new Date(iso).getTime()) / 86400000));
 
-  // Backend doesn't expose a project-members listing endpoint yet, so this
-  // reads defensively off whatever the project payload includes and quietly
-  // shows nothing if it isn't there — wire to a real endpoint once available.
-  const team = project?.memberships || project?.members || [];
+  const selectedProject = project || myProjects.find((p) => p.id === projectId) || null;
 
   return (
     <div className="pd bayn-scroll">
@@ -240,18 +320,10 @@ export default function ProjectDashboardPage({ onNavigate }) {
               <p className="pd__subtitle">{t('projectDashboard.subtitle')}</p>
             </div>
 
-            {myProjects.length > 0 && (
-              <label className="pd__select">
-                <span className="pd__select-label">{t('projectDashboard.selectProject')}</span>
-                <span className="pd__select-control">
-                  <select value={projectId} onChange={(e) => handleProjectChange(e.target.value)}>
-                    {myProjects.map((p) => (
-                      <option key={p.id} value={p.id}>{p.title}</option>
-                    ))}
-                  </select>
-                  <ChevronDown width={16} height={16} aria-hidden="true" />
-                </span>
-              </label>
+            {selectedProject && (
+              <div className="pd__project">
+                <span className="pd__project-name">{selectedProject.title}</span>
+              </div>
             )}
           </div>
 
@@ -323,68 +395,123 @@ export default function ProjectDashboardPage({ onNavigate }) {
               )}
             </section>
 
-            {/* Owners see attendance across the team (owner-only per spec);
-                members see the project roster instead. */}
-            <aside className="pd__panel">
-              {isOwner ? (
-                <>
-                  <div className="pd__panel-head"><h3>{t('projectDashboard.teamAttendance')}</h3></div>
-                  {team.length === 0 ? (
-                    <p className="pd__empty">{t('projectDashboard.attendanceUnavailable')}</p>
-                  ) : (
-                    <ul className="pd__team">
-                      {team.map((member) => {
-                        const name = locale === 'ar' ? member.name_ar : member.name_en;
-                        const status = (member.attendance_status || '').toLowerCase();
-                        return (
-                          <li key={member.id} className="pd__team-row">
-                            <p className="pd__team-name">{name || '—'}</p>
-                            {status && (
-                              <span className={`pd__attendance-badge pd__attendance-badge--${status}`}>
-                                {t(`projectDashboard.attendance_${status}`, status)}
-                              </span>
-                            )}
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  )}
-                </>
-              ) : (
-                <>
-                  <div className="pd__panel-head"><h3>{t('projectDashboard.projectTeam')}</h3></div>
-                  {team.length === 0 ? (
-                    <p className="pd__empty">{t('projectDashboard.teamUnavailable')}</p>
-                  ) : (
-                    <ul className="pd__team">
-                      {team.map((member) => {
-                        const name = locale === 'ar' ? member.name_ar : member.name_en;
-                        const isMe = member.is_current_user;
-                        return (
-                          <li key={member.id} className="pd__team-row">
-                            <div>
-                              <p className="pd__team-name">{name || '—'}</p>
-                              <p className="pd__team-role">
-                                {member.role === 'owner' ? t('projectDashboard.owner') : ''}
-                                {member.role === 'owner' && member.job_title ? ' · ' : ''}
-                                {member.job_title || ''}
-                              </p>
-                            </div>
-                            {isMe && <span className="pd__team-you">{t('projectDashboard.you')}</span>}
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  )}
-                </>
-              )}
-            </aside>
+            {/* Owner-only: schedule a new team meeting, sitting beside the
+                tasks board (where the attendance card used to be). */}
+            {isOwner && (
+              <section className="pd__panel pd__schedule">
+                <div className="pd__panel-head">
+                  <h3>{t('projectDashboard.scheduleTitle')}</h3>
+                </div>
+                <form className="pd__schedule-form" onSubmit={handleSchedule}>
+                  <label className="pd__field pd__field--grow">
+                    <span className="pd__field-label">{t('projectDashboard.scheduleName')}</span>
+                    <input
+                      type="text"
+                      value={scheduleForm.title}
+                      onChange={(e) => setScheduleForm((f) => ({ ...f, title: e.target.value }))}
+                      placeholder={t('projectDashboard.scheduleNamePh')}
+                    />
+                  </label>
+                  <div className="pd__field">
+                    <span className="pd__field-label">{t('projectDashboard.scheduleDate')}</span>
+                    <div className="pd__calendar-inline">
+                      <CalendarPicker
+                        initialDate={scheduleForm.date ? parseDateStr(scheduleForm.date) : new Date()}
+                        selectedDates={scheduleForm.date ? [parseDateStr(scheduleForm.date)] : []}
+                        onSelectDate={setDate}
+                      />
+                    </div>
+                    {scheduleForm.date && (
+                      <p className="pd__field-note">{formatDateStr(scheduleForm.date)}</p>
+                    )}
+                  </div>
+                  <div className="pd__field">
+                    <span className="pd__field-label">{t('projectDashboard.scheduleTime')}</span>
+                    <div className="pd__time-row">
+                      <Select
+                        label={t('projectDashboard.scheduleFrom')}
+                        value={scheduleForm.from}
+                        onChange={setFrom}
+                        options={fromOptions}
+                        className="pd__time-select"
+                      />
+                      <Select
+                        label={t('projectDashboard.scheduleTo')}
+                        value={scheduleForm.to}
+                        onChange={(v) => setScheduleForm((f) => ({ ...f, to: v }))}
+                        options={toOptions}
+                        disabled={!scheduleForm.from}
+                        className="pd__time-select"
+                      />
+                    </div>
+                  </div>
+                  <div className="pd__field">
+                    <span className="pd__field-label">{t('projectDashboard.scheduleParticipants')}</span>
+                    {team.filter((m) => m.user_id !== user?.id).length === 0 ? (
+                      <p className="pd__field-note pd__field-note--muted">{t('projectDashboard.scheduleNoMembers')}</p>
+                    ) : (
+                      <ul className="pd__members">
+                        {team.filter((m) => m.user_id !== user?.id).map((m) => {
+                          const name = locale === 'ar' ? m.name_ar : m.name_en;
+                          const checked = selectedMembers.includes(m.user_id);
+                          return (
+                            <li key={m.user_id}>
+                              <label className={`pd__member${checked ? ' is-checked' : ''}`}>
+                                <input type="checkbox" checked={checked} onChange={() => toggleMember(m.user_id)} />
+                                <span>{name || '—'}</span>
+                              </label>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </div>
+
+                  {scheduleError && <p className="pd__schedule-error">{scheduleError}</p>}
+
+                  <button type="submit" className="pd__schedule-btn" disabled={!scheduleReady || scheduling}>
+                    <Plus width={16} height={16} aria-hidden="true" />
+                    {scheduling ? t('projectDashboard.scheduling') : t('projectDashboard.scheduleBtn')}
+                  </button>
+                </form>
+              </section>
+            )}
           </div>
 
           <div className="pd__row3">
-            {/* Owners review incoming join requests here (with real
-                accept/reject actions); members see their own sent applications. */}
-            {isOwner ? (
+            {/* The project's team roster (real members). Per-meeting attendance
+                isn't wired yet — the backend only records self-reported
+                attendance, with no team-wide read endpoint. */}
+            <aside className="pd__panel">
+              <div className="pd__panel-head"><h3>{t('projectDashboard.projectTeam')}</h3></div>
+              {team.length === 0 ? (
+                <p className="pd__empty">{t('projectDashboard.teamUnavailable')}</p>
+              ) : (
+                <ul className="pd__team">
+                  {team.map((member) => {
+                    const name = locale === 'ar' ? member.name_ar : member.name_en;
+                    const isMe = member.user_id === user?.id;
+                    return (
+                      <li key={member.user_id} className="pd__team-row">
+                        <div>
+                          <p className="pd__team-name">{name || '—'}</p>
+                          <p className="pd__team-role">
+                            {member.role === 'owner' ? t('projectDashboard.owner') : ''}
+                            {member.role === 'owner' && member.job_title ? ' · ' : ''}
+                            {member.job_title || ''}
+                          </p>
+                        </div>
+                        {isMe && <span className="pd__team-you">{t('projectDashboard.you')}</span>}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </aside>
+
+            {/* Owner-only: incoming join requests. Members don't manage
+                requests, so this panel doesn't show for them at all. */}
+            {isOwner && (
               <section className="pd__panel">
                 <div className="pd__panel-head">
                   <h3>{t('projectDashboard.joinRequests')}</h3>
@@ -392,59 +519,30 @@ export default function ProjectDashboardPage({ onNavigate }) {
                     {t('projectDashboard.viewAll')}
                   </button>
                 </div>
-                {incomingRequests.filter((r) => r.status === 'pending').length === 0 ? (
+                {incomingRequests.length === 0 ? (
                   <p className="pd__empty">{t('joinRequests.empty')}</p>
                 ) : (
                   <ul className="pd__requests">
-                    {incomingRequests.filter((r) => r.status === 'pending').slice(0, 3).map((r) => (
-                      <li key={r.id} className="pd__request-row">
-                        <div className="pd__request-top">
-                          <span className="pd__request-avatar" aria-hidden="true">
-                            {requesterName(r).trim().charAt(0).toUpperCase()}
-                          </span>
-                          <div>
-                            <p className="pd__request-name">{requesterName(r)}</p>
-                            {r.requester?.job_title && <p className="pd__request-role">{r.requester.job_title}</p>}
+                    {incomingRequests.slice(0, 4).map((r) => {
+                      const stage = stageOf(r);
+                      return (
+                        <li key={r.id} className="pd__request-row">
+                          <div className="pd__request-top">
+                            <span className="pd__request-avatar" aria-hidden="true">
+                              {requesterName(r).trim().charAt(0).toUpperCase()}
+                            </span>
+                            <div>
+                              <p className="pd__request-name">{requesterName(r)}</p>
+                              {r.requester?.job_title && <p className="pd__request-role">{r.requester.job_title}</p>}
+                            </div>
+                            <span className={`pd__req-stage pd__req-stage--${stage}`}>
+                              {t(`joinRequests.tab.${stage}`)}
+                            </span>
                           </div>
-                        </div>
-                        {r.message && <p className="pd__request-msg">{r.message}</p>}
-                        <div className="pd__request-actions">
-                          <Button variant="primary" size="sm" onClick={() => handleAccept(r.id)} disabled={actioningId === r.id}>
-                            {t('joinRequests.accept')}
-                          </Button>
-                          <Button variant="secondary" size="sm" onClick={() => handleReject(r.id)} disabled={actioningId === r.id}>
-                            {t('joinRequests.reject')}
-                          </Button>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </section>
-            ) : (
-              <section className="pd__panel">
-                <div className="pd__panel-head">
-                  <h3>{t('projectDashboard.applications')}</h3>
-                  <button type="button" className="pd__panel-link">{t('projectDashboard.viewAll')}</button>
-                </div>
-                {projectApplications.length === 0 ? (
-                  <p className="pd__empty">{t('projectDashboard.applicationsEmpty')}</p>
-                ) : (
-                  <ul className="pd__applications">
-                    {projectApplications.slice(0, 4).map((a) => (
-                      <li key={a.id} className="pd__application-row">
-                        <div>
-                          <p className="pd__application-title">{a.project?.title || t('projectDashboard.project')}</p>
-                          <p className="pd__application-sub">
-                            {a.job_title ? `${a.job_title} · ` : ''}
-                            {t('projectDashboard.sentDaysAgo', { count: daysAgo(a.created_at) })}
-                          </p>
-                        </div>
-                        <span className={`pd__status-pill pd__status-pill--${a.status}`}>
-                          {t(`projectDashboard.status_${a.status}`, a.status)}
-                        </span>
-                      </li>
-                    ))}
+                          {r.message && <p className="pd__request-msg">{r.message}</p>}
+                        </li>
+                      );
+                    })}
                   </ul>
                 )}
               </section>
@@ -461,8 +559,8 @@ export default function ProjectDashboardPage({ onNavigate }) {
               {upcomingMeetings.length === 0 ? (
                 <p className="pd__empty">{t('projectDashboard.meetingsEmpty')}</p>
               ) : (
-                <ul className="pd__meetings">
-                  {upcomingMeetings.slice(0, 4).map((m) => (
+                <ul className="pd__meetings pd__meetings--scroll bayn-scroll">
+                  {upcomingMeetings.map((m) => (
                     <li key={m.id} className="pd__meeting-row">
                       <span className="pd__meeting-date">
                         <span className="pd__meeting-day">{dayNum(m.start_time)}</span>
@@ -470,9 +568,6 @@ export default function ProjectDashboardPage({ onNavigate }) {
                       </span>
                       <div>
                         <p className="pd__meeting-title">{m.title || t('projectDashboard.meeting')}</p>
-                        <p className="pd__meeting-sub">
-                          {m.video_link ? t('projectDashboard.dailyRoom') : ''}
-                        </p>
                         <span className="pd__meeting-badge">{t('projectDashboard.confirmed')}</span>
                       </div>
                     </li>

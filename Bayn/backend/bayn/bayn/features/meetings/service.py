@@ -28,6 +28,7 @@ from bayn.features.meetings.models import (
     AttendanceStatus,
     Meeting,
     MeetingAttendance,
+    MeetingParticipant,
     MeetingRequest,
     MeetingRequestStatus,
 )
@@ -198,18 +199,38 @@ def _participant_info(user: User) -> ParticipantInfo:
 
 
 async def participants_map(db: AsyncSession, meetings) -> dict[uuid.UUID, list[ParticipantInfo]]:
-    # The two participants (requester + owner) of each meeting, with avatars.
-    ids = set()
-    for m in meetings:
-        ids.add(m.user_id)
-        ids.add(m.counterpart_id)
-    if not ids:
+    # Everyone in each meeting, with avatars. The legacy user_id/counterpart_id
+    # pair plus any extra rows in meeting_participants (team meetings, same-slot
+    # applicant meetings), de-duplicated and kept in a stable order.
+    meeting_ids = [m.id for m in meetings]
+    if not meeting_ids:
         return {}
+
+    per_meeting: dict[uuid.UUID, list[uuid.UUID]] = {}
+    for m in meetings:
+        per_meeting[m.id] = [uid for uid in (m.user_id, m.counterpart_id) if uid]
+
+    extra = await db.execute(
+        select(MeetingParticipant.meeting_id, MeetingParticipant.user_id)
+        .where(MeetingParticipant.meeting_id.in_(meeting_ids))
+        .order_by(MeetingParticipant.created_at)
+    )
+    for meeting_id, uid in extra.all():
+        per_meeting.setdefault(meeting_id, []).append(uid)
+
+    ids = {uid for uids in per_meeting.values() for uid in uids}
     result = await db.execute(select(User).where(User.id.in_(ids)))
     users = {u.id: _participant_info(u) for u in result.scalars().all()}
+
     out = {}
     for m in meetings:
-        out[m.id] = [users[uid] for uid in (m.user_id, m.counterpart_id) if uid in users]
+        seen = set()
+        ordered = []
+        for uid in per_meeting.get(m.id, []):
+            if uid in users and uid not in seen:
+                seen.add(uid)
+                ordered.append(users[uid])
+        out[m.id] = ordered
     return out
 
 
@@ -453,6 +474,37 @@ async def _schedule_meeting(
     but doesn't commit; the caller owns the transaction.
     """
     project = await db.get(Project, request.project_id)
+
+    # Same-slot folding: if another applicant already turned this exact slot into
+    # a meeting, join that one instead of creating a second. A non-signer never
+    # blocks the others, and a late signer lands here too, joining after the fact.
+    if request.slot_id is not None:
+        existing = await db.scalar(
+            select(Meeting).where(
+                Meeting.project_id == request.project_id,
+                Meeting.slot_id == request.slot_id,
+            )
+        )
+        if existing is not None:
+            request.status = MeetingRequestStatus.scheduled
+            request.resulting_meeting_id = existing.id
+
+            contract = await contracts_service.get_contract_for_request(db, request.id)
+            if contract is not None:
+                contract.meeting_id = existing.id
+
+            already_in = await db.scalar(
+                select(MeetingParticipant.id).where(
+                    MeetingParticipant.meeting_id == existing.id,
+                    MeetingParticipant.user_id == request.requester_id,
+                )
+            )
+            if not already_in:
+                db.add(MeetingParticipant(
+                    meeting_id=existing.id, user_id=request.requester_id, is_host=False
+                ))
+            return existing
+
     is_initial = not await _has_prior_meeting(db, request.requester_id, request.owner_id, request.project_id)
 
     room_name = f"meeting-{uuid.uuid4().hex}"
@@ -484,6 +536,7 @@ async def _schedule_meeting(
         user_id=request.requester_id,
         counterpart_id=request.owner_id,
         project_id=request.project_id,
+        slot_id=request.slot_id,
         title=meeting_title,
         start_time=request.proposed_start_time,
         end_time=request.proposed_end_time,
@@ -500,6 +553,11 @@ async def _schedule_meeting(
     contract = await contracts_service.get_contract_for_request(db, request.id)
     if contract is not None:
         contract.meeting_id = meeting.id
+
+    # Unified participant list: the owner hosts, the requester attends. Further
+    # applicants who signed for the same slot get appended in the fold above.
+    db.add(MeetingParticipant(meeting_id=meeting.id, user_id=request.owner_id, is_host=True))
+    db.add(MeetingParticipant(meeting_id=meeting.id, user_id=request.requester_id, is_host=False))
 
     # Only the owner has a membership at this point — the requester earns theirs
     # after the meeting — so this builds the one attendance row it can. The
@@ -685,6 +743,102 @@ async def cancel_meeting_request(
 
 # ── Meetings ────────────────────────────────────────────────────────────────
 
+async def create_team_meeting(
+    db: AsyncSession,
+    owner_id: uuid.UUID,
+    project_id: uuid.UUID,
+    title: str | None,
+    start_time: datetime,
+    end_time: datetime,
+    participant_ids: list[uuid.UUID],
+    locale: str = DEFAULT_LOCALE,
+) -> Meeting:
+    """The owner schedules a meeting for their project and picks which members
+    attend. Unlike the request flow this is direct (no NDA): every attendee is
+    already a member of the project."""
+    project = await db.get(Project, project_id)
+    if project is None:
+        raise NotFoundError(t("projects", "project.not_found", locale))
+
+    owner_membership = await db.scalar(
+        select(ProjectMembership).where(
+            ProjectMembership.project_id == project_id,
+            ProjectMembership.user_id == owner_id,
+        )
+    )
+    if not owner_membership or owner_membership.role != ProjectMembershipRole.OWNER:
+        raise ForbiddenError(t("meetings", "team.owner_only", locale))
+
+    start = _ensure_aware(start_time)
+    end = _ensure_aware(end_time)
+    if end <= start:
+        raise ValidationError(t("meetings", "team.bad_time_range", locale))
+    if start < datetime.now(timezone.utc):
+        raise ValidationError(t("meetings", "team.past_time", locale))
+
+    # Selected attendees must be members of this same project (owner excluded —
+    # they're added as host regardless).
+    selected = [uid for uid in dict.fromkeys(participant_ids) if uid != owner_id]
+    if selected:
+        rows = await db.execute(
+            select(ProjectMembership.user_id).where(
+                ProjectMembership.project_id == project_id,
+                ProjectMembership.user_id.in_(selected),
+            )
+        )
+        members = {uid for (uid,) in rows.all()}
+        if any(uid not in members for uid in selected):
+            raise ValidationError(t("meetings", "team.not_a_member", locale))
+
+    room_name = f"meeting-{uuid.uuid4().hex}"
+    exp = int(end.timestamp())
+    nbf = int((start - JOIN_WINDOW).timestamp())
+    try:
+        room = await daily_client.create_room(
+            name=room_name, exp_epoch_seconds=exp, nbf_epoch_seconds=nbf
+        )
+    except DailyError:
+        raise ValidationError(t("meetings", "request.room_creation_failed", locale))
+
+    custom = (title or "").strip()
+    meeting_title = f"{custom} - {project.title}" if custom else project.title
+
+    # counterpart_id == owner: the owner both organises and hosts; the real
+    # attendee list lives in meeting_participants.
+    meeting = Meeting(
+        user_id=owner_id,
+        counterpart_id=owner_id,
+        project_id=project_id,
+        slot_id=None,
+        title=meeting_title,
+        start_time=start,
+        end_time=end,
+        is_initial_meeting=False,
+        video_link=room.get("url"),
+    )
+    db.add(meeting)
+    await db.flush()
+
+    db.add(MeetingParticipant(meeting_id=meeting.id, user_id=owner_id, is_host=True))
+    for uid in selected:
+        db.add(MeetingParticipant(meeting_id=meeting.id, user_id=uid, is_host=False))
+
+    # Everyone here already has a membership, so seed an attendance row each.
+    member_ids = [owner_id, *selected]
+    memberships = await db.execute(
+        select(ProjectMembership).where(
+            ProjectMembership.project_id == project_id,
+            ProjectMembership.user_id.in_(member_ids),
+        )
+    )
+    for membership in memberships.scalars().all():
+        db.add(MeetingAttendance(meeting_id=meeting.id, membership_id=membership.id))
+
+    await db.commit()
+    await db.refresh(meeting)
+    return meeting
+
+
 async def get_meeting(
     db: AsyncSession, meeting_id: uuid.UUID, user_id: uuid.UUID, locale: str = DEFAULT_LOCALE
 ) -> Meeting:
@@ -692,7 +846,15 @@ async def get_meeting(
     if not meeting:
         raise NotFoundError(t("meetings", "meeting.not_found", locale))
     if user_id not in (meeting.user_id, meeting.counterpart_id):
-        raise ForbiddenError(t("meetings", "meeting.not_a_participant", locale))
+        # Group meetings carry their extra attendees in meeting_participants.
+        is_participant = await db.scalar(
+            select(MeetingParticipant.id).where(
+                MeetingParticipant.meeting_id == meeting_id,
+                MeetingParticipant.user_id == user_id,
+            )
+        )
+        if not is_participant:
+            raise ForbiddenError(t("meetings", "meeting.not_a_participant", locale))
     return meeting
 
 
@@ -757,9 +919,20 @@ async def list_meetings(
     for request in pending.scalars().all():
         await refresh_request_state(db, request, locale)
 
+    # A meeting is "mine" if I'm the legacy pair, or listed among its extra
+    # participants (team / same-slot meetings).
+    participant_meetings = select(MeetingParticipant.meeting_id).where(
+        MeetingParticipant.user_id == user_id
+    )
     query = (
         select(Meeting)
-        .where(or_(Meeting.user_id == user_id, Meeting.counterpart_id == user_id))
+        .where(
+            or_(
+                Meeting.user_id == user_id,
+                Meeting.counterpart_id == user_id,
+                Meeting.id.in_(participant_meetings),
+            )
+        )
         .order_by(Meeting.start_time.desc())
     )
     if project_id is not None:
