@@ -521,7 +521,7 @@
     "scheduleFrom": "من",
     "scheduleTo": "إلى",
     "scheduleParticipants": "دعوة الأعضاء",
-    "scheduleNoMembers": "ما فيه أعضاء آخرين لدعوتهم بعد.",
+    "scheduleNoMembers": "لا يوجد أعضاء آخرين لدعوتهم بعد.",
     "scheduling": "جاري الجدولة…",
     "scheduleFailed": "تعذّرت جدولة الاجتماع. حاول مرة أخرى.",
     "scheduleBtn": "جدولة",
