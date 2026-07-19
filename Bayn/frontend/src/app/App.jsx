@@ -52,7 +52,7 @@ export default function App() {
 
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/projects/dashboard" replace />} />
+      <Route path="/" element={<Navigate to="/home" replace />} />
       <Route path="/login" element={<LoginPage onNavigate={goTo} />} />
       <Route
         path="/signup"
