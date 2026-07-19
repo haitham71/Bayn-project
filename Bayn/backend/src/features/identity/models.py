@@ -100,7 +100,7 @@ class User(Base):
     last_name_en: Mapped[str] = mapped_column(String(50), nullable=False)
 
     national_id: Mapped[Optional[str]] = mapped_column(String(20), unique=True, nullable=True)
-    birth_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    birth_date: Mapped[date] = mapped_column(Date, nullable=False)
 
     email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     username: Mapped[str] = mapped_column(String(30), unique=True, nullable=False)

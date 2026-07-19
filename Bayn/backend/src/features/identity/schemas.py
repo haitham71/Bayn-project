@@ -46,7 +46,7 @@ class UserSignup(BaseModel):
     second_name_ar: Optional[str] = None
     third_name_ar: Optional[str] = None
     last_name_ar: str
-    birth_date: Optional[date] = None # lst change 7/7 لازم يكون فوق 18
+    birth_date: [date] # lst change 7/7 لازم يكون فوق 18 ---> changed optional and none to make this mandatory
     first_name_en: str
     second_name_en: Optional[str] = None
     third_name_en: Optional[str] = None
@@ -58,6 +58,8 @@ class UserSignup(BaseModel):
 
     phone_country_id: uuid.UUID
     phone_number: int
+
+    terms_accepted: bool
 
     @field_validator("username")
     @classmethod
@@ -86,6 +88,25 @@ class UserSignup(BaseModel):
             raise ValueError(t("validation", "password_number", locale))
         if not re.search(r"[@#$]", value):
             raise ValueError(t("validation", "password_special_char", locale))
+        return value
+    
+    @field_validator("birth_date")
+    @classmethod
+    def validate_age_above_18(cls, value: date, info: ValidationInfo) -> date:
+        """Enforce that the registering user is 18 years or older."""
+        if not value:
+            locale = _locale_from(info)
+            raise ValueError(t("validation", "birth_date_required", locale))
+            
+        today = date.today()
+        age = today.year - value.year - ((today.month, today.day) < (value.month, value.day))
+        
+        if age < 18:
+            locale = _locale_from(info)
+            # add a key like "age_restriction" to translation files 
+            # or a direct message fallback??
+            raise ValueError(t("validation", "age_restriction", locale))
+            
         return value
 
 
