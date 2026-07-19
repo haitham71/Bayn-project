@@ -91,6 +91,16 @@ class ProjectMembershipResponse(BaseModel):
     created_at: datetime
 
 
+class ProjectMemberResponse(BaseModel):
+    """A project member with the public info needed to show them in a team list."""
+    user_id: uuid.UUID
+    name_en: str
+    name_ar: str
+    job_title: str | None = None
+    avatar_url: str | None = None
+    role: ProjectMembershipRole
+
+
 class MyProjectResponse(ProjectResponse):
     """A project the current user belongs to, plus their role in it."""
     role: ProjectMembershipRole

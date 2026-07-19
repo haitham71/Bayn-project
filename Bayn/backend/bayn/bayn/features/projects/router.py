@@ -14,7 +14,7 @@ from bayn.features.projects.schemas import (
     MeetingSlotResponse,
     MyProjectResponse,
     ProjectCreateRequest,
-    ProjectMembershipResponse,
+    ProjectMemberResponse,
     ProjectResponse,
     ProjectUpdateRequest,
     SlotsReplaceRequest,
@@ -111,12 +111,12 @@ async def replace_slots(
 
 
 @projects_router.get(
-    "/{project_id}/members", response_model=list[ProjectMembershipResponse], summary="List project members"
+    "/{project_id}/members", response_model=list[ProjectMemberResponse], summary="List project members"
 )
 async def list_members(
     project_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-) -> list[ProjectMembershipResponse]:
+) -> list[ProjectMemberResponse]:
     return await service.list_members(db, project_id)
 
 

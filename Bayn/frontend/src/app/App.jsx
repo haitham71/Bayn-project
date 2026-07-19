@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import LoginPage        from '@/features/identity/pages/LoginPage';
 import SignUpPage       from '@/features/identity/pages/SignUpPage';
@@ -11,11 +11,14 @@ import HomePage         from '@/features/home/pages/Homepage';
 import MyProfilePage    from '@/features/profile/pages/MyProfilePage';
 import MyProjectsPage   from '@/features/projects/pages/MyProjectsPage';
 import JoinRequestsPage from '@/features/projects/pages/JoinRequestsPage';
-import ProjectDashboardPage from '@/features/identity/dashboard/pages/ProjectDashboard';
+import ProjectDashboardPage from '@/features/dashboard/ProjectDashboard';
 import CreateIdeaPage   from '@/features/ideas/pages/CreateIdeaPage';
+import EditIdeaPage    from '@/features/ideas/pages/EditIdeaPage';
 import IdeasMarketplacePage from '@/features/ideas/pages/IdeasMarketplacePage';
 import IdeaDetailsPage from '@/features/ideas/pages/IdeaDetailsPage';
 import MeetingsPage from '@/features/meetings/pages/MeetingsPage';
+// Lazy: pulls in the heavy Daily SDK only when a user actually opens a meeting.
+const MeetingRoomPage = lazy(() => import('@/features/meetings/pages/MeetingRoomPage'));
 import ProtectedRoute    from '@/shared/components/ProtectedRoute';
 
 // Pages navigate with short keys (onNavigate('home')); this maps each key to its
@@ -80,9 +83,11 @@ export default function App() {
       <Route path="/my-profile" element={<ProtectedRoute><MyProfilePage onNavigate={goTo} /></ProtectedRoute>} />
       <Route path="/my-projects" element={<ProtectedRoute><MyProjectsPage onNavigate={goTo} /></ProtectedRoute>} />
       <Route path="/meetings" element={<ProtectedRoute><MeetingsPage onNavigate={goTo} /></ProtectedRoute>} />
+      <Route path="/meeting/:id" element={<ProtectedRoute><Suspense fallback={null}><MeetingRoomPage onNavigate={goTo} /></Suspense></ProtectedRoute>} />
       <Route path="/join-requests" element={<ProtectedRoute><JoinRequestsPage onNavigate={goTo} /></ProtectedRoute>} />
       <Route path="/join-requests/:projectId" element={<ProtectedRoute><JoinRequestsPage onNavigate={goTo} /></ProtectedRoute>} />
       <Route path="/create-idea" element={<ProtectedRoute><CreateIdeaPage onNavigate={goTo} /></ProtectedRoute>} />
+      <Route path="/edit-idea/:id" element={<ProtectedRoute><EditIdeaPage onNavigate={goTo} /></ProtectedRoute>} />
       <Route path="/projects/dashboard" element={<ProtectedRoute><ProjectDashboardPage onNavigate={goTo} /></ProtectedRoute>} />
       <Route path="/projects/:projectId/dashboard" element={<ProtectedRoute><ProjectDashboardPage onNavigate={goTo} /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/login" replace />} />

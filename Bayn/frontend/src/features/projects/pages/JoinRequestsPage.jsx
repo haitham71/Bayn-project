@@ -38,6 +38,7 @@ import FilePen from '@/assets/icons/file-pen.svg?react';
 import Calendar from '@/assets/icons/calendar.svg?react';
 import MapPin from '@/assets/icons/map-pin.svg?react';
 import Eye from '@/assets/icons/eye.svg?react';
+import Lightbulb from '@/assets/icons/lightbulb.svg?react';
 import './JoinRequestsPage.css';
 
 const hhmm = (d) => `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
@@ -196,6 +197,12 @@ export default function JoinRequestsPage({ onNavigate }) {
         <main className="jr__body">
           <section className="jr__card jr__content">
             <h1 className="jr__title">{t('joinRequests.title')}</h1>
+            {project?.title && (
+              <span className="jr__project">
+                <Lightbulb width={16} height={16} aria-hidden="true" />
+                {project.title}
+              </span>
+            )}
             <p className="jr__subtitle">{t('joinRequests.subtitle')}</p>
 
             {/* Stat tiles */}
@@ -261,6 +268,16 @@ export default function JoinRequestsPage({ onNavigate }) {
                     </div>
 
                     <div className="jr__req-body">
+                      {r.requester?.skills?.length > 0 && (
+                        <div className="jr__req-skills">
+                          <p className="jr__msg-label">{t('joinRequests.skills')}</p>
+                          <div className="jr__skill-chips">
+                            {r.requester.skills.map((s) => (
+                              <span key={s} className="jr__skill-chip">{s}</span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                       {r.message && (
                         <>
                           <p className="jr__msg-label">{t('joinRequests.message')}</p>
