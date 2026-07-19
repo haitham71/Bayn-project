@@ -31,3 +31,19 @@ export const updateProject = (id, payload) =>
 // Owner: replace the project's available meeting slots.
 export const replaceSlots = (id, slots) =>
   api.put(`${API.projects.base}/${id}/slots`, { slots }).then((r) => r.data);
+
+// A project's tasks. `params` supports backend filters, e.g. { status, priority }.
+export const getProjectTasks = (id, params) =>
+  api.get(API.tasks.forProject(id), { params }).then((r) => r.data);
+
+// Progress summary for a project's tasks: { percent_done, overdue_count, top_contributor }.
+export const getProjectTaskProgress = (id) =>
+  api.get(API.tasks.progress(id)).then((r) => r.data);
+
+// Create a task on a project.
+export const createProjectTask = (id, payload) =>
+  api.post(API.tasks.forProject(id), payload).then((r) => r.data);
+
+// Update a task (status, priority, assignee, etc.).
+export const updateProjectTask = (id, taskId, payload) =>
+  api.patch(`${API.tasks.forProject(id)}/${taskId}`, payload).then((r) => r.data);
