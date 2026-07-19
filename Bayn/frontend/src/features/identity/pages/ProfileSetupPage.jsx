@@ -11,8 +11,14 @@ import {
   getSaudiCountryId,
   getCities,
   searchSkills,
+  getMySkills,
   updateProfile,
   addSkillToProfile,
+  removeSkillFromProfile,
+  getAllSpecializations,
+  getMySpecializations,
+  addSpecializationToProfile,
+  removeSpecializationFromProfile,
 } from '../services/authService';
 import { getApiErrorMessage } from '@/shared/lib/apiError';
 import './ProfileSetupPage.css';
@@ -49,7 +55,9 @@ export default function ProfileSetupPage({ onNavigate, initialData = {}, onDataC
   const [thirdNameAr, setThirdNameAr] = useState(initialData.thirdNameAr || '');
   const [lastNameAr, setLastNameAr] = useState(initialData.lastNameAr || '');
 
-  const [title, setTitle] = useState(initialData.title || '');
+  const [specializations, setSpecializations] = useState(initialData.specializations || []);
+  // The full catalog list, used as the (fixed) options for the dropdown.
+  const [specializationOptions, setSpecializationOptions] = useState([]);
   // Experience and location are plain text fields for now; they become dropdown
   // components later.
   const [experience, setExperience] = useState(initialData.experience || '');
@@ -66,6 +74,13 @@ export default function ProfileSetupPage({ onNavigate, initialData = {}, onDataC
   // Built up as skill search results come in — resolves a chosen skill name
   // back to the skill_id the backend needs.
   const [skillIdByName, setSkillIdByName] = useState({});
+  // Maps an already-saved skill name to its UserSkill row id, so a skill the
+  // user removes here can be DELETEd on submit.
+  const [skillRowIdByName, setSkillRowIdByName] = useState({});
+  // Same two maps for specializations: name -> Specialization id (to add) and
+  // name -> UserSpecialization row id (to remove).
+  const [specIdByName, setSpecIdByName] = useState({});
+  const [specRowIdByName, setSpecRowIdByName] = useState({});
 
   // Load the city list once (only Saudi Arabia is seeded today).
   useEffect(() => {
@@ -75,7 +90,7 @@ export default function ProfileSetupPage({ onNavigate, initialData = {}, onDataC
         setCountryId(saId);
         if (saId) {
           const cities = await getCities(saId);
-          setCityOptions(cities.map((c) => ({ value: c.id, label: c.name_en })));
+          setCityOptions(cities.map((c) => ({ value: c.id, label: c.name })));
         }
       } catch {
         // Location becomes a plain disabled field if the catalog call fails.
@@ -93,14 +108,64 @@ export default function ProfileSetupPage({ onNavigate, initialData = {}, onDataC
     return results.map((r) => r.name);
   }
 
+  // Load any already-saved skills so they show on entry, and so submit can
+  // tell new picks from removals. Only seeds the field when it's still empty,
+  // to avoid clobbering choices carried over from an earlier wizard step.
+  useEffect(() => {
+    getMySkills()
+      .then((rows) => {
+        if (!rows.length) return;
+        setSkillIdByName((prev) => {
+          const next = { ...prev };
+          rows.forEach((r) => { next[r.skill.name] = r.skill_id; });
+          return next;
+        });
+        setSkillRowIdByName(Object.fromEntries(rows.map((r) => [r.skill.name, r.id])));
+        setSkills((cur) => (cur.length ? cur : rows.map((r) => r.skill.name)));
+      })
+      .catch(() => {});
+  }, []);
+
+  // The full specialization catalog — the fixed dropdown options plus the
+  // name->id map needed to save a pick.
+  useEffect(() => {
+    getAllSpecializations()
+      .then((list) => {
+        setSpecializationOptions(list.map((s) => s.name));
+        setSpecIdByName((prev) => {
+          const next = { ...prev };
+          list.forEach((s) => { next[s.name] = s.id; });
+          return next;
+        });
+      })
+      .catch(() => {});
+  }, []);
+
+  // Load already-saved specializations so they show on entry and submit can
+  // tell new picks from removals. Only seeds when the field is still empty.
+  useEffect(() => {
+    getMySpecializations()
+      .then((rows) => {
+        if (!rows.length) return;
+        setSpecIdByName((prev) => {
+          const next = { ...prev };
+          rows.forEach((r) => { next[r.specialization.name] = r.specialization_id; });
+          return next;
+        });
+        setSpecRowIdByName(Object.fromEntries(rows.map((r) => [r.specialization.name, r.id])));
+        setSpecializations((cur) => (cur.length ? cur : rows.map((r) => r.specialization.name)));
+      })
+      .catch(() => {});
+  }, []);
+
   // Persist everything up so it survives navigating back to earlier steps.
   useEffect(() => {
     onDataChange?.({
       firstNameEn, secondNameEn, thirdNameEn, lastNameEn,
       firstNameAr, secondNameAr, thirdNameAr, lastNameAr,
-      title, experience, location, bio, skills,
+      specializations, experience, location, bio, skills,
     });
-  }, [firstNameEn, secondNameEn, thirdNameEn, lastNameEn, firstNameAr, secondNameAr, thirdNameAr, lastNameAr, title, experience, location, bio, skills]);
+  }, [firstNameEn, secondNameEn, thirdNameEn, lastNameEn, firstNameAr, secondNameAr, thirdNameAr, lastNameAr, specializations, experience, location, bio, skills]);
 
 
   // Both name languages are shown together. First and last names carry over
@@ -162,21 +227,31 @@ export default function ProfileSetupPage({ onNavigate, initialData = {}, onDataC
         third_name_ar: thirdNameAr || null,
         second_name_en: secondNameEn || null,
         third_name_en: thirdNameEn || null,
-        job_title: title || null,
         years_of_experience: experience || null,
         country_id: countryId || null,
         city_id: location || null,
         bio: bio || null,
       });
 
-      // Best-effort: attach each chosen skill. One failure shouldn't block
-      // the rest or stop the user from reaching the app.
-      await Promise.all(
-        skills
-          .map((name) => skillIdByName[name])
-          .filter(Boolean)
-          .map((skillId) => addSkillToProfile(skillId).catch(() => {})),
-      );
+      // Best-effort: add newly-chosen skills and drop removed ones. One failure
+      // shouldn't block the rest or stop the user from reaching the app.
+      const addedSkills = skills.filter((name) => !skillRowIdByName[name]);
+      const removedSkills = Object.keys(skillRowIdByName).filter((name) => !skills.includes(name));
+      // Same diff for the (single) specialization.
+      const addedSpecs = specializations.filter((name) => !specRowIdByName[name]);
+      const removedSpecs = Object.keys(specRowIdByName).filter((name) => !specializations.includes(name));
+      await Promise.all([
+        ...addedSkills.map((name) => {
+          const skillId = skillIdByName[name];
+          return skillId ? addSkillToProfile(skillId).catch(() => {}) : null;
+        }),
+        ...removedSkills.map((name) => removeSkillFromProfile(skillRowIdByName[name]).catch(() => {})),
+        ...addedSpecs.map((name) => {
+          const specId = specIdByName[name];
+          return specId ? addSpecializationToProfile(specId).catch(() => {}) : null;
+        }),
+        ...removedSpecs.map((name) => removeSpecializationFromProfile(specRowIdByName[name]).catch(() => {})),
+      ]);
 
       onNavigate('home');
     } catch (err) {
@@ -223,12 +298,14 @@ export default function ProfileSetupPage({ onNavigate, initialData = {}, onDataC
 
         <hr className="ps__divider" />
 
-        <Input
-          label={t('profile.title')}
-          supportingText={t('profile.titleHint')}
-          value={title}
-          onChange={e => setTitle(e.target.value)}
-          className="ps__input"
+        <SkillsInput
+          label={t('profile.specializations')}
+          value={specializations}
+          onChange={setSpecializations}
+          options={specializationOptions}
+          max={1}
+          removeLabelKey="profile.removeSpecialization"
+          removeLabelParam="specialization"
         />
 
         <div className="ps__names-grid">

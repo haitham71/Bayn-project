@@ -91,10 +91,16 @@ export default function MyProjectsPage({ onNavigate }) {
                       <span className="mp__posted">
                         {t('myProjects.postedDaysAgo', { count: daysSince(p.created_at) })}
                       </span>
-                      <button type="button" className="mp__link" onClick={() => navigate(`/join-requests/${p.id}`)}>
-                        {t('myProjects.viewDetails')}
-                        <List width={20} height={20} aria-hidden="true" />
-                      </button>
+                      <div className="mp__project-actions">
+                        <button type="button" className="mp__link" onClick={() => navigate(`/edit-idea/${p.id}`)}>
+                          {t('myProjects.viewDetails')}
+                          <List width={20} height={20} aria-hidden="true" />
+                        </button>
+                        <button type="button" className="mp__link" onClick={() => navigate(`/join-requests/${p.id}`)}>
+                          {t('myProjects.joinRequests')}
+                          <UserCheck width={18} height={18} aria-hidden="true" />
+                        </button>
+                      </div>
                     </div>
                   </article>
                 ))}

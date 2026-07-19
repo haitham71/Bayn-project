@@ -11,8 +11,8 @@ export const listMeetingRequests = (role, projectId) =>
 
 // Takes the proposed slot and sends both parties the NDA. Does not schedule the
 // meeting — that happens on its own once both have signed.
-export const acceptMeetingRequest = (requestId) =>
-  api.post(`${API.meetings.requests}/${requestId}/accept`).then((r) => r.data);
+export const acceptMeetingRequest = (requestId, title) =>
+  api.post(`${API.meetings.requests}/${requestId}/accept`, { title: title || null }).then((r) => r.data);
 
 export const rejectMeetingRequest = (requestId) =>
   api.post(`${API.meetings.requests}/${requestId}/reject`).then((r) => r.data);

@@ -149,7 +149,17 @@ export const uploadAvatar = (file) => {
 };
 
 export const deleteAvatar = () => api.delete(API.auth.avatar).then((r) => r.data);
+export const getMySkills = () => api.get(API.profile.skills).then((r) => r.data);
 export const addSkillToProfile = (skill_id) =>
   api.post(API.profile.skills, { skill_id }).then((r) => r.data);
+export const removeSkillFromProfile = (userSkillId) =>
+  api.delete(`${API.profile.skills}/${userSkillId}`).then((r) => r.data);
+
+export const getAllSpecializations = () =>
+  api.get(API.catalog.specializations).then((r) => r.data);
+export const getMySpecializations = () =>
+  api.get(API.profile.specializations).then((r) => r.data);
 export const addSpecializationToProfile = (specialization_id) =>
   api.post(API.profile.specializations, { specialization_id }).then((r) => r.data);
+export const removeSpecializationFromProfile = (userSpecializationId) =>
+  api.delete(`${API.profile.specializations}/${userSpecializationId}`).then((r) => r.data);

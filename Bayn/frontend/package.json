@@ -9,10 +9,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@daily-co/daily-js": "^0.91.0",
+    "@daily-co/daily-react": "^0.26.0",
     "@tanstack/react-query": "^5.101.2",
     "axios": "^1.18.1",
     "dompurify": "^3.4.12",
     "i18next": "^26.3.4",
+    "jotai": "^2.20.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-i18next": "^17.0.8",
