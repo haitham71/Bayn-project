@@ -16,12 +16,12 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from Bayn.backend.src.common.exceptions import ConflictError, NotFoundError, ValidationError
-from Bayn.backend.src.features.catalog.models import (
+from bayn.common.exceptions import ConflictError, NotFoundError, ValidationError
+from bayn.features.catalog.models import (
     Industry, Skill, Specialization, UserSkill, UserSpecialization,
 )
-from Bayn.backend.src.features.identity.models import Country
-from Bayn.backend.src.features.catalog import service
+from bayn.features.identity.models import Country
+from bayn.features.catalog import service
 
 
 pytestmark = pytest.mark.asyncio

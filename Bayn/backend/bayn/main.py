@@ -7,7 +7,6 @@ from fastapi.responses import JSONResponse
 from bayn.common.exceptions import AppException
 from bayn.core.config import settings
 from bayn.features.identity.router import router as identity_router
-from bayn.features.project.router import router as project_router
 # imported so their tables register on Base.metadata for migrations
 from bayn.features.catalog.models import Industry, Skill, Specialization, UserSkill, UserSpecialization
 from bayn.features.catalog.router import catalog_router, profile_router

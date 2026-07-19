@@ -46,7 +46,7 @@ class UserSignup(BaseModel):
     second_name_ar: Optional[str] = None
     third_name_ar: Optional[str] = None
     last_name_ar: str
-    birth_date: [date] # lst change 7/7 لازم يكون فوق 18 ---> changed optional and none to make this mandatory
+    birth_date: date # lst change 7/7 لازم يكون فوق 18 ---> changed optional and none to make this mandatory
     first_name_en: str
     second_name_en: Optional[str] = None
     third_name_en: Optional[str] = None

@@ -7,6 +7,7 @@ Run tests:
 
 import asyncio
 from collections.abc import AsyncGenerator
+from datetime import date
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -17,11 +18,11 @@ from sqlalchemy import event
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
 
-from Bayn.backend.src.common.exceptions import NotFoundError
-from Bayn.backend.src.core.database import Base, get_db
-from Bayn.backend.src.core.security import create_access_token, hash_password
-from Bayn.backend.src.features.identity.models import City, Country, User
-from Bayn.backend.src.main import app
+from bayn.common.exceptions import NotFoundError
+from bayn.core.database import Base, get_db
+from bayn.core.security import create_access_token, hash_password
+from bayn.features.identity.models import City, Country, User
+from bayn.main import app
 
 
 # in-memory SQLite avoids needing a running Postgres for tests
@@ -122,6 +123,7 @@ async def test_user(db: AsyncSession, test_country: Country) -> User:
         last_name_ar="سعيد",
         first_name_en="Asaad",
         last_name_en="Saeed",
+        birth_date=date(2000, 1, 1),
         email="test@example.com",
         username="asaad_test",
         password_hash=hash_password("TestPass123"),
