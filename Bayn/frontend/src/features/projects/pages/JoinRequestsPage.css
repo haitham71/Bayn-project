@@ -58,6 +58,29 @@
   color: var(--text-title, #0f3d2e);
 }
 
+/* The idea these requests belong to. */
+.jr__project {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 5px 14px;
+  border-radius: 20px;
+  background: var(--color-primary-400, #76c3a9);
+  color: var(--text-title, #0f3d2e);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+[dir='rtl'] .jr__project {
+  font-family: var(--font-ar);
+}
+
+.jr__project svg {
+  flex: 0 0 auto;
+}
+
 .jr__subtitle {
   margin: 8px 0 0;
   font-size: 16px;
