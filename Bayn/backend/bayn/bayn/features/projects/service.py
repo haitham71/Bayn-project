@@ -9,7 +9,7 @@ from sqlalchemy.orm import selectinload
 
 from bayn.common.exceptions import ConflictError, ForbiddenError, NotFoundError, ValidationError
 from bayn.core.i18n import DEFAULT_LOCALE, t
-from bayn.features.catalog.models import Skill
+from bayn.features.catalog.models import Skill, Specialization, UserSpecialization
 from bayn.features.identity.models import User
 from bayn.features.projects.models import (
     Project,
@@ -235,19 +235,36 @@ async def list_members(db: AsyncSession, project_id: uuid.UUID) -> list[ProjectM
         .where(ProjectMembership.project_id == project_id)
         .order_by(ProjectMembership.created_at)
     )
+    rows = result.all()
+
+    # Each member's specialization (max one per profile), fetched in one query.
+    user_ids = [user.id for user, _ in rows]
+    spec_map: dict[uuid.UUID, tuple[str, str]] = {}
+    if user_ids:
+        spec_rows = await db.execute(
+            select(UserSpecialization.user_id, Specialization.name_en, Specialization.name_ar)
+            .join(Specialization, Specialization.id == UserSpecialization.specialization_id)
+            .where(UserSpecialization.user_id.in_(user_ids))
+        )
+        for uid, name_en, name_ar in spec_rows.all():
+            spec_map.setdefault(uid, (name_en, name_ar))
+
     members = []
-    for user, role in result.all():
+    for user, role in rows:
         avatar_url = None
         if user.avatar_key:
             try:
                 avatar_url = r2_client.get_avatar_url(user.avatar_key)
             except StorageError:
                 avatar_url = None
+        spec = spec_map.get(user.id)
         members.append(ProjectMemberResponse(
             user_id=user.id,
             name_en=f"{user.first_name_en} {user.last_name_en}".strip(),
             name_ar=f"{user.first_name_ar} {user.last_name_ar}".strip(),
             job_title=user.job_title,
+            specialization_en=spec[0] if spec else None,
+            specialization_ar=spec[1] if spec else None,
             avatar_url=avatar_url,
             role=role,
         ))

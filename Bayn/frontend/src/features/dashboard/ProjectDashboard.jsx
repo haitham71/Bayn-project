@@ -490,6 +490,7 @@ export default function ProjectDashboardPage({ onNavigate }) {
                 <ul className="pd__team">
                   {team.map((member) => {
                     const name = locale === 'ar' ? member.name_ar : member.name_en;
+                    const specialization = locale === 'ar' ? member.specialization_ar : member.specialization_en;
                     const isMe = member.user_id === user?.id;
                     return (
                       <li key={member.user_id} className="pd__team-row">
@@ -497,8 +498,8 @@ export default function ProjectDashboardPage({ onNavigate }) {
                           <p className="pd__team-name">{name || '—'}</p>
                           <p className="pd__team-role">
                             {member.role === 'owner' ? t('projectDashboard.owner') : ''}
-                            {member.role === 'owner' && member.job_title ? ' · ' : ''}
-                            {member.job_title || ''}
+                            {member.role === 'owner' && specialization ? ' · ' : ''}
+                            {specialization || ''}
                           </p>
                         </div>
                         {isMe && <span className="pd__team-you">{t('projectDashboard.you')}</span>}

@@ -234,6 +234,7 @@ export default function HomePage({ onNavigate }) {
                       <ul className="home__team-list bayn-scroll">
                         {teamMembers.map((mem) => {
                           const name = ((locale === 'ar' ? mem.name_ar : mem.name_en) || '').trim();
+                          const specialization = locale === 'ar' ? mem.specialization_ar : mem.specialization_en;
                           return (
                             <li key={mem.user_id} className="home__team-member">
                               {mem.avatar_url ? (
@@ -243,7 +244,7 @@ export default function HomePage({ onNavigate }) {
                               )}
                               <span className="home__team-info">
                                 <span className="home__team-name">{name || t('home.profileName')}</span>
-                                {mem.job_title && <span className="home__team-role">{mem.job_title}</span>}
+                                {specialization && <span className="home__team-role">{specialization}</span>}
                               </span>
                               <span className={`home__team-badge${mem.role === 'owner' ? ' home__team-badge--owner' : ''}`}>
                                 {t(mem.role === 'owner' ? 'home.roleOwner' : 'home.roleMember')}

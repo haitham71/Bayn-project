@@ -97,6 +97,8 @@ class ProjectMemberResponse(BaseModel):
     name_en: str
     name_ar: str
     job_title: str | None = None
+    specialization_en: str | None = None
+    specialization_ar: str | None = None
     avatar_url: str | None = None
     role: ProjectMembershipRole
 
