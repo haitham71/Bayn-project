@@ -31,6 +31,8 @@ class RequesterInfo(BaseModel):
     # "Riyadh, Saudi Arabia" — None when the user set neither city nor country.
     location_en: str | None = None
     location_ar: str | None = None
+    # the requester's skills (names), so the owner can judge the fit at a glance
+    skills: list[str] = Field(default_factory=list)
 
 
 class SignatureState(BaseModel):

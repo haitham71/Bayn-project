@@ -272,6 +272,27 @@
   color: var(--text-title, #0f3d2e);
 }
 
+/* Requester skills */
+.jr__req-skills {
+  margin-bottom: 8px;
+}
+
+.jr__skill-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.jr__skill-chip {
+  padding: 3px 9px;
+  border-radius: 20px;
+  background: rgba(119, 181, 160, 0.2);
+  color: var(--text-title, #0f3d2e);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
 .jr__req-actions {
   display: flex;
   flex-direction: column;

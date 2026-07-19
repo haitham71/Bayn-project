@@ -309,6 +309,7 @@
     "approve": "Accept",
     "decline": "Reject",
     "message": "Message",
+    "skills": "Skills",
     "applied": "Applied {{when}}",
     "accept": "Send NDA",
     "acceptTitle": "Send the NDA?",

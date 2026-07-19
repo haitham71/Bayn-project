@@ -261,6 +261,16 @@ export default function JoinRequestsPage({ onNavigate }) {
                     </div>
 
                     <div className="jr__req-body">
+                      {r.requester?.skills?.length > 0 && (
+                        <div className="jr__req-skills">
+                          <p className="jr__msg-label">{t('joinRequests.skills')}</p>
+                          <div className="jr__skill-chips">
+                            {r.requester.skills.map((s) => (
+                              <span key={s} className="jr__skill-chip">{s}</span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                       {r.message && (
                         <>
                           <p className="jr__msg-label">{t('joinRequests.message')}</p>

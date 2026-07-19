@@ -20,6 +20,7 @@ from bayn.core.config import settings
 from bayn.core.i18n import DEFAULT_LOCALE, t
 from bayn.features.contracts import service as contracts_service
 from bayn.features.contracts.models import Contract, ContractStatus
+from bayn.features.catalog.models import Skill, UserSkill
 from bayn.features.identity.models import User
 from bayn.features.meetings.models import (
     ACTIVE_REQUEST_STATUSES,
@@ -263,6 +264,17 @@ async def requesters_map(db: AsyncSession, user_ids: list[uuid.UUID]) -> dict[uu
         .options(selectinload(User.city), selectinload(User.country))
         .where(User.id.in_(ids))
     )
+    # Each requester's skills (names), gathered in one query and grouped by user.
+    skills_by_user: dict[uuid.UUID, list[str]] = {}
+    skill_rows = await db.execute(
+        select(UserSkill.user_id, Skill.name)
+        .join(Skill, UserSkill.skill_id == Skill.id)
+        .where(UserSkill.user_id.in_(ids))
+        .order_by(Skill.name)
+    )
+    for uid, sname in skill_rows.all():
+        skills_by_user.setdefault(uid, []).append(sname)
+
     out = {}
     for user in result.scalars().all():
         out[user.id] = RequesterInfo(
@@ -272,6 +284,7 @@ async def requesters_map(db: AsyncSession, user_ids: list[uuid.UUID]) -> dict[uu
             job_title=user.job_title,
             location_en=_location(user, arabic=False),
             location_ar=_location(user, arabic=True),
+            skills=skills_by_user.get(user.id, []),
         )
     return out
 
