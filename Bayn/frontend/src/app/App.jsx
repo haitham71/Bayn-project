@@ -12,6 +12,7 @@ import MyProfilePage    from '@/features/profile/pages/MyProfilePage';
 import MyProjectsPage   from '@/features/projects/pages/MyProjectsPage';
 import JoinRequestsPage from '@/features/projects/pages/JoinRequestsPage';
 import ProjectDashboardPage from '@/features/dashboard/ProjectDashboard';
+import SettingsPage from '@/features/settings/settings';
 import CreateIdeaPage   from '@/features/ideas/pages/CreateIdeaPage';
 import EditIdeaPage    from '@/features/ideas/pages/EditIdeaPage';
 import IdeasMarketplacePage from '@/features/ideas/pages/IdeasMarketplacePage';
@@ -37,6 +38,7 @@ const PATHS = {
   meetings: '/meetings',
   createidea: '/create-idea',
   dashboard: '/projects/dashboard',
+  settings: '/settings',
 };
 
 export default function App() {
@@ -90,6 +92,7 @@ export default function App() {
       <Route path="/edit-idea/:id" element={<ProtectedRoute><EditIdeaPage onNavigate={goTo} /></ProtectedRoute>} />
       <Route path="/projects/dashboard" element={<ProtectedRoute><ProjectDashboardPage onNavigate={goTo} /></ProtectedRoute>} />
       <Route path="/projects/:projectId/dashboard" element={<ProtectedRoute><ProjectDashboardPage onNavigate={goTo} /></ProtectedRoute>} />
+      <Route path="/settings" element={<ProtectedRoute><SettingsPage onNavigate={goTo} /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
