@@ -146,6 +146,9 @@
     "opening": "{{count}} شاغر",
     "postedDaysAgo": "نُشر قبل {{count}} أيام",
     "calendarTitle": "تقويمك",
+    "tasksTitle": "المهام",
+    "tasksEmpty": "لا توجد مهام بعد.",
+    "upcomingMeetings": "الاجتماعات القادمة",
     "meetingJoinRequest": "اجتماع لطلب انضمام",
     "meetingWeeklyTeam": "اجتماع الفريق الأسبوعي"
   },
