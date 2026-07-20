@@ -15,7 +15,7 @@ from bayn.features.projects.schemas import (
     MeetingSlotResponse,
     MyProjectResponse,
     ProjectCreateRequest,
-    ProjectMembershipResponse,
+    ProjectMemberResponse,
     ProjectResponse,
     ProjectUpdateRequest,
     SlotsReplaceRequest,
@@ -61,9 +61,11 @@ async def list_my_projects(
     owners = await service.owners_map(db, [p.id for p, _ in rows])
     result = []
     for project, role in rows:
+        # role isn't a column on Project — set it as a transient attribute so
+        # from_attributes validation can pick it up (it's required on the schema).
+        project.role = role
         resp = MyProjectResponse.model_validate(project)
         resp.owner = owners.get(project.id)
-        resp.role = role
         result.append(resp)
     return result
 
@@ -93,12 +95,12 @@ async def update_project(
 
 
 @projects_router.get(
-    "/{project_id}/members", response_model=list[ProjectMembershipResponse], summary="List a project's members"
+    "/{project_id}/members", response_model=list[ProjectMemberResponse], summary="List a project's members"
 )
 async def list_members(
     project_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-) -> list[ProjectMembershipResponse]:
+) -> list[ProjectMemberResponse]:
     return await service.list_members(db, project_id)
 
 
