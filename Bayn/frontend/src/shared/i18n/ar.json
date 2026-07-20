@@ -563,14 +563,22 @@
     "disconnect": "قطع الاتصال",
     "connectedNotWired": "ربط/قطع الحسابات غير متاح حالياً.",
     "dangerTitle": "منطقة الخطر",
-    "deactivateTitle": "تعطيل الحساب",
-    "deactivateDesc": "إخفاء ملفك الشخصي مؤقتاً وإيقاف كل نشاطك. تقدر تفعّله مرة ثانية بأي وقت.",
-    "deactivate": "تعطيل",
     "deleteTitle": "حذف الحساب",
     "deleteDesc": "سيتم حذف حسابك بشكل مؤقت (soft-delete). تُحفظ بياناتك حسب سياستنا، لكن ملفك الشخصي ما بيكون ظاهر بعدها.",
     "deleteAccount": "حذف الحساب",
     "confirmNameMsg": "بيتم تحديث اسمك وبيانات حسابك.",
     "confirmContactMsg": "بيتم تحديث معلومات التواصل الخاصة فيك.",
     "confirmDeleteMsg": "هذا بيعطّل حسابك. متأكد؟"
+  },
+  "profileView": {
+    "editProfile": "تعديل الملف الشخصي",
+    "edit": "تعديل",
+    "addProject": "إضافة مشروع",
+    "projectsEmpty": "لا توجد مشاريع خارجية مضافة بعد.",
+    "viewProject": "عرض المشروع",
+    "details": "التفاصيل",
+    "preferredIndustry": "الصناعة المفضّلة",
+    "gitProfile": "ملف Git",
+    "memberSince": "عضو منذ"
   }
 }

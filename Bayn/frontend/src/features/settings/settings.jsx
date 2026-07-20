@@ -40,7 +40,8 @@ function eyeToggle(shown) {
 }
 
 export default function SettingsPage({ onNavigate }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = i18n.language === 'ar' ? 'ar' : 'en';
   const { data: profile } = useProfile();
   const queryClient = useQueryClient();
 
@@ -231,6 +232,10 @@ export default function SettingsPage({ onNavigate }) {
     action?.();
   }
 
+  const memberSince = profile?.created_at
+    ? new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' }).format(new Date(profile.created_at))
+    : '';
+
   function scrollTo(key) {
     setActiveSection(key);
     document.getElementById(`settings-${key}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -244,8 +249,13 @@ export default function SettingsPage({ onNavigate }) {
         <Navbar userName={profile ? `${profile.first_name_en || ''} ${profile.last_name_en || ''}`.trim() : ''} />
 
         <div className="st__head">
-          <h1>{t('settings.title')}</h1>
-          <p className="st__subtitle">{t('settings.subtitle')}</p>
+          <div>
+            <h1>{t('settings.title')}</h1>
+            <p className="st__subtitle">{t('settings.subtitle')}</p>
+          </div>
+          {memberSince && (
+            <p className="st__member-since">{t('profileView.memberSince')}: <span>{memberSince}</span></p>
+          )}
         </div>
 
         <div className="st__body">
@@ -416,13 +426,6 @@ export default function SettingsPage({ onNavigate }) {
             <section id="settings-danger" className="st__panel st__panel--danger">
               <div className="st__panel-head">
                 <h3 className="st__danger-title">{t('settings.dangerTitle')}</h3>
-              </div>
-              <div className="st__danger-row">
-                <div>
-                  <p className="st__danger-item-title">{t('settings.deactivateTitle')}</p>
-                  <p className="st__danger-item-sub">{t('settings.deactivateDesc')}</p>
-                </div>
-                <Button variant="secondary" className="st__btn-danger" disabled>{t('settings.deactivate')}</Button>
               </div>
               <div className="st__danger-row">
                 <div>

@@ -563,14 +563,22 @@
     "disconnect": "Disconnect",
     "connectedNotWired": "Connecting/disconnecting accounts isn't available yet.",
     "dangerTitle": "Danger zone",
-    "deactivateTitle": "Deactivate account",
-    "deactivateDesc": "Temporarily hide your profile and pause all activity. You can reactivate any time.",
-    "deactivate": "Deactivate",
     "deleteTitle": "Delete account",
     "deleteDesc": "Your account will be soft-deleted. Data is retained per our data policy, but your profile will no longer be visible.",
     "deleteAccount": "Delete account",
     "confirmNameMsg": "Your name and account details will be updated.",
     "confirmContactMsg": "Your contact information will be updated.",
     "confirmDeleteMsg": "This will deactivate your account. Are you sure?"
+  },
+  "profileView": {
+    "editProfile": "Edit profile",
+    "edit": "Edit",
+    "addProject": "Add project",
+    "projectsEmpty": "No external projects added yet.",
+    "viewProject": "View project",
+    "details": "Details",
+    "preferredIndustry": "Preferred industry",
+    "gitProfile": "Git profile",
+    "memberSince": "Member since"
   }
 }
