@@ -5,7 +5,8 @@ from fastapi import APIRouter, Depends, Query, WebSocket, WebSocketDisconnect, s
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from bayn.core.database import get_db
-from bayn.core.security import get_current_user_from_token  # Assuming this exists for HTTP auth
+from bayn.core.security import decode_token
+from bayn.features.identity.dependencies import get_current_active_user
 from bayn.features.identity.models import User
 from bayn.features.chat.manager import manager
 from bayn.features.chat.schemas import (
@@ -20,12 +21,22 @@ from bayn.features.chat import service
 router = APIRouter(prefix="/chats", tags=["Chat"])
 
 
+async def _user_from_token(token: str, db: AsyncSession) -> User:
+    """Resolve a User from a raw JWT access token — used by the WebSocket
+    handshake, which can't go through the HTTP auth dependency."""
+    user_id = decode_token(token, "access")
+    user = await db.get(User, user_id)
+    if user is None or not user.is_active:
+        raise ValueError("invalid token")
+    return user
+
+
 # ── HTTP REST Endpoints ───────────────────────────────────────────────────────
 
 @router.post("/direct", response_model=ConversationResponse, status_code=status.HTTP_201_CREATED)
 async def create_or_get_direct_chat(
     payload: DirectChatCreateRequest,
-    current_user: User = Depends(get_current_user_from_token),
+    current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Initializes or retrieves an existing 1-on-1 conversation room."""
@@ -36,7 +47,7 @@ async def create_or_get_direct_chat(
 
 @router.get("", response_model=list[ConversationResponse])
 async def list_conversations(
-    current_user: User = Depends(get_current_user_from_token),
+    current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Returns all conversations the authenticated user is currently in, sorted by activity."""
@@ -48,7 +59,7 @@ async def get_chat_history(
     conversation_id: uuid.UUID,
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
-    current_user: User = Depends(get_current_user_from_token),
+    current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Retrieves standard paginated message history logs for a specific conversation."""
@@ -68,7 +79,7 @@ async def websocket_endpoint(
     """Dedicated bi-directional socket pipeline for real-time messaging."""
     # 1. Authenticate the WebSocket connection up front
     try:
-        user = await get_current_user_from_token(token, db)
+        user = await _user_from_token(token, db)
     except Exception:
         # Close connection immediately if the token is invalid or expired
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
