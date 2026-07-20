@@ -34,7 +34,7 @@ export const API = {
   },
   projects: {
     base: '/projects',
-    mine: '/projects/mine',
+    mine: '/projects/me',
   },
   meetings: {
     base: '/meetings',

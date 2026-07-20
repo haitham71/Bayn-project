@@ -28,9 +28,10 @@ export const getProject = (id) =>
 export const getProjectSlots = (id) =>
   api.get(`${API.projects.base}/${id}/slots`).then((r) => r.data);
 
-// Owner: partial-update a project (e.g. visibility).
+// Owner: update a project (e.g. visibility). Backend exposes this as PUT with
+// an all-optional body, so a partial payload updates just the given fields.
 export const updateProject = (id, payload) =>
-  api.patch(`${API.projects.base}/${id}`, payload).then((r) => r.data);
+  api.put(`${API.projects.base}/${id}`, payload).then((r) => r.data);
 
 // Owner: replace the project's available meeting slots.
 export const replaceSlots = (id, slots) =>
