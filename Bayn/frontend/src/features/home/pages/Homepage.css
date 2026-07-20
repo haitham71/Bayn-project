@@ -119,7 +119,7 @@
   padding: 20px;
   border: 1px solid var(--bg-surface-thirdary);
   border-radius: 30px;
-  background: var(--bg-surface-primary);
+  background: var(--color-secondary-200);
   box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.25);
 }
 

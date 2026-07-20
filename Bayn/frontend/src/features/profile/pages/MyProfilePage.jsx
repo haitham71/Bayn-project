@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
-import { getSaudiCountryId, getCities, searchSkills, getMySkills, addSkillToProfile, removeSkillFromProfile, getAllSpecializations, getMySpecializations, addSpecializationToProfile, removeSpecializationFromProfile, uploadAvatar, updateProfile, requestPasswordChange as requestPasswordChangeApi } from '@/features/identity/services/authService';
+import { getSaudiCountryId, getCities, searchSkills, getMySkills, addSkillToProfile, removeSkillFromProfile, getAllSpecializations, getMySpecializations, addSpecializationToProfile, removeSpecializationFromProfile, uploadAvatar, updateProfile } from '@/features/identity/services/authService';
 import { useProfile, profileQueryKey } from '@/shared/hooks/useProfile';
 import { getApiErrorMessage } from '@/shared/lib/apiError';
 import Sidebar from '@/shared/components/Sidebar';
@@ -10,21 +10,13 @@ import Input from '@/shared/components/Input';
 import Button from '@/shared/components/Button';
 import Select from '@/shared/components/Select';
 import SkillsInput from '@/shared/components/SkillsInput';
-import PasswordStrength from '@/shared/components/PasswordStrength';
 import ConfirmDialog from '@/shared/components/ConfirmDialog';
-import { validateName, validateUsername, validatePassword } from '@/features/identity/utils/validation';
+import { validateName } from '@/features/identity/utils/validation';
 import Camera from '@/assets/icons/camera.svg?react';
 import MapPin from '@/assets/icons/map-pin.svg?react';
-import Eye from '@/assets/icons/eye.svg?react';
-import EyeOff from '@/assets/icons/eye-off.svg?react';
 import './MyProfilePage.css';
 
 const BIO_MAX = 200;
-
-const TABS = [
-  { key: 'account', labelKey: 'myProfile.tabAccount' },
-  { key: 'profile', labelKey: 'myProfile.tabProfile' },
-];
 
 // Values match the backend's ExperienceRange enum exactly.
 const EXPERIENCE_OPTIONS = [
@@ -43,18 +35,11 @@ const EMPTY_PREVIEW = {
   bio: '', experience: '', location: '', skills: [], specializations: [],
 };
 
-// Small trailing eye toggle shared by the password fields.
-function eyeToggle(shown) {
-  return shown
-    ? <Eye width={20} height={20} aria-hidden="true" />
-    : <EyeOff width={20} height={20} aria-hidden="true" />;
-}
 
 export default function MyProfilePage({ onNavigate }) {
   const { t, i18n } = useTranslation();
   const { data: profile } = useProfile();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState('account');
   // Pending confirm modal: { message, onConfirm } while awaiting a yes/no.
   const [confirmState, setConfirmState] = useState(null);
 
@@ -71,24 +56,6 @@ export default function MyProfilePage({ onNavigate }) {
   useEffect(() => () => {
     if (pendingPreview) URL.revokeObjectURL(pendingPreview);
   }, [pendingPreview]);
-
-  // --- Account information (loaded from the backend on mount) ---
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [accountErrors, setAccountErrors] = useState({});
-  const [accountSaving, setAccountSaving] = useState(false);
-  const [accountError, setAccountError] = useState('');
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmNewPassword, setConfirmNewPassword] = useState('');
-  const [showCurrent, setShowCurrent] = useState(false);
-  const [showNew, setShowNew] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [pwErrors, setPwErrors] = useState({});
-  const [pwSaving, setPwSaving] = useState(false);
-  const [pwSubmitError, setPwSubmitError] = useState('');
-  const [pwSuccess, setPwSuccess] = useState('');
 
   // --- Profile information (four-part name in both languages) ---
   // Names, experience and location load from the backend on mount.
@@ -142,9 +109,6 @@ export default function MyProfilePage({ onNavigate }) {
   useEffect(() => {
     if (!profile) return;
     const u = profile;
-    setUsername(u.username || '');
-    setEmail(u.email || '');
-    setPhone(u.phone_number ? `+966 ${u.phone_number}` : '');
     setFirstNameEn(u.first_name_en || '');
     setSecondNameEn(u.second_name_en || '');
     setThirdNameEn(u.third_name_en || '');
@@ -302,71 +266,6 @@ export default function MyProfilePage({ onNavigate }) {
   const allNameFields = nameGroups.flatMap((g) => g.fields);
 
 
-  // Confirm actions — validate first, then open the confirm modal; the actual
-  // save runs only after the user confirms.
-  function requestAccountUpdate() {
-    const err = validateUsername(username);
-    setAccountErrors(err ? { username: err } : {});
-    if (err) return;
-    // Nothing to save if the username matches the last saved value.
-    if (username.trim() === committed.username) {
-      setAccountError(t('myProfile.noChanges'));
-      return;
-    }
-    setConfirmState({ message: t('myProfile.confirmAccountMsg'), onConfirm: doAccountUpdate });
-  }
-
-  async function doAccountUpdate() {
-    setAccountSaving(true);
-    setAccountError('');
-    try {
-      // The backend lowercases the username and rejects one already taken.
-      const updated = await updateProfile({ username });
-      queryClient.setQueryData(profileQueryKey, updated);
-      setCommitted((c) => ({ ...c, username: updated.username || username }));
-    } catch (e) {
-      setAccountError(getApiErrorMessage(e, t('signup.errorGeneric')));
-    } finally {
-      setAccountSaving(false);
-    }
-  }
-
-  const accountFieldError = (field) =>
-    accountErrors[field] ? { error: true, errorText: t(`signup.${accountErrors[field]}`) } : {};
-
-  function requestPasswordChange() {
-    // Same rules the sign-up form enforces, plus a current-password check
-    // and a new/confirm match.
-    const next = {};
-    if (!currentPassword) next.current = 'errRequired';
-    const pass = validatePassword(newPassword);
-    if (pass) next.new = pass;
-    else if (newPassword === currentPassword) next.new = 'errSamePassword';
-    if (!next.new && confirmNewPassword !== newPassword) next.confirm = 'errorPassword';
-    setPwErrors(next);
-    if (Object.values(next).some(Boolean)) return;
-    setPwSubmitError('');
-    setPwSuccess('');
-    setConfirmState({ message: t('myProfile.confirmPasswordMsg'), onConfirm: doPasswordChange });
-  }
-
-  // The backend stages the new password and emails a confirmation link; the
-  // change only takes effect once the user clicks that link.
-  async function doPasswordChange() {
-    setPwSaving(true);
-    setPwSubmitError('');
-    try {
-      await requestPasswordChangeApi(currentPassword, newPassword);
-      setPwSuccess(t('myProfile.passwordEmailSent'));
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmNewPassword('');
-    } catch (e) {
-      setPwSubmitError(getApiErrorMessage(e, t('signup.errorGeneric')));
-    } finally {
-      setPwSaving(false);
-    }
-  }
 
   // Runs the pending action, then closes the modal.
   function handleConfirm() {
@@ -374,14 +273,6 @@ export default function MyProfilePage({ onNavigate }) {
     setConfirmState(null);
     action?.();
   }
-
-  // Clears a single password field's error once the user edits it.
-  function clearPwError(field) {
-    setPwErrors((prev) => (prev[field] ? { ...prev, [field]: undefined } : prev));
-  }
-
-  const pwFieldError = (field) =>
-    pwErrors[field] ? { error: true, errorText: t(`signup.${pwErrors[field]}`) } : {};
 
   function clearNameError(field) {
     setNameErrors((prev) => (prev[field] ? { ...prev, [field]: undefined } : prev));
@@ -503,118 +394,7 @@ export default function MyProfilePage({ onNavigate }) {
           <section className="myp__card myp__form">
             <h1 className="myp__card-title">{t('myProfile.title')}</h1>
 
-            <div className="myp__tabs" role="tablist">
-              {TABS.map((tab) => (
-                <button
-                  key={tab.key}
-                  type="button"
-                  role="tab"
-                  aria-selected={activeTab === tab.key}
-                  className={`myp__tab${activeTab === tab.key ? ' myp__tab--active' : ''}`}
-                  onClick={() => setActiveTab(tab.key)}
-                >
-                  {t(tab.labelKey)}
-                </button>
-              ))}
-            </div>
-
-            {activeTab === 'account' && (
-              <div className="myp__panel" role="tabpanel">
-                <div className="myp__grid">
-                  <Input
-                    label={t('signup.username')}
-                    value={username}
-                    onChange={(e) => {
-                      setUsername(e.target.value);
-                      setAccountErrors((p) => (p.username ? {} : p));
-                      setAccountError('');
-                    }}
-                    className="myp__input"
-                    {...accountFieldError('username')}
-                  />
-                  <Input
-                    label={t('signup.email')}
-                    value={email}
-                    disabled
-                    className="myp__input"
-                  />
-                  <Input
-                    label={t('signup.phone')}
-                    value={phone}
-                    disabled
-                    className="myp__input"
-                  />
-                </div>
-
-                {accountError && <p className="myp__form-error">{accountError}</p>}
-
-                <Button
-                  type="button"
-                  variant="primary"
-                  size="sm"
-                  className="myp__submit"
-                  onClick={requestAccountUpdate}
-                  disabled={accountSaving}
-                >
-                  {t('myProfile.confirmAccountUpdate')}
-                </Button>
-
-                <h2 className="myp__section-title">{t('myProfile.changePassword')}</h2>
-
-                <Input
-                  label={t('myProfile.currentPassword')}
-                  type={showCurrent ? 'text' : 'password'}
-                  value={currentPassword}
-                  onChange={(e) => { setCurrentPassword(e.target.value); clearPwError('current'); }}
-                  trailingIcon={eyeToggle(showCurrent)}
-                  onTrailingClick={() => setShowCurrent((p) => !p)}
-                  className="myp__input myp__input--full"
-                  {...pwFieldError('current')}
-                />
-
-                <div className="myp__grid">
-                  <Input
-                    label={t('myProfile.newPassword')}
-                    type={showNew ? 'text' : 'password'}
-                    value={newPassword}
-                    onChange={(e) => { setNewPassword(e.target.value); clearPwError('new'); }}
-                    trailingIcon={eyeToggle(showNew)}
-                    onTrailingClick={() => setShowNew((p) => !p)}
-                    className="myp__input"
-                    {...pwFieldError('new')}
-                  />
-                  <Input
-                    label={t('myProfile.confirmNewPassword')}
-                    type={showConfirm ? 'text' : 'password'}
-                    value={confirmNewPassword}
-                    onChange={(e) => { setConfirmNewPassword(e.target.value); clearPwError('confirm'); }}
-                    trailingIcon={eyeToggle(showConfirm)}
-                    onTrailingClick={() => setShowConfirm((p) => !p)}
-                    className="myp__input"
-                    {...pwFieldError('confirm')}
-                  />
-                </div>
-
-                <PasswordStrength password={newPassword} />
-
-                {pwSubmitError && <p className="myp__form-error">{pwSubmitError}</p>}
-                {pwSuccess && <p className="myp__form-success">{pwSuccess}</p>}
-
-                <Button
-                  type="button"
-                  variant="primary"
-                  size="sm"
-                  className="myp__submit"
-                  onClick={requestPasswordChange}
-                  disabled={pwSaving}
-                >
-                  {t('myProfile.confirmPasswordChange')}
-                </Button>
-              </div>
-            )}
-
-            {activeTab === 'profile' && (
-              <div className="myp__panel" role="tabpanel">
+            <div className="myp__panel" role="tabpanel">
                 {nameGroups.map((group) => (
                   <div key={group.lng} className="myp__names-group">
                     <p className="myp__names-lang">{group.heading}</p>
@@ -694,8 +474,7 @@ export default function MyProfilePage({ onNavigate }) {
                 >
                   {t('myProfile.confirmProfileUpdate')}
                 </Button>
-              </div>
-            )}
+            </div>
           </section>
 
           {/* Read-only preview */}
