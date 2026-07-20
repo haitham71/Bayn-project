@@ -1,0 +1,8 @@
+{
+  "error": {
+    "cannot_chat_self": "لا يمكنك بدء محادثة مع نفسك",
+    "failed_to_create_chat": "تعذّر إنشاء المحادثة. حاول مرة أخرى.",
+    "conversation_not_found": "المحادثة غير موجودة",
+    "message_send_failed": "تعذّر إرسال الرسالة. حاول مرة أخرى."
+  }
+}
