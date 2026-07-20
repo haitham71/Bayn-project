@@ -274,30 +274,6 @@ export default function SettingsPage({ onNavigate }) {
 
           <div className="st__content">
 
-            {/* ---- Account: Name ---- */}
-            <section id="settings-account" className="st__panel">
-              <div className="st__panel-head">
-                <h3>{t('settings.nameTitle')}</h3>
-                <p className="st__panel-desc">{t('settings.nameDesc')}</p>
-              </div>
-              <div className="st__row2">
-                <Input label={t('signup.firstNameEn')} value={firstNameEn} onChange={(e) => setFirstNameEn(e.target.value)} {...nameFieldError('firstNameEn')} />
-                <Input label={t('signup.lastNameEn')} value={lastNameEn} onChange={(e) => setLastNameEn(e.target.value)} {...nameFieldError('lastNameEn')} />
-              </div>
-              <div className="st__row2">
-                <Input label={t('signup.firstNameAr')} value={firstNameAr} onChange={(e) => setFirstNameAr(e.target.value)} {...nameFieldError('firstNameAr')} />
-                <Input label={t('signup.lastNameAr')} value={lastNameAr} onChange={(e) => setLastNameAr(e.target.value)} {...nameFieldError('lastNameAr')} />
-              </div>
-              <div className="st__row2">
-                <Input label={t('signup.username')} value={username} onChange={(e) => setUsername(e.target.value)} {...nameFieldError('username')} />
-                <Select label={t('profile.location')} value={cityId} onChange={setCityId} options={cityOptions} />
-              </div>
-              {nameError && <p className="st__error">{nameError}</p>}
-              <div className="st__save-row">
-                <Button variant="primary" onClick={requestNameSave} disabled={nameSaving}>{t('myProfile.save')}</Button>
-              </div>
-            </section>
-
             {/* ---- Security: contact info + password ---- */}
             <section id="settings-security" className="st__panel">
               <div className="st__panel-head">

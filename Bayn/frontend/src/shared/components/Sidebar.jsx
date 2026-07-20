@@ -27,7 +27,7 @@ const defaultItems = [
 ];
 
 const defaultFooter = [
-    { key: 'settings', labelKey: 'sidebar.settings', icon: Settings },
+    { key: 'settings', page: 'settings', labelKey: 'sidebar.settings', icon: Settings },
 	{ key: 'language', labelKey: 'app.switchLanguage', icon: Languages, action: 'toggleLanguage' },
 	{ key: 'logout', labelKey: 'sidebar.logout', icon: LogOut, action: 'logout' },
 ];
