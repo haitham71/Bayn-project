@@ -824,6 +824,26 @@ async def create_team_meeting(
     return meeting
 
 
+async def cancel_team_meeting(
+    db: AsyncSession, meeting_id: uuid.UUID, owner_id: uuid.UUID, locale: str = DEFAULT_LOCALE
+) -> None:
+    """The owner cancels a team meeting they scheduled. Scoped to team
+    meetings only — 1:1 introduction meetings go through the NDA/contract
+    flow and aren't touched here."""
+    meeting = await db.get(Meeting, meeting_id)
+    if not meeting:
+        raise NotFoundError(t("meetings", "meeting.not_found", locale))
+
+    if meeting.user_id != meeting.counterpart_id:
+        raise ValidationError(t("meetings", "team.not_a_team_meeting", locale))
+
+    if meeting.user_id != owner_id:
+        raise ForbiddenError(t("meetings", "team.owner_only", locale))
+
+    await db.delete(meeting)  # cascades to meeting_participants and attendance rows
+    await db.commit()
+
+
 async def get_meeting(
     db: AsyncSession, meeting_id: uuid.UUID, user_id: uuid.UUID, locale: str = DEFAULT_LOCALE
 ) -> Meeting:
@@ -925,6 +945,47 @@ async def list_meetings(
         query = query.where(Meeting.project_id == project_id)
     result = await db.execute(query)
     return result.scalars().all()
+
+
+async def list_project_meetings(
+    db: AsyncSession, project_id: uuid.UUID, viewer_id: uuid.UUID, locale: str = DEFAULT_LOCALE
+) -> list[Meeting]:
+    """All of a project's meetings visible to viewer_id, for the project
+    calendar. Owner-scheduled team meetings (user_id == counterpart_id) are
+    visible to every project member; 1:1 introduction meetings from a join
+    request stay private to whoever is actually a party to them."""
+    # Note: _require_member above is scoped to "member, not owner" (the
+    # request-a-meeting-with-the-owner flow) — the calendar needs any
+    # membership, owner included.
+    is_member = await db.scalar(
+        select(ProjectMembership.id).where(
+            ProjectMembership.project_id == project_id, ProjectMembership.user_id == viewer_id
+        )
+    )
+    if not is_member:
+        raise ForbiddenError(t("meetings", "request.member_only", locale))
+
+    result = await db.execute(
+        select(Meeting).where(Meeting.project_id == project_id).order_by(Meeting.start_time)
+    )
+    meetings = result.scalars().all()
+    if not meetings:
+        return []
+
+    meeting_ids = [m.id for m in meetings]
+    viewer_rows = await db.execute(
+        select(MeetingParticipant.meeting_id).where(
+            MeetingParticipant.meeting_id.in_(meeting_ids), MeetingParticipant.user_id == viewer_id
+        )
+    )
+    viewer_participant_meetings = {mid for (mid,) in viewer_rows.all()}
+
+    return [
+        m for m in meetings
+        if m.user_id == m.counterpart_id
+        or viewer_id in (m.user_id, m.counterpart_id)
+        or m.id in viewer_participant_meetings
+    ]
 
 
 # ── Attendance ──────────────────────────────────────────────────────────────

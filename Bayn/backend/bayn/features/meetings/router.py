@@ -174,6 +174,16 @@ async def create_team_meeting(
     return resp
 
 
+@router.delete("/team/{meeting_id}", status_code=204, summary="Owner cancels a team meeting")
+async def cancel_team_meeting(
+    meeting_id: uuid.UUID,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+    locale: str = Depends(get_locale),
+) -> None:
+    await service.cancel_team_meeting(db, meeting_id, current_user.id, locale)
+
+
 @router.get("", response_model=list[MeetingResponse], summary="List my confirmed meetings")
 async def list_meetings(
     project_id: uuid.UUID | None = Query(default=None),
