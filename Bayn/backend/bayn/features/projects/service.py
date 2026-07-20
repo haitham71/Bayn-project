@@ -18,7 +18,7 @@ from bayn.features.projects.models import (
     ProjectMembershipRole,
     SlotStatus,
 )
-from bayn.features.projects.schemas import OwnerInfo, ProjectCreateRequest, ProjectUpdateRequest
+from bayn.features.projects.schemas import CalendarItemResponse, OwnerInfo, ProjectCreateRequest, ProjectUpdateRequest
 from bayn.integrations.storage.cloudflare import StorageError, r2_client
 
 # a user can hold membership (owner or member) in at most this many projects at once
@@ -245,3 +245,41 @@ async def leave_project(
 
     await db.delete(membership)
     await db.commit()
+
+
+async def get_project_calendar(
+    db: AsyncSession, project_id: uuid.UUID, user_id: uuid.UUID, locale: str = DEFAULT_LOCALE
+) -> list[CalendarItemResponse]:
+    """A project's tasks (placed by deadline) and meetings (placed by start
+    time), merged into one chronologically-sorted calendar. Each of the two
+    sub-fetches enforces its own project-membership/visibility rules."""
+    from bayn.features.meetings import service as meetings_service  # local import avoids a cycle
+    from bayn.features.tasks import service as tasks_service
+
+    tasks = await tasks_service.list_tasks(db, project_id, user_id, status=None, locale=locale)
+    meetings = await meetings_service.list_project_meetings(db, project_id, user_id, locale)
+
+    items = [
+        CalendarItemResponse(
+            type="task",
+            id=task.id,
+            title=task.title,
+            date=task.due_date,
+            status=task.status.value,
+            priority=task.priority.value,
+        )
+        for task in tasks
+        if task.due_date is not None
+    ]
+    items += [
+        CalendarItemResponse(
+            type="meeting",
+            id=meeting.id,
+            title=meeting.title or "",
+            date=meeting.start_time,
+            end_date=meeting.end_time,
+        )
+        for meeting in meetings
+    ]
+    items.sort(key=lambda item: item.date)
+    return items

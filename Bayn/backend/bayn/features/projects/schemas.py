@@ -2,6 +2,7 @@
 
 import uuid
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -94,3 +95,15 @@ class ProjectMembershipResponse(BaseModel):
 class MyProjectResponse(ProjectResponse):
     """A project the current user belongs to, plus their role in it."""
     role: ProjectMembershipRole
+
+
+class CalendarItemResponse(BaseModel):
+    """A single entry on a project's calendar — either a task (placed by its
+    deadline) or a meeting (placed by its start time)."""
+    type: Literal["task", "meeting"]
+    id: uuid.UUID
+    title: str
+    date: datetime
+    end_date: datetime | None = None
+    status: str | None = None
+    priority: str | None = None

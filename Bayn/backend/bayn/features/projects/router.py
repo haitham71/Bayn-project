@@ -11,6 +11,7 @@ from bayn.features.identity.dependencies import get_current_active_user
 from bayn.features.identity.models import User
 from bayn.features.projects import service
 from bayn.features.projects.schemas import (
+    CalendarItemResponse,
     MeetingSlotResponse,
     MyProjectResponse,
     ProjectCreateRequest,
@@ -134,3 +135,17 @@ async def replace_slots(
     locale: str = Depends(get_locale),
 ) -> list[MeetingSlotResponse]:
     return await service.replace_slots(db, project_id, current_user.id, payload.slots, locale)
+
+
+@projects_router.get(
+    "/{project_id}/calendar",
+    response_model=list[CalendarItemResponse],
+    summary="A project's tasks and meetings, merged into one calendar",
+)
+async def get_project_calendar(
+    project_id: uuid.UUID,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+    locale: str = Depends(get_locale),
+) -> list[CalendarItemResponse]:
+    return await service.get_project_calendar(db, project_id, current_user.id, locale)

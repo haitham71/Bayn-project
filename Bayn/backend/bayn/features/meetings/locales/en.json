@@ -25,7 +25,8 @@
     "owner_only": "Only the project owner can schedule a team meeting",
     "bad_time_range": "The end time must be after the start time",
     "past_time": "The meeting time must be in the future",
-    "not_a_member": "You can only invite members of this project"
+    "not_a_member": "You can only invite members of this project",
+    "not_a_team_meeting": "This isn't a team meeting"
   },
   "attendance": {
     "not_found": "Attendance record not found"
