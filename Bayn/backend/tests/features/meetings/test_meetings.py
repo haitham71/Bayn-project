@@ -625,3 +625,121 @@ class TestJoinFlow:
         assert cancel.status_code == 200
         await db.refresh(request)
         assert (await db.get(ProjectMeetingSlot, request.slot_id)).status == SlotStatus.available
+
+
+# ═══════════════════════════════════════════════════════
+# Platform-wide concurrent meeting cap
+# ═══════════════════════════════════════════════════════
+
+async def _make_member(db, test_country, tag: str) -> User:
+    user = User(
+        first_name_ar=f"عضو {tag}", last_name_ar="اختبار",
+        first_name_en=f"Member {tag}", last_name_en="Test",
+        birth_date=date(2000, 1, 1),
+        email=f"cap_{tag}@example.com", username=f"cap_member_{tag}",
+        password_hash=hash_password("TestPass123"),
+        phone_country_id=test_country.id,
+        phone_number=560000000 + hash(tag) % 1000,
+        national_id=f"300000{ord(tag[-1]):04d}",
+        is_active=True,
+    )
+    db.add(user)
+    await db.flush()
+    return user
+
+
+class TestPlatformCapacity:
+    """MAX_CONCURRENT_MEETINGS_PLATFORM caps how many meetings may overlap at
+    once across the whole platform, independent of project or user."""
+
+    @pytest_asyncio.fixture
+    async def crowded_project(self, db, owner: User, test_country) -> tuple[Project, list[User]]:
+        proj = Project(title="Capacity test", stage=ProjectStage.planning, team_members_needed=5)
+        db.add(proj)
+        await db.flush()
+        db.add(ProjectMembership(user_id=owner.id, project_id=proj.id, role=ProjectMembershipRole.OWNER))
+
+        members = [await _make_member(db, test_country, str(i)) for i in range(4)]
+        for m in members:
+            db.add(ProjectMembership(user_id=m.id, project_id=proj.id, role=ProjectMembershipRole.MEMBER))
+        await db.flush()
+        return proj, members
+
+    @pytest.mark.asyncio
+    async def test_fourth_overlapping_meeting_waits_then_schedules_once_capacity_frees(
+        self, client: AsyncClient, crowded_project, owner: User, mock_daily, mock_calcom, mock_nda,
+    ):
+        project, members = crowded_project
+        # identical window for all four — guarantees full overlap
+        payload = _request_payload(project.id, start_offset_hours=48)
+
+        meeting_ids = [
+            await _schedule_meeting(client, project.id, m, owner, mock_nda, payload=payload)
+            for m in members
+        ]
+
+        assert all(meeting_ids[:3])  # first 3 fill the cap of 3
+        assert meeting_ids[3] is None  # 4th is over capacity — left pending, not scheduled
+
+        # confirm it's still pending, not errored out or lost
+        listed = await client.get(
+            "/meetings/requests", params={"role": "incoming"}, headers=auth_headers_for(owner)
+        )
+        assert listed.status_code == 200
+        fourth = next(r for r in listed.json() if r["resulting_meeting_id"] is None)
+        assert fourth["status"] == "awaiting_signatures"
+
+    @pytest.mark.asyncio
+    async def test_deferred_meeting_schedules_once_an_earlier_one_frees_the_slot(
+        self, client: AsyncClient, db, crowded_project, owner: User, mock_daily, mock_calcom, mock_nda,
+    ):
+        project, members = crowded_project
+        payload = _request_payload(project.id, start_offset_hours=48)
+
+        first_three = members[:3]
+        fourth = members[3]
+
+        meeting_ids = [
+            await _schedule_meeting(client, project.id, m, owner, mock_nda, payload=payload)
+            for m in first_three
+        ]
+        assert all(meeting_ids)
+
+        blocked_id = await _schedule_meeting(client, project.id, fourth, owner, mock_nda, payload=payload)
+        assert blocked_id is None
+
+        # free up capacity by cancelling one of the scheduled meetings' request
+        from bayn.features.meetings.models import Meeting
+        await db.delete(await db.get(Meeting, uuid.UUID(meeting_ids[0])))
+        await db.commit()
+
+        listed = await client.get(
+            "/meetings/requests", params={"role": "incoming"}, headers=auth_headers_for(owner)
+        )
+        assert listed.status_code == 200
+        retried = next(r for r in listed.json() if r["requester_id"] == str(fourth.id))
+        assert retried["status"] == "scheduled"
+        assert retried["resulting_meeting_id"] is not None
+
+
+class TestTeamMeetingPlatformCapacity:
+
+    @pytest.mark.asyncio
+    async def test_team_meeting_rejected_when_platform_at_capacity(
+        self, client: AsyncClient, project_with_member: Project, owner: User, member: User,
+        mock_daily, mock_calcom, mock_nda,
+    ):
+        start = _future(72)
+        payload = {
+            "project_id": str(project_with_member.id),
+            "start_time": start.isoformat(),
+            "end_time": (start + timedelta(hours=1)).isoformat(),
+            "participant_ids": [],
+        }
+
+        for _ in range(3):
+            response = await client.post("/meetings/team", headers=auth_headers_for(owner), json=payload)
+            assert response.status_code == 201
+
+        response = await client.post("/meetings/team", headers=auth_headers_for(owner), json=payload)
+        assert response.status_code == 409

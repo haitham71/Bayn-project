@@ -55,8 +55,19 @@ logger = logging.getLogger(__name__)
 
 MEETING_REQUEST_TTL = timedelta(days=7)
 MAX_MEETINGS_PER_DAY = 3
+# Daily.co/Cal.com's own limits.
+MAX_CONCURRENT_MEETINGS_PLATFORM = 3
 # How early participants may enter the video room before the meeting starts.
 JOIN_WINDOW = timedelta(minutes=5)
+
+
+async def _count_overlapping_meetings(db: AsyncSession, start: datetime, end: datetime) -> int:
+    result = await db.execute(
+        select(func.count()).select_from(Meeting).where(
+            Meeting.start_time < end, Meeting.end_time > start,
+        )
+    )
+    return result.scalar_one()
 
 
 def _ensure_aware(dt: datetime) -> datetime:
@@ -494,6 +505,15 @@ async def _schedule_meeting(
 
     is_initial = not await _has_prior_meeting(db, request.requester_id, request.owner_id, request.project_id)
 
+    overlapping = await _count_overlapping_meetings(
+        db, _ensure_aware(request.proposed_start_time), _ensure_aware(request.proposed_end_time)
+    )
+    if overlapping >= MAX_CONCURRENT_MEETINGS_PLATFORM:
+        # ValidationError, not ConflictError: this runs inside refresh_request_state's
+        # best-effort retry (only catches ValidationError, same as room_creation_failed) —
+        # a ConflictError here would escape and break the read that triggered it.
+        raise ValidationError(t("meetings", "capacity.platform_full", locale))
+
     room_name = f"meeting-{uuid.uuid4().hex}"
     exp = int(_ensure_aware(request.proposed_end_time).timestamp()) + 3600
     nbf = int((_ensure_aware(request.proposed_start_time) - JOIN_WINDOW).timestamp())
@@ -774,6 +794,10 @@ async def create_team_meeting(
         members = {uid for (uid,) in rows.all()}
         if any(uid not in members for uid in selected):
             raise ValidationError(t("meetings", "team.not_a_member", locale))
+
+    overlapping = await _count_overlapping_meetings(db, start, end)
+    if overlapping >= MAX_CONCURRENT_MEETINGS_PLATFORM:
+        raise ConflictError(t("meetings", "capacity.platform_full", locale))
 
     room_name = f"meeting-{uuid.uuid4().hex}"
     exp = int(end.timestamp())
