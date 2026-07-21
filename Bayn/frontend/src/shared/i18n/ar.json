@@ -2,13 +2,6 @@
   "app": {
     "switchLanguage": "English"
   },
-  "input": {
-    "label": "التسمية",
-    "supportingText": "نص مساعد",
-    "errorText": "هذا الحقل فيه خطأ",
-    "search": "بحث",
-    "description": "الوصف"
-  },
   "sidebar": {
     "home": "الرئيسية",
     "ideas": "الأفكار",
@@ -41,8 +34,6 @@
     "namesTitle": "أدخل اسمك الكامل",
     "langEnglish": "الإنجليزية",
     "langArabic": "العربية",
-    "title": "المسمى المختصر",
-    "titleHint": "مسمى مختصر يصف من أنت",
     "experience": "سنوات الخبرة",
     "location": "الموقع",
     "bio": "نبذة تعريفية",
@@ -50,8 +41,7 @@
     "removeSkill": "إزالة {{skill}}",
     "specializations": "أضف تخصصك",
     "removeSpecialization": "إزالة {{specialization}}",
-    "finish": "إنهاء",
-    "back": "رجوع"
+    "finish": "إنهاء"
   },
   "myProfile": {
     "title": "ملفي الشخصي",
@@ -60,13 +50,11 @@
     "currentPassword": "كلمة المرور الحالية",
     "newPassword": "كلمة المرور الجديدة",
     "confirmNewPassword": "تأكيد كلمة المرور الجديدة",
-    "updateErrorGeneric": "حدث خطأ ما. حاول مرة أخرى.",
     "confirmProfileUpdate": "تأكيد تحديث المعلومات الشخصية",
     "passwordEmailSent": "تم إرسال رابط تأكيد التغيير إلى بريدك الإلكتروني.",
     "sectionBio": "نبذة تعريفية",
     "sectionExperience": "سنوات الخبرة",
     "sectionSkills": "المهارات",
-    "sectionSpecializations": "التخصصات",
     "changePhoto": "تغيير الصورة",
     "avatarTypeError": "الصيغة غير مدعومة. استخدم JPG أو PNG أو WebP.",
     "avatarSizeError": "حجم الصورة يتجاوز 5 ميجابايت.",
@@ -138,15 +126,11 @@
     "viewDetails": "عرض التفاصيل",
     "joinRequests": "طلبات الانضمام",
     "dashboard": "لوحة التحكم",
-    "planningStage": "مرحلة التخطيط",
     "opening": "{{count}} شاغر",
     "postedDaysAgo": "نُشر قبل {{count}} أيام",
-    "calendarTitle": "تقويمك",
     "tasksTitle": "المهام",
     "tasksEmpty": "لا مهام مسندة إليك حتى الآن.",
-    "upcomingMeetings": "الاجتماعات القادمة",
-    "meetingJoinRequest": "اجتماع لطلب انضمام",
-    "meetingWeeklyTeam": "اجتماع الفريق الأسبوعي"
+    "upcomingMeetings": "الاجتماعات القادمة"
   },
   "createIdea": {
     "step1Title": "عنوان الفكرة",
@@ -163,7 +147,6 @@
     "step4Title": "متطلبات الفريق",
     "teamMembers": "عدد أعضاء الفريق المطلوب",
     "rolesNeeded": "الأدوار / الخبرات المطلوبة",
-    "rolesPlaceholder": "مثال: مطوّر واجهات، مصمم، مطوّر خلفية",
     "step5Title": "التصنيف والمرحلة",
     "category": "التصنيف",
     "currentStage": "المرحلة الحالية",
@@ -224,7 +207,6 @@
     "opensIn": "يفتح بعد {{mins}} د",
     "opensSoon": "يفتح قبل الموعد بـ 5 د",
     "ended": "انتهى",
-    "dailyRoom": "غرفة Daily.co",
     "meeting": "اجتماع",
     "empty": "لا توجد اجتماعات بعد."
   },
@@ -320,13 +302,8 @@
     "meetingTitleHint": "اختياري — الافتراضي اسم المشروع",
     "cancel": "إلغاء",
     "reject": "رفض",
-    "viewProfile": "عرض الملف",
     "empty": "لا توجد طلبات هنا بعد.",
     "actionError": "تعذّر تنفيذ العملية، حاول مرة أخرى.",
-    "about": "حول",
-    "tips": "نصائح",
-    "meetingsTime": "أوقات الاجتماعات",
-    "showCalendar": "عرض التقويم",
     "saveEdit": "حفظ التعديل",
     "manageTitle": "إدارة المشروع",
     "meetingTimes": "مواعيد الاجتماعات",
@@ -417,15 +394,13 @@
     "greetMorning": "صباح الخير",
     "greetAfternoon": "مرحباً",
     "greetEvening": "مساء الخير",
-    "greetName": "أيها المستخدم",
+    "greetName": " ",
     "sub": "تابع عملك، وحقق المزيد اليوم",
     "search": "ابحث في بين...",
     "notifications": "الإشعارات",
     "messages": "الرسائل",
-    "profileName": "أسعد السعيد",
+    "profileName": "مستخدم",
     "support": "الدعم",
-    "calendarLabel": "تقويمك",
-    "requests": "الطلبات",
     "projects": "المشاريع",
     "meeting": "جدولة اجتماع",
     "createIdea": "+ إنشاء فكرة جديدة",
@@ -433,7 +408,6 @@
     "noMeetings": "لا توجد اجتماعات قادمة.",
     "joinMeeting": "انضمام",
     "teamLabel": "الفريق الحالي",
-    "teamPick": "اختر مشروعاً",
     "teamNext": "المشروع التالي",
     "teamEmpty": "لست عضواً في أي مشروع بعد.",
     "roleOwner": "المالك",
@@ -443,38 +417,18 @@
     "statusLabel": "حالة الطلبات",
     "recLabel": "موصى به لك · استكشف أفكاراً جديدة",
     "recEmpty": "لا أفكار بعد — كن أول من ينشر فكرة!",
-    "schedule": [
-      {
-        "time": "09:00 - 09:30",
-        "name": "اجتماع الفريق اليومي"
-      },
-      {
-        "time": "11:00 - 12:00",
-        "name": "مراجعة التصميم"
-      },
-      {
-        "time": "14:00 - 15:00",
-        "name": "اجتماع المستثمرين"
-      },
-      {
-        "time": "16:30 - 17:00",
-        "name": "مراجعة نهاية السبرنت"
-      }
-    ],
     "currentTasksLabel": "المهام الحالية",
     "tasksEmpty": "لا مهام مسندة إليك."
   },
   "projectDashboard": {
     "title": "لوحة المشروع",
     "subtitle": "مهامك وطلباتك وعقودك.",
-    "selectProject": "اختر المشروع",
     "taskCompletion": "إنجاز المهام",
     "onTrack": "على المسار",
     "overdueTasks": "مهام متأخرة",
     "needsAttention": "تحتاج انتباه",
     "upcomingMeetings": "الاجتماعات القادمة",
     "thisWeekCount": "{{count}} هذا الأسبوع",
-    "applicationsSent": "الطلبات المُرسلة",
     "pendingCount": "{{count}} قيد الانتظار",
     "tasks": "المهام",
     "newTask": "مهمة جديدة",
@@ -491,35 +445,18 @@
     "teamUnavailable": "أعضاء الفريق غير متاحين بعد.",
     "owner": "المالك",
     "you": "أنت",
-    "recordingsFiles": "التسجيلات والملفات",
-    "filesUnavailable": "لا توجد تسجيلات أو ملفات بعد.",
     "upcomingMeetingsTitle": "الاجتماعات القادمة",
     "meetingsEmpty": "لا توجد اجتماعات قادمة.",
     "meeting": "اجتماع",
-    "dailyRoom": "غرفة Daily.co",
     "confirmed": "مؤكّد",
-    "applications": "الطلبات",
-    "applicationsEmpty": "لا توجد طلبات مُرسلة بعد.",
-    "project": "المشروع",
-    "sentDaysAgo": "أُرسل قبل {{count}} يوم",
-    "status_pending": "قيد الانتظار",
-    "status_accepted": "مقبول",
-    "status_rejected": "مرفوض",
     "myContract": "عقدي",
     "contractUnavailable": "لا يوجد عقد مرتبط بهذا المشروع بعد.",
     "viewAll": "عرض الكل",
     "joinRequests": "طلبات الانضمام",
-    "teamAttendance": "حضور الفريق",
-    "attendancePick": "اختر اجتماعاً",
-    "attendanceUnavailable": "الحضور غير متاح بعد.",
-    "attendance_present": "حاضر",
-    "attendance_late": "متأخر",
-    "attendance_absent": "غائب",
     "scheduleTitle": "جدولة اجتماع للفريق",
     "scheduleName": "عنوان الاجتماع",
     "scheduleNamePh": "مثال: اجتماع أسبوعي",
     "scheduleDate": "التاريخ",
-    "scheduleDatePh": "اختر تاريخاً",
     "scheduleTime": "الوقت",
     "scheduleFrom": "من",
     "scheduleTo": "إلى",
@@ -530,7 +467,6 @@
     "scheduleBtn": "جدولة",
     "contracts": "العقود",
     "newTaskTitle": "مهمة جديدة",
-    "taskTitleLabel": "عنوان المهمة",
     "taskDescLabel": "الوصف",
     "taskPriorityLabel": "الأولوية",
     "taskStatusLabel": "الحالة",
@@ -582,14 +518,6 @@
     "notifNotWired": "تفضيلات الإشعارات غير محفوظة بحسابك بعد."
   },
   "profileView": {
-    "editProfile": "تعديل الملف الشخصي",
-    "edit": "تعديل",
-    "addProject": "إضافة مشروع",
-    "projectsEmpty": "لا توجد مشاريع خارجية مضافة بعد.",
-    "viewProject": "عرض المشروع",
-    "details": "التفاصيل",
-    "preferredIndustry": "الصناعة المفضّلة",
-    "gitProfile": "ملف Git",
     "memberSince": "عضو منذ"
   }
 }

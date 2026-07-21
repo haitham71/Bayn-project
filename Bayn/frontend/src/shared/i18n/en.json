@@ -2,13 +2,6 @@
   "app": {
     "switchLanguage": "العربية"
   },
-  "input": {
-    "label": "Label",
-    "supportingText": "Supporting text",
-    "errorText": "This field has an error",
-    "search": "Search",
-    "description": "Description"
-  },
   "sidebar": {
     "home": "Home",
     "ideas": "Ideas",
@@ -41,8 +34,6 @@
     "namesTitle": "Enter your full name",
     "langEnglish": "English",
     "langArabic": "Arabic",
-    "title": "Short title",
-    "titleHint": "A short title that describe who you are",
     "experience": "Years of experience",
     "location": "Location",
     "bio": "Bio",
@@ -50,8 +41,7 @@
     "removeSkill": "Remove {{skill}}",
     "specializations": "Add your specialization",
     "removeSpecialization": "Remove {{specialization}}",
-    "finish": "Finish",
-    "back": "Back"
+    "finish": "Finish"
   },
   "myProfile": {
     "title": "My Profile",
@@ -60,13 +50,11 @@
     "currentPassword": "Current password",
     "newPassword": "New password",
     "confirmNewPassword": "Confirm new password",
-    "updateErrorGeneric": "Something went wrong. Please try again.",
     "confirmProfileUpdate": "Confirm profile update",
     "passwordEmailSent": "A confirmation link has been sent to your email.",
     "sectionBio": "Bio",
     "sectionExperience": "Years of Experience",
     "sectionSkills": "Skills",
-    "sectionSpecializations": "Specializations",
     "changePhoto": "Change photo",
     "avatarTypeError": "Unsupported format. Use JPG, PNG, or WebP.",
     "avatarSizeError": "Image exceeds the 5MB limit.",
@@ -138,15 +126,11 @@
     "viewDetails": "View details",
     "joinRequests": "Join requests",
     "dashboard": "Dashboard",
-    "planningStage": "Planning stage",
     "opening": "{{count}} Opening",
     "postedDaysAgo": "Posted {{count}} days ago",
-    "calendarTitle": "Your calendar",
     "tasksTitle": "Tasks",
     "tasksEmpty": "No tasks assigned to you yet.",
-    "upcomingMeetings": "Upcoming meetings",
-    "meetingJoinRequest": "Meeting for join request",
-    "meetingWeeklyTeam": "Weekly team meeting"
+    "upcomingMeetings": "Upcoming meetings"
   },
   "createIdea": {
     "step1Title": "Idea title",
@@ -163,7 +147,6 @@
     "step4Title": "Team Requirements",
     "teamMembers": "Team Members Needed",
     "rolesNeeded": "Roles / Expertise Needed",
-    "rolesPlaceholder": "e.g. Frontend Developer, Designer, Backend Developer",
     "step5Title": "Category and Stage",
     "category": "Category",
     "currentStage": "Current Stage",
@@ -224,7 +207,6 @@
     "opensIn": "Opens in {{mins}} min",
     "opensSoon": "Opens 5 min before",
     "ended": "Ended",
-    "dailyRoom": "Daily.co room",
     "meeting": "Meeting",
     "empty": "No meetings yet."
   },
@@ -320,13 +302,8 @@
     "meetingTitleHint": "Optional — defaults to the project name",
     "cancel": "Cancel",
     "reject": "Reject",
-    "viewProfile": "View Profile",
     "empty": "No requests here yet.",
     "actionError": "That didn't go through, please try again.",
-    "about": "About",
-    "tips": "Tips",
-    "meetingsTime": "Meetings Time",
-    "showCalendar": "Show Calendar",
     "saveEdit": "Save Edit",
     "manageTitle": "Manage project",
     "meetingTimes": "Meeting times",
@@ -417,15 +394,13 @@
     "greetMorning": "Good Morning",
     "greetAfternoon": "Good Afternoon",
     "greetEvening": "Good Evening",
-    "greetName": "User",
+    "greetName": " ",
     "sub": "Here's what's happening today",
     "search": "Search on Bayn",
     "notifications": "Notifications",
     "messages": "Messages",
-    "profileName": "Assad Al-saeed",
+    "profileName": "User",
     "support": "Support",
-    "calendarLabel": "Your calendar",
-    "requests": "Requests",
     "projects": "Projects",
     "meeting": "Schedule a Meeting",
     "createIdea": "+ Create New Idea",
@@ -433,7 +408,6 @@
     "noMeetings": "No upcoming meetings.",
     "joinMeeting": "Join",
     "teamLabel": "Current team",
-    "teamPick": "Choose a project",
     "teamNext": "Next project",
     "teamEmpty": "You're not part of any project yet.",
     "roleOwner": "Owner",
@@ -443,38 +417,18 @@
     "statusLabel": "Application's status",
     "recLabel": "Recommended for you · Explore new ideas",
     "recEmpty": "No ideas yet — be the first to post one!",
-    "schedule": [
-      {
-        "time": "09:00 - 09:30",
-        "name": "Team Standup"
-      },
-      {
-        "time": "11:00 - 12:00",
-        "name": "Design Review"
-      },
-      {
-        "time": "14:00 - 15:00",
-        "name": "Investor Call"
-      },
-      {
-        "time": "16:30 - 17:00",
-        "name": "Sprint Retrospective"
-      }
-    ],
     "currentTasksLabel": "Current tasks",
     "tasksEmpty": "No tasks assigned to you."
   },
   "projectDashboard": {
     "title": "Project Dashboard",
     "subtitle": "Your tasks, applications, and contracts.",
-    "selectProject": "Select the project",
     "taskCompletion": "Task completion",
     "onTrack": "on track",
     "overdueTasks": "Overdue tasks",
     "needsAttention": "needs attention",
     "upcomingMeetings": "Upcoming meetings",
     "thisWeekCount": "{{count}} this week",
-    "applicationsSent": "Applications sent",
     "pendingCount": "{{count}} pending",
     "tasks": "Tasks",
     "newTask": "New task",
@@ -491,35 +445,18 @@
     "teamUnavailable": "Team members aren't available yet.",
     "owner": "Owner",
     "you": "You",
-    "recordingsFiles": "Recordings & files",
-    "filesUnavailable": "No recordings or files yet.",
     "upcomingMeetingsTitle": "Upcoming meetings",
     "meetingsEmpty": "No upcoming meetings.",
     "meeting": "Meeting",
-    "dailyRoom": "Daily.co room",
     "confirmed": "Confirmed",
-    "applications": "Applications",
-    "applicationsEmpty": "No applications sent yet.",
-    "project": "Project",
-    "sentDaysAgo": "sent {{count}} days ago",
-    "status_pending": "Pending",
-    "status_accepted": "Accepted",
-    "status_rejected": "Rejected",
     "myContract": "My contract",
     "contractUnavailable": "No contract linked to this project yet.",
     "viewAll": "View all",
     "joinRequests": "Join requests",
-    "teamAttendance": "Team attendance",
-    "attendancePick": "Choose a meeting",
-    "attendanceUnavailable": "Attendance isn't available yet.",
-    "attendance_present": "present",
-    "attendance_late": "late",
-    "attendance_absent": "absent",
     "scheduleTitle": "Schedule a team meeting",
     "scheduleName": "Meeting title",
     "scheduleNamePh": "e.g. Weekly sync",
     "scheduleDate": "Date",
-    "scheduleDatePh": "Pick a date",
     "scheduleTime": "Time",
     "scheduleFrom": "From",
     "scheduleTo": "To",
@@ -530,7 +467,6 @@
     "scheduleBtn": "Schedule",
     "contracts": "Contracts",
     "newTaskTitle": "New task",
-    "taskTitleLabel": "Task title",
     "taskDescLabel": "Description",
     "taskPriorityLabel": "Priority",
     "taskStatusLabel": "Status",
@@ -582,14 +518,6 @@
     "notifNotWired": "Notification preferences aren't saved to your account yet."
   },
   "profileView": {
-    "editProfile": "Edit profile",
-    "edit": "Edit",
-    "addProject": "Add project",
-    "projectsEmpty": "No external projects added yet.",
-    "viewProject": "View project",
-    "details": "Details",
-    "preferredIndustry": "Preferred industry",
-    "gitProfile": "Git profile",
     "memberSince": "Member since"
   }
 }
