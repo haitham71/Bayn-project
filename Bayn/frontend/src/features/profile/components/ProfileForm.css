@@ -1,0 +1,142 @@
+/* Editable profile form card. */
+
+/* ---- Editable form ---- */
+
+.myp__form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.myp__panel {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.myp__error {
+  margin: 0;
+  font-size: 13px;
+  color: #900000;
+}
+
+.myp__section-title {
+  margin: 4px 0 -4px;
+  font-family: var(--font-sans);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-title, #0f3d2e);
+}
+
+/* Confirm buttons sit at the leading edge, not stretched full width. */
+
+.myp__submit.bayn-btn {
+  align-self: flex-start;
+  margin-top: 4px;
+}
+
+/* Name group (English / Arabic) inside the profile tab. */
+
+.myp__names-group {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.myp__names-lang {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-supporting, #786c57);
+}
+
+.myp__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px 24px;
+}
+
+.myp__input.bayn-input,
+.myp__input.bayn-select {
+  width: 100%;
+}
+
+.myp__input--full {
+  grid-column: 1 / -1;
+}
+
+.myp__bio .bayn-input__support {
+  text-align: end;
+}
+
+/* Lock the bio field to a fixed height — no user resizing. */
+
+.myp__bio .bayn-input__native {
+  resize: none;
+}
+
+/* Skills input + entered chips */
+
+.myp__skills {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.myp__chips {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.myp__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 6px 3px 10px;
+  border-radius: 33px;
+  background: rgba(119, 181, 160, 0.21);
+  color: var(--text-title, #0f3d2e);
+  font-size: 12px;
+}
+
+.myp__chip-x {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-supporting, #786c57);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.myp__chip-x:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: var(--text-title, #0f3d2e);
+}
+
+.myp__form-error {
+  margin: -12px 0 0;
+  font-size: 14px;
+  color: var(--text-error, #b23b3b);
+}
+
+.myp__form-success {
+  margin: -12px 0 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--btn-primary-default, #295e4d);
+}
+
+@media (max-width: 720px) {
+  .myp__grid {
+    grid-template-columns: 1fr;
+  }
+}

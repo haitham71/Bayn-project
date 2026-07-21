@@ -1,118 +1,78 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { getIndustries } from '@/features/identity/services/authService';
 import { createProject } from '@/features/projects/services/projectService';
 import { getApiErrorMessage } from '@/shared/lib/apiError';
 import Sidebar from '@/shared/components/Sidebar';
 import Navbar from '@/shared/components/Navbar';
 import Input from '@/shared/components/Input';
-import Select from '@/shared/components/Select';
-import SkillsInput from '@/shared/components/SkillsInput';
 import RichTextEditor from '@/shared/components/RichTextEditor';
 import Button from '@/shared/components/Button';
+import ConfirmDialog from '@/shared/components/ConfirmDialog';
 import MeetingScheduler from '@/shared/components/MeetingScheduler';
 import Eye from '@/assets/icons/eye.svg?react';
 import UserPlus from '@/assets/icons/user-plus.svg?react';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
-import './CreateIdeaPage.css';
+import { meetingsToSlots } from '@/features/meetings/lib/slots';
+import { useIdeaForm } from '../hooks/useIdeaForm';
+import IdeaStep from '../components/IdeaStep';
+import IdeaFormFields from '../components/IdeaFormFields';
+import SummaryToggle from '../components/SummaryToggle';
+import './IdeaEditor.css';
 
 const TITLE_MAX = 100;
 const DESC_MAX = 2000;
 
-const TEAM_OPTIONS = Array.from({ length: 8 }, (_, i) => ({ value: String(i + 1), label: String(i + 1) }));
-// Values match the backend's ProjectStage enum; labels are translated at render.
-const STAGE_OPTIONS = [
-  { value: 'planning', labelKey: 'createIdea.stagePlanning' },
-  { value: 'development', labelKey: 'createIdea.stageDevelopment' },
-  { value: 'launching', labelKey: 'createIdea.stageLaunching' },
-];
-
-// Flatten the scheduler's [{ date, slots:[{start,end}] }] into backend meeting
-// slots ({ start_time, end_time } ISO) by combining each day with its times.
-function meetingsToSlots(days) {
-  const out = [];
-  (days || []).forEach((d) => {
-    const date = d.date instanceof Date ? d.date : new Date(d.date);
-    (d.slots || []).forEach((s) => {
-      const [sh, sm] = s.start.split(':').map(Number);
-      const [eh, em] = s.end.split(':').map(Number);
-      const start = new Date(date.getFullYear(), date.getMonth(), date.getDate(), sh, sm);
-      const end = new Date(date.getFullYear(), date.getMonth(), date.getDate(), eh, em);
-      out.push({ start_time: start.toISOString(), end_time: end.toISOString() });
-    });
-  });
-  return out;
-}
-
-// One numbered form step: circled index + title + note, then its field(s).
-function Step({ n, title, note, children }) {
-  return (
-    <section className="ci__step">
-      <div className="ci__step-head">
-        <span className="ci__step-num">{n}</span>
-        <h2 className="ci__step-title">{title}</h2>
-      </div>
-      {note && <p className="ci__step-note">{note}</p>}
-      <div className="ci__step-body">{children}</div>
-    </section>
-  );
-}
-
 export default function CreateIdeaPage({ onNavigate }) {
   const { t } = useTranslation();
   const { fullName } = useCurrentUser();
+  const { form, setField, industryOptions, handleSkillQuery, skillIds } = useIdeaForm();
 
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [skills, setSkills] = useState([]);
-  const [teamSize, setTeamSize] = useState('');
-  const [roles, setRoles] = useState('');
-  const [category, setCategory] = useState('');
-  const [stage, setStage] = useState('');
   const [meetings, setMeetings] = useState([]);
-  const [visibility, setVisibility] = useState('public');
   const [joinOpen, setJoinOpen] = useState(true);
-  const [industryOptions, setIndustryOptions] = useState([]);
   const [publishing, setPublishing] = useState(false);
   const [publishError, setPublishError] = useState('');
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
-  // Categories come from the industries catalog (value = industry id).
-  useEffect(() => {
-    getIndustries()
-      .then((rows) => setIndustryOptions(rows.map((r) => ({ value: r.id, label: r.name }))))
-      .catch(() => {});
-  }, []);
-
-  async function handlePublish() {
+  // Validate first, then open the confirm dialog — publishing itself waits for
+  // the user's confirmation.
+  function requestPublish() {
     setPublishError('');
-    if (!title.trim() || !teamSize || !stage) {
+    if (!form.title.trim() || !form.teamSize || !form.stage) {
       setPublishError(t('createIdea.requiredFields'));
       return;
     }
+    setConfirmOpen(true);
+  }
 
+  async function doPublish() {
+    setConfirmOpen(false);
     setPublishing(true);
     try {
-      const project = await createProject({
-        title: title.trim(),
-        description: description || null,
-        more_info: roles || null,
-        industry_id: category || null,
-        stage,
-        team_members_needed: Number(teamSize),
-        is_hidden: visibility === 'private',
-        slots: meetingsToSlots(meetings),
-        // NOTE: skills and the join-request toggle aren't sent yet — the create
-        // endpoint doesn't support them. Wire once the backend does.
-      });
+      // Hold the "publishing" state for at least a second so it reads as a real
+      // step rather than a flash.
+      await Promise.all([
+        createProject({
+          title: form.title.trim(),
+          description: form.description || null,
+          more_info: form.roles || null,
+          industry_id: form.category || null,
+          stage: form.stage,
+          team_members_needed: Number(form.teamSize),
+          is_hidden: form.visibility === 'private',
+          slots: meetingsToSlots(meetings),
+          skill_ids: skillIds(),
+          // NOTE: the join-request toggle isn't sent yet — the create endpoint
+          // doesn't support it. Wire once the backend does.
+        }),
+        new Promise((resolve) => setTimeout(resolve, 1000)),
+      ]);
       onNavigate?.('myprojects');
-      return project;
     } catch (err) {
       setPublishError(getApiErrorMessage(err, t('createIdea.publishError')));
     } finally {
       setPublishing(false);
     }
   }
-
 
   return (
     <div className="ci">
@@ -124,17 +84,17 @@ export default function CreateIdeaPage({ onNavigate }) {
         <main className="ci__body">
           {/* Numbered form */}
           <section className="ci__card ci__form">
-            <Step n={1} title={t('createIdea.step1Title')} note={t('createIdea.step1Note')}>
+            <IdeaStep n={1} title={t('createIdea.step1Title')} note={t('createIdea.step1Note')}>
               <Input
                 label={t('createIdea.step1Placeholder')}
-                value={title}
-                onChange={(e) => setTitle(e.target.value.slice(0, TITLE_MAX))}
-                supportingText={`${title.length}/${TITLE_MAX}`}
+                value={form.title}
+                onChange={(e) => setField('title', e.target.value.slice(0, TITLE_MAX))}
+                supportingText={`${form.title.length}/${TITLE_MAX}`}
                 className="ci__input ci__input--counter"
               />
-            </Step>
+            </IdeaStep>
 
-            <Step
+            <IdeaStep
               n={2}
               title={t('createIdea.step2Title')}
               note={
@@ -146,58 +106,20 @@ export default function CreateIdeaPage({ onNavigate }) {
             >
               <RichTextEditor
                 placeholder={t('createIdea.step2Placeholder')}
-                value={description}
-                onChange={setDescription}
+                value={form.description}
+                onChange={(v) => setField('description', v)}
                 maxLength={DESC_MAX}
                 className="ci__input"
               />
-            </Step>
+            </IdeaStep>
 
-            <Step n={3} title={t('createIdea.step3Title')} note={t('createIdea.step3Note')}>
-              <SkillsInput
-                label={t('createIdea.step3Label')}
-                supportingText={t('createIdea.step3Placeholder')}
-                value={skills}
-                onChange={setSkills}
-              />
-            </Step>
-
-            <Step n={4} title={t('createIdea.step4Title')}>
-              <div className="ci__row">
-                <Select
-                  label={t('createIdea.teamMembers')}
-                  value={teamSize}
-                  onChange={setTeamSize}
-                  options={TEAM_OPTIONS}
-                  className="ci__input ci__input--sm"
-                />
-                <Input
-                  label={t('createIdea.rolesNeeded')}
-                  value={roles}
-                  onChange={(e) => setRoles(e.target.value)}
-                  className="ci__input ci__input--grow"
-                />
-              </div>
-            </Step>
-
-            <Step n={5} title={t('createIdea.step5Title')}>
-              <div className="ci__row">
-                <Select
-                  label={t('createIdea.category')}
-                  value={category}
-                  onChange={setCategory}
-                  options={industryOptions}
-                  className="ci__input ci__input--sm"
-                />
-                <Select
-                  label={t('createIdea.currentStage')}
-                  value={stage}
-                  onChange={setStage}
-                  options={STAGE_OPTIONS.map((s) => ({ value: s.value, label: t(s.labelKey) }))}
-                  className="ci__input ci__input--sm"
-                />
-              </div>
-            </Step>
+            <IdeaFormFields
+              form={form}
+              setField={setField}
+              industryOptions={industryOptions}
+              onSkillQuery={handleSkillQuery}
+              numbered
+            />
           </section>
 
           {/* Idea summary */}
@@ -207,50 +129,28 @@ export default function CreateIdeaPage({ onNavigate }) {
             <p className="ci__summary-hint">{t('createIdea.summaryHint')}</p>
 
             <ul className="ci__summary-rows">
-              <li className="ci__summary-row">
-                <Eye width={22} height={22} aria-hidden="true" />
-                <span className="ci__summary-label">{t('createIdea.visibility')}</span>
-                <div className="ci__toggle" role="group" aria-label={t('createIdea.visibility')}>
-                  <button
-                    type="button"
-                    className={`ci__toggle-opt${visibility === 'public' ? ' ci__toggle-opt--active' : ''}`}
-                    onClick={() => setVisibility('public')}
-                  >
-                    {t('createIdea.visibilityValue')}
-                  </button>
-                  <button
-                    type="button"
-                    className={`ci__toggle-opt${visibility === 'private' ? ' ci__toggle-opt--active' : ''}`}
-                    onClick={() => setVisibility('private')}
-                  >
-                    {t('createIdea.visibilityPrivate')}
-                  </button>
-                </div>
-              </li>
-
-              <li className="ci__summary-row">
-                <UserPlus width={22} height={22} aria-hidden="true" />
-                <span className="ci__summary-label">{t('createIdea.joinRequest')}</span>
-                <div className="ci__toggle" role="group" aria-label={t('createIdea.joinRequest')}>
-                  <button
-                    type="button"
-                    className={`ci__toggle-opt${joinOpen ? ' ci__toggle-opt--active' : ''}`}
-                    onClick={() => setJoinOpen(true)}
-                  >
-                    {t('createIdea.joinRequestValue')}
-                  </button>
-                  <button
-                    type="button"
-                    className={`ci__toggle-opt${!joinOpen ? ' ci__toggle-opt--active' : ''}`}
-                    onClick={() => setJoinOpen(false)}
-                  >
-                    {t('createIdea.joinRequestOff')}
-                  </button>
-                </div>
-              </li>
+              <SummaryToggle
+                icon={Eye}
+                label={t('createIdea.visibility')}
+                value={form.visibility}
+                onChange={(v) => setField('visibility', v)}
+                options={[
+                  { value: 'public', label: t('createIdea.visibilityValue') },
+                  { value: 'private', label: t('createIdea.visibilityPrivate') },
+                ]}
+              />
+              <SummaryToggle
+                icon={UserPlus}
+                label={t('createIdea.joinRequest')}
+                value={joinOpen}
+                onChange={setJoinOpen}
+                options={[
+                  { value: true, label: t('createIdea.joinRequestValue') },
+                  { value: false, label: t('createIdea.joinRequestOff') },
+                ]}
+              />
             </ul>
 
-            {/* Suspended until the backend supports meeting availability. */}
             <MeetingScheduler onChange={setMeetings} />
 
             {publishError && <p className="ci__error">{publishError}</p>}
@@ -260,7 +160,7 @@ export default function CreateIdeaPage({ onNavigate }) {
                 variant="primary"
                 size="sm"
                 className="ci__publish"
-                onClick={handlePublish}
+                onClick={requestPublish}
                 disabled={publishing}
               >
                 {publishing ? t('createIdea.publishing') : t('createIdea.publish')}
@@ -272,6 +172,16 @@ export default function CreateIdeaPage({ onNavigate }) {
           </aside>
         </main>
       </div>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        title={t('createIdea.confirmTitle')}
+        message={t('createIdea.confirmMsg')}
+        confirmLabel={t('createIdea.confirmYes')}
+        cancelLabel={t('createIdea.confirmCancel')}
+        onConfirm={doPublish}
+        onCancel={() => setConfirmOpen(false)}
+      />
     </div>
   );
 }

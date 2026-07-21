@@ -1,0 +1,34 @@
+/* Legal links rows. */
+
+/* ---- Legal links ---- */
+
+.st__legal-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--bg-surface-secondary, #d7cbb9);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-title, #0f3d2e);
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.st__legal-row:last-of-type {
+  border-bottom: none;
+}
+
+.st__legal-row:hover {
+  color: var(--btn-primary-default, #295e4d);
+}
+
+.st__legal-arrow {
+  flex-shrink: 0;
+  color: var(--text-supporting, #786c57);
+}
+
+[dir='rtl'] .st__legal-arrow {
+  transform: scaleX(-1);
+}

@@ -2,7 +2,7 @@
 meeting exists, the owner's post-meeting call, and attendance."""
 
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from unittest.mock import AsyncMock
 
 import pytest
@@ -10,10 +10,10 @@ import pytest_asyncio
 from httpx import AsyncClient
 from sqlalchemy import select
 
-from Bayn.backend.src.core.security import create_access_token, hash_password
-from Bayn.backend.src.features.identity.models import User
-from Bayn.backend.src.integrations.daily import DailyError
-from Bayn.backend.src.features.meetings.models import MeetingRequest
+from bayn.core.security import create_access_token, hash_password
+from bayn.features.identity.models import User
+from bayn.integrations.daily import DailyError
+from bayn.features.meetings.models import MeetingRequest
 from bayn.features.projects.models import (
     Project,
     ProjectMeetingSlot,
@@ -34,6 +34,7 @@ async def member(db, test_country) -> User:
     user = User(
         first_name_ar="خالد", last_name_ar="سالم",
         first_name_en="Khaled", last_name_en="Salem",
+        birth_date=date(2000, 1, 1),
         email="member@example.com", username="member_test",
         password_hash=hash_password("TestPass123"),
         phone_country_id=test_country.id,
@@ -51,6 +52,7 @@ async def outsider(db, test_country) -> User:
     user = User(
         first_name_ar="سارة", last_name_ar="عبدالله",
         first_name_en="Sarah", last_name_en="Abdullah",
+        birth_date=date(2000, 1, 1),
         email="outsider@example.com", username="outsider_test",
         password_hash=hash_password("TestPass123"),
         phone_country_id=test_country.id,

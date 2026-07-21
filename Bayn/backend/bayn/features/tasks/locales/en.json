@@ -1,0 +1,10 @@
+{
+  "task": {
+    "not_found": "Task not found",
+    "not_a_member": "Only project members can view or update this task",
+    "owner_only": "Only the project owner can do this",
+    "editor_only": "Only the project owner or a member granted editor rights can manage this task",
+    "invalid_assignee": "The assignee must be a member of this project",
+    "deadline_must_extend": "The new deadline must be later than the current one"
+  }
+}

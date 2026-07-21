@@ -1,0 +1,148 @@
+/* A single join-request card. */
+
+.jr__req {
+  display: grid;
+  grid-template-columns: auto minmax(150px, 1fr) minmax(0, 1.4fr) auto;
+  align-items: center;
+  gap: 20px;
+  padding: 16px 20px;
+  border: 1px solid var(--bg-surface-secondary, #d7cbb9);
+  border-radius: 10px;
+  box-shadow: 0 0 13px rgba(0, 0, 0, 0.3);
+}
+
+.jr__avatar {
+  display: grid;
+  place-items: center;
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-primary-300, #5ca18a), var(--color-primary-600, #0f3d2e));
+  color: var(--color-neutral-100, #fff);
+  font-family: var(--font-sans);
+  font-size: 32px;
+  font-weight: 700;
+}
+
+.jr__req-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.jr__req-name {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 20px;
+  font-weight: 550;
+  color: var(--btn-primary-default, #295e4d);
+}
+
+.jr__req-role {
+  margin: 0;
+  font-size: 16px;
+  color: var(--btn-primary-default, #295e4d);
+}
+
+.jr__req-loc,
+.jr__req-slot {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--btn-primary-default, #295e4d);
+}
+
+/* The icons keep their size when the text beside them wraps. */
+
+.jr__req-loc svg,
+.jr__req-slot svg {
+  flex: 0 0 auto;
+}
+
+.jr__req-applied {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--color-neutral-500, #606060);
+}
+
+.jr__req-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding-inline: 16px;
+  border-inline-start: 1px solid var(--bg-surface-secondary, #d7cbb9);
+}
+
+.jr__msg-label {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--text-supporting, #786c57);
+}
+
+.jr__msg {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-title, #0f3d2e);
+}
+
+/* Requester skills */
+
+.jr__req-skills {
+  margin-bottom: 8px;
+}
+
+.jr__skill-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.jr__skill-chip {
+  padding: 3px 9px;
+  border-radius: 20px;
+  background: rgba(119, 181, 160, 0.2);
+  color: var(--text-title, #0f3d2e);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.jr__req-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  /* the column is empty for finished requests — keep the grid from collapsing
+     so rows in different stages still line up */
+  min-width: 120px;
+}
+
+/* Where a request sits in the process when there's no button to press. */
+
+.jr__req-state {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: center;
+  color: var(--text-supporting, #786c57);
+}
+
+@media (max-width: 1100px) {
+  .jr__req {
+    grid-template-columns: auto 1fr;
+  }
+  .jr__req-body {
+    grid-column: 1 / -1;
+    border-inline-start: none;
+    padding-inline: 0;
+  }
+  .jr__req-actions {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}

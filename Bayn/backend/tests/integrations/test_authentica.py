@@ -6,7 +6,7 @@ Run: pytest tests/integrations/test_authentica.py -v
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from Bayn.backend.src.integrations.authentica import (
+from bayn.integrations.authentica import (
     AuthenticaClient,
     AuthenticaError,
     AuthenticaOTPInvalid,

@@ -1,0 +1,786 @@
+/* Project Dashboard page — layout, stat cards, meeting scheduler,
+   team roster, join requests, upcoming meetings and contracts. */
+
+/* Project Dashboard — tasks, team, meetings, applications, contract, for a
+   single selected project. Mirrors the layout conventions used by
+   MyProjectsPage/JoinRequestsPage/MeetingsPage (fixed floating sidebar,
+   108px inline-start offset for content). */
+
+.pd {
+  height: 100vh;
+  overflow-y: auto;
+  background: var(--bg-surface-primary);
+}
+
+.pd__main {
+  padding-block: 22px 40px;
+  padding-inline: 108px 40px;
+}
+
+.pd__body {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ---- Head: title + project switcher ---- */
+
+.pd__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.pd__title {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 32px;
+  font-weight: 550;
+  letter-spacing: -0.72px;
+  color: var(--text-title, #0f3d2e);
+}
+
+.pd__subtitle {
+  margin: 8px 0 0;
+  font-size: 16px;
+  color: var(--text-supporting, #786c57);
+}
+
+.pd__project {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-end;
+  text-align: end;
+}
+
+.pd__project-label {
+  font-size: 12px;
+  color: var(--text-supporting, #786c57);
+}
+
+.pd__project-name {
+  font-family: var(--font-sans);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--btn-primary-default, #295e4d);
+}
+
+[dir='rtl'] .pd__project-name {
+  font-family: var(--font-ar);
+}
+
+/* ---- Stat cards ---- */
+
+.pd__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.pd__stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px 18px;
+  border: 1px solid var(--bg-surface-secondary, #d7cbb9);
+  border-radius: 14px;
+  background: #f7f2ea;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.12);
+}
+
+.pd__stat-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pd__stat-icon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--bg-surface-secondary, #d7cbb9);
+  color: var(--btn-primary-default, #295e4d);
+}
+
+.pd__stat-flag {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.pd__stat-flag--ok { 
+background: var(--color-success-100);
+color: var(--color-success-700); 
+}
+
+.pd__stat-flag--warn { 
+background: var(--color-warning-100); 
+color: var(--color-warning-800);
+}
+
+.pd__stat-flag--bad { 
+	background: var(--color-error-100);
+color: var(--color-error-700); 
+}
+
+.pd__stat-value {
+  font-family: var(--font-sans);
+  font-size: 26px;
+  font-weight: 550;
+  color: var(--text-title, #0f3d2e);
+}
+
+.pd__stat-label {
+  font-size: 12.5px;
+  color: var(--text-supporting, #786c57);
+}
+
+/* ---- Shared panel shell ---- */
+
+.pd__panel {
+  padding: 20px;
+  border: 1px solid var(--bg-surface-secondary, #d7cbb9);
+  border-radius: 14px;
+  background: #f7f2ea;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.12);
+}
+
+.pd__panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.pd__panel-head h3 {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-title, #0f3d2e);
+}
+
+/* Custom meeting picker in the team-attendance header. Native <select> can't
+   restyle its option hover in Chromium (stays blue), so this is a fully
+   controlled dropdown with a brand-green hover instead. */
+
+.pd__mpick {
+  position: relative;
+}
+
+.pd__mpick-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 190px;
+  padding: 6px 12px;
+  border: 1px solid var(--bg-surface-secondary, #d7cbb9);
+  border-radius: 8px;
+  background: var(--color-neutral-100, #fff);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 550;
+  color: var(--btn-primary-default, #295e4d);
+  cursor: pointer;
+}
+
+[dir='rtl'] .pd__mpick-trigger {
+  font-family: var(--font-ar);
+}
+
+.pd__mpick-trigger span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pd__mpick-trigger svg {
+  flex-shrink: 0;
+  color: var(--btn-primary-default, #295e4d);
+}
+
+.pd__mpick-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  inset-inline-end: 0;
+  z-index: 20;
+  min-width: 180px;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  border: 1px solid var(--bg-surface-secondary, #d7cbb9);
+  border-radius: 8px;
+  background: var(--color-neutral-100, #fff);
+  box-shadow: 0 8px 20px -8px rgba(4, 18, 14, 0.35);
+}
+
+.pd__mpick-option {
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--text-title, #0f3d2e);
+  text-align: start;
+  cursor: pointer;
+}
+
+[dir='rtl'] .pd__mpick-option {
+  font-family: var(--font-ar);
+}
+
+.pd__mpick-option:hover {
+  background: #e3efe9;
+  color: var(--btn-primary-default, #295e4d);
+}
+
+.pd__mpick-option.is-selected {
+  font-weight: 650;
+  color: var(--btn-primary-default, #295e4d);
+}
+
+.pd__panel-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--btn-primary-default, #295e4d);
+  cursor: pointer;
+}
+
+.pd__panel-link:hover { opacity: 0.75; }
+
+.pd__empty {
+  margin: 12px 0;
+  font-size: 13px;
+  color: var(--text-supporting, #786c57);
+}
+
+/* ---- Schedule a meeting ---- */
+
+/* Sits beside the tasks board (the split's second column) with its fields
+   stacked vertically. */
+
+.pd__schedule-form {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 14px;
+  /* Cap the width so the calendar renders at its natural size (matching the
+     create-idea scheduler) instead of stretching across the whole column. */
+  max-width: 340px;
+}
+
+.pd__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pd__field--grow {
+  flex: initial;
+}
+
+.pd__field-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-supporting, #786c57);
+}
+
+.pd__field input {
+  padding: 10px 12px;
+  border: 1px solid var(--bg-surface-secondary, #d7cbb9);
+  border-radius: 8px;
+  background: var(--color-neutral-100, #fff);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--text-title, #0f3d2e);
+}
+
+[dir='rtl'] .pd__field input {
+  font-family: var(--font-ar);
+}
+
+.pd__field input:focus {
+  outline: none;
+  border-color: var(--btn-primary-default, #295e4d);
+}
+
+.pd__field {
+  position: relative;
+}
+
+/* Always-visible inline month calendar for the date field. */
+
+.pd__calendar-inline {
+  border-radius: 16px;
+}
+
+/* Confirmation of the chosen day under the calendar. */
+
+.pd__field-note {
+  margin: 2px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--btn-primary-default, #295e4d);
+}
+
+/* From / to time pickers side by side, reusing the shared Select so they match
+   the create-idea page's scheduler exactly. */
+
+.pd__time-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.pd__time-select.bayn-select {
+  flex: 1 1 0;
+  min-width: 0;
+  width: auto;
+}
+
+.pd__schedule-btn {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 8px;
+  background: var(--btn-primary-default, #295e4d);
+  color: #fff;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+[dir='rtl'] .pd__schedule-btn {
+  font-family: var(--font-ar);
+}
+
+.pd__schedule-btn:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.pd__schedule-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Member picker (checkbox chips) for the schedule form. */
+
+.pd__members {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pd__member {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--bg-surface-secondary, #d7cbb9);
+  border-radius: 8px;
+  background: var(--color-neutral-100, #fff);
+  font-size: 13px;
+  color: var(--text-title, #0f3d2e);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.pd__member.is-checked {
+  border-color: var(--btn-primary-default, #295e4d);
+  background: #e3efe9;
+}
+
+.pd__member input {
+  accent-color: var(--btn-primary-default, #295e4d);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.pd__field-note--muted {
+  color: var(--text-supporting, #786c57);
+  font-weight: 400;
+}
+
+.pd__schedule-error {
+  margin: 0;
+  font-size: 12px;
+  color: var(--input-error, #900000);
+}
+
+/* ---- Split: tasks board + team ---- */
+
+/* ---- Project team ---- */
+
+.pd__team {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pd__team-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--bg-surface-secondary, #d7cbb9);
+}
+
+.pd__team-row:last-child { border-bottom: none; }
+
+.pd__team-name {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-title, #0f3d2e);
+}
+
+.pd__team-role {
+  margin: 2px 0 0;
+  font-size: 11.5px;
+  color: var(--text-supporting, #786c57);
+}
+
+.pd__team-you {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--bg-surface-secondary, #d7cbb9);
+  color: var(--btn-primary-default, #295e4d);
+}
+
+/* ---- Team attendance (owner view) ---- */
+
+.pd__attendance-badge {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 7px;
+  white-space: nowrap;
+}
+
+.pd__attendance-badge--present { 
+background: var(--color-success-100); 
+color: var(--color-success-700); 
+}
+
+.pd__attendance-badge--late {
+background: var(--color-warning-100);
+color: var(--color-warning-800);
+}
+
+.pd__attendance-badge--absent {
+background: var(--color-error-100);
+color: var(--color-error-700);
+}
+
+/* ---- Join requests (owner view) ---- */
+
+.pd__requests {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.pd__request-row {
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--bg-surface-secondary, #d7cbb9);
+}
+
+.pd__request-row:last-child { border-bottom: none; padding-bottom: 0; }
+
+.pd__request-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.pd__request-avatar {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-primary-300), var(--color-primary-600));
+  color: var(--color-neutral-100);
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.pd__request-name {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-title, #0f3d2e);
+}
+
+.pd__request-role {
+  margin: 1px 0 0;
+  font-size: 11.5px;
+  color: var(--text-supporting, #786c57);
+}
+
+.pd__request-msg {
+  margin: 0 0 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-body-2, #463e31);
+}
+
+/* Join-request status badge — mirrors the home "Application's status" card. */
+
+.pd__req-stage {
+  flex: 0 0 auto;
+  margin-inline-start: auto;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.pd__req-stage--pending { 
+background: #f4e3c7; 
+color: #8a5a12; }
+
+.pd__req-stage--signing { 
+background: #dfeafd; 
+color: #285e9e; 
+}
+
+.pd__req-stage--meeting { 
+background: #ece3d3; 
+color: var(--text-title, #0f3d2e); 
+}
+
+.pd__req-stage--approved { 
+background: var(--color-primary-300, #76c3a9);
+color: var(--text-title, #0f3d2e); 
+}
+
+.pd__req-stage--rejected { 
+background: #f3d9d5; 
+color: #9a3b2e; }
+
+.pd__request-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* ---- Row 3: recordings / meetings / applications ---- */
+
+/* Lower area: a narrow schedule card beside a stack of the team roster and,
+   under it, the smaller info cards. */
+.pd__lower {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.pd__lower .pd__schedule {
+  flex: 0 0 360px;
+}
+
+.pd__lower-cards {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.pd__cards-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+  align-items: start;
+}
+
+/* Upcoming meetings list */
+
+.pd__meetings {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Show ~4 meetings, then scroll for the rest. */
+
+.pd__meetings--scroll {
+  max-height: 336px;
+  overflow-y: auto;
+  padding-inline-end: 6px;
+}
+
+.pd__meeting-row {
+  display: flex;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--bg-surface-secondary, #d7cbb9);
+}
+
+.pd__meeting-row:last-child { border-bottom: none; padding-bottom: 0; }
+
+.pd__meeting-date {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 9px;
+  background: var(--bg-surface-secondary, #d7cbb9);
+}
+
+.pd__meeting-day {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-title, #0f3d2e);
+  line-height: 1;
+}
+
+.pd__meeting-month {
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--btn-primary-default, #295e4d);
+}
+
+.pd__meeting-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-title, #0f3d2e);
+}
+
+.pd__meeting-sub {
+  margin: 2px 0 0;
+  font-size: 11.5px;
+  color: var(--text-supporting, #786c57);
+}
+
+.pd__meeting-badge {
+  display: inline-block;
+  margin-top: 5px;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: var(--color-success-100);
+  color: var(--color-success-700);
+}
+
+/* Applications list */
+
+.pd__applications {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pd__application-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--bg-surface-secondary, #d7cbb9);
+}
+
+.pd__application-row:last-child { border-bottom: none; padding-bottom: 0; }
+
+.pd__application-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-title, #0f3d2e);
+}
+
+.pd__application-sub {
+  margin: 2px 0 0;
+  font-size: 11.5px;
+  color: var(--text-supporting, #786c57);
+}
+
+.pd__status-pill {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 4px 9px;
+  border-radius: 7px;
+  white-space: nowrap;
+}
+
+.pd__status-pill--pending { 
+background: var(--color-warning-100); 
+color: var(--color-warning-800); 
+}
+
+.pd__status-pill--accepted { 
+background: var(--color-success-100); 
+color: var(--color-success-700);
+}
+
+.pd__status-pill--rejected { 
+background: var(--color-error-100);
+color: var(--color-error-700);
+}
+
+.pd__contract {
+  max-width: none;
+}
+
+@media (max-width: 1180px) {
+  .pd__lower { flex-direction: column; }
+  .pd__lower .pd__schedule { flex-basis: auto; width: 100%; max-width: 420px; }
+}
+
+@media (max-width: 720px) {
+  .pd__main { padding-inline: 24px; }
+  .pd__stats { grid-template-columns: 1fr 1fr; }
+}
+
+@keyframes pd-sheet-in {
+  from { transform: translateX(var(--pd-sheet-from, 24px)); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}

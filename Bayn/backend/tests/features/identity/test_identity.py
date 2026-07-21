@@ -10,6 +10,7 @@ Run:
 """
 
 import re
+import uuid
 from datetime import date
 from unittest.mock import AsyncMock
 
@@ -17,13 +18,13 @@ import pytest
 import pytest_asyncio
 from httpx import AsyncClient
 
-from Bayn.backend.src.common.exceptions import IncompleteProfileError, UserAlreadyExistsError
-from Bayn.backend.src.core.security import create_signup_pending_token, hash_password
-from Bayn.backend.src.features.catalog.models import Skill, UserSkill
-from Bayn.backend.src.features.identity import service
-from Bayn.backend.src.features.identity.dependencies import require_complete_profile
-from Bayn.backend.src.features.identity.models import City, Country, ExperienceRange, User
-from Bayn.backend.src.features.identity.schemas import UserLogin, UserSignup
+from bayn.common.exceptions import IncompleteProfileError, UserAlreadyExistsError
+from bayn.core.security import create_signup_pending_token, hash_password
+from bayn.features.catalog.models import Skill, UserSkill
+from bayn.features.identity import service
+from bayn.features.identity.dependencies import require_complete_profile
+from bayn.features.identity.models import City, Country, ExperienceRange, User
+from bayn.features.identity.schemas import UserLogin, UserSignup
 
 
 # ═══════════════════════════════════════════════════════
@@ -38,10 +39,12 @@ class TestSignup:
         "last_name_ar": "الأحمد",
         "first_name_en": "Mohammed",
         "last_name_en": "Al-Ahmad",
+        "birth_date": "2000-01-01",
         "email": "new@example.com",
         "username": "new_user",
         "password": "TestPass123@",
         "phone_number": 512345678,
+        "terms_accepted": True,
     }
 
     def _payload(self, test_country: Country, **overrides) -> dict:
@@ -181,11 +184,13 @@ class TestSignup:
         payload = UserSignup(
             first_name_ar="خالد", last_name_ar="سالم",
             first_name_en="Khaled", last_name_en="Salem",
+            birth_date=date(2000, 1, 1),
             email=test_user.email,
             username="khaled_new",
             password="TestPass123@",
             phone_country_id=test_user.phone_country_id,
             phone_number=512345679,
+            terms_accepted=True,
         )
         data = service._pending_signup_payload(payload)
         data["email_verified"] = True
@@ -404,7 +409,7 @@ class TestProfile:
         response = await client.patch(
             "/auth/profile",
             headers=auth_headers,
-            json={"job_title": "Backend Engineer"},
+            json={"specialization_id": str(uuid.uuid4())},
         )
 
         assert response.status_code == 200
@@ -417,6 +422,7 @@ class TestProfile:
         other = User(
             first_name_ar="سارة", last_name_ar="محمد",
             first_name_en="Sarah", last_name_en="Mohammed",
+            birth_date=date(2000, 1, 1),
             email="other@example.com", username="other_user",
             password_hash=hash_password("TestPass123"),
             national_id="1234567890",
@@ -482,7 +488,7 @@ class TestProfile:
         test_user.birth_date = date(1995, 1, 1)
         test_user.country_id = test_city.country_id
         test_user.city_id = test_city.id
-        test_user.job_title = "Backend Engineer"
+        test_user.specialization_id = test_city.country_id  # any non-null FK value; not committed
         test_user.industry_id = test_city.country_id  # any non-null FK value; not committed
         test_user.years_of_experience = ExperienceRange.less_than_1
         test_user.avatar_key = "avatars/test.png"
@@ -565,7 +571,7 @@ class TestOTP:
         mock_authentica,
     ):
 
-        from Bayn.backend.src.integrations.authentica import AuthenticaOTPInvalid
+        from bayn.integrations.authentica import AuthenticaOTPInvalid
         mock_authentica.verify_email_otp.side_effect = AuthenticaOTPInvalid("Invalid OTP")
 
 

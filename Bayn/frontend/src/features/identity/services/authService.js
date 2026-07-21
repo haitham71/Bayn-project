@@ -138,6 +138,9 @@ export const confirmPasswordChange = (token) =>
 export const getProfile = () => api.get(API.auth.profile).then((r) => r.data);
 export const updateProfile = (payload) => api.patch(API.auth.profile, payload).then((r) => r.data);
 
+// Soft-deletes the signed-in user's account (DELETE /auth/profile).
+export const deleteAccount = () => api.delete(API.auth.profile).then((r) => r.data);
+
 // Uploads the avatar as multipart/form-data and returns the updated profile
 // (which carries the fresh avatar_url). Let the browser set the boundary.
 export const uploadAvatar = (file) => {
@@ -149,7 +152,17 @@ export const uploadAvatar = (file) => {
 };
 
 export const deleteAvatar = () => api.delete(API.auth.avatar).then((r) => r.data);
+export const getMySkills = () => api.get(API.profile.skills).then((r) => r.data);
 export const addSkillToProfile = (skill_id) =>
   api.post(API.profile.skills, { skill_id }).then((r) => r.data);
+export const removeSkillFromProfile = (userSkillId) =>
+  api.delete(`${API.profile.skills}/${userSkillId}`).then((r) => r.data);
+
+export const getAllSpecializations = () =>
+  api.get(API.catalog.specializations).then((r) => r.data);
+export const getMySpecializations = () =>
+  api.get(API.profile.specializations).then((r) => r.data);
 export const addSpecializationToProfile = (specialization_id) =>
   api.post(API.profile.specializations, { specialization_id }).then((r) => r.data);
+export const removeSpecializationFromProfile = (userSpecializationId) =>
+  api.delete(`${API.profile.specializations}/${userSpecializationId}`).then((r) => r.data);

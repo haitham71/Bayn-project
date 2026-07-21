@@ -22,14 +22,12 @@ const STAGE_LABEL = {
 };
 const STAGE_FILTERS = ['all', 'planning', 'development', 'launching'];
 
+// How many skill chips a card shows before collapsing the rest into a "+N".
+const MAX_CARD_SKILLS = 6;
+
 function daysSince(iso) {
   const ms = Date.now() - new Date(iso).getTime();
   return Math.max(0, Math.floor(ms / 86400000));
-}
-
-// Rich-text descriptions are HTML — strip tags for the card's plain preview.
-function stripHtml(html) {
-  return (html || '').replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
 export default function IdeasMarketplacePage({ onNavigate }) {
@@ -154,7 +152,16 @@ export default function IdeasMarketplacePage({ onNavigate }) {
                 <div className="im__summary">
                   <span className="im__summary-label">{t('ideas.summary')}</span>
                   <h2 className="im__card-title">{p.title}</h2>
-                  {p.description && <p className="im__card-desc">{stripHtml(p.description)}</p>}
+                  <div className="im__skills">
+                    {(p.skills || []).slice(0, MAX_CARD_SKILLS).map((s) => (
+                      <span key={s.id} className="im__skill">{s.name}</span>
+                    ))}
+                    {(p.skills || []).length > MAX_CARD_SKILLS && (
+                      <span className="im__skill im__skill--more">
+                        +{p.skills.length - MAX_CARD_SKILLS}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <div className="im__pills">

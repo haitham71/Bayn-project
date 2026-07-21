@@ -2,6 +2,17 @@ import { useEffect, useId, useRef, useState } from 'react';
 import ChevronDown from '@/assets/icons/chevron-down.svg?react';
 import './Select.css';
 
+// A small round avatar for options that carry one (e.g. people pickers):
+// shows the image, or the name's first letter when there's no picture.
+function SelectAvatar({ src, name }) {
+  const initial = (name || '?').trim().charAt(0).toUpperCase();
+  return (
+    <span className="bayn-select__avatar" aria-hidden="true">
+      {src ? <img src={src} alt="" /> : <span className="bayn-select__avatar-fallback">{initial}</span>}
+    </span>
+  );
+}
+
 // Dropdown that mirrors the Input field styling (floating label, bottom border,
 // supporting text) and opens a list of choices. Controlled via value/onChange.
 export default function Select({
@@ -98,7 +109,14 @@ export default function Select({
       >
         <span className="bayn-select__control">
           <span className="bayn-select__value">
-            {selected ? selected.label : <span className="bayn-select__placeholder">{placeholder}</span>}
+            {selected ? (
+              <span className="bayn-select__value-inner">
+                {'avatar' in selected && <SelectAvatar src={selected.avatar} name={selected.label} />}
+                {selected.label}
+              </span>
+            ) : (
+              <span className="bayn-select__placeholder">{placeholder}</span>
+            )}
           </span>
           <span className="bayn-select__label">{label}</span>
         </span>
@@ -123,6 +141,7 @@ export default function Select({
                 onClick={() => choose(option)}
               >
                 {Icon && <Icon width={22} height={22} aria-hidden="true" />}
+                {'avatar' in option && <SelectAvatar src={option.avatar} name={option.label} />}
                 <span className="bayn-select__option-label">{option.label}</span>
               </li>
             );
