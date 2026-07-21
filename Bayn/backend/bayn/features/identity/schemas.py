@@ -258,7 +258,6 @@ class PublicUserResponse(BaseModel):
     
     username: str
     city_id: Optional[uuid.UUID]
-    specialization_id: Optional[uuid.UUID]
     years_of_experience: Optional[ExperienceRange]
     industry_id: Optional[uuid.UUID]
     #git_profile: Optional[str]
