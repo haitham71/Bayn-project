@@ -21,6 +21,8 @@ from bayn.features.tasks.router import router as tasks_router
 from bayn.features.dashboard.router import router as dashboard_router
 from bayn.features.chat.models import Conversation, ConversationMember, Message
 from bayn.features.chat.router import router as chat_router
+from bayn.features.notifications.models import Notification
+from bayn.features.notifications.router import router as notifications_router
 
 app = FastAPI(
     title="Beyn API",
@@ -56,6 +58,7 @@ app.include_router(contracts_router)
 app.include_router(tasks_router)
 app.include_router(dashboard_router)
 app.include_router(chat_router)
+app.include_router(notifications_router)
 
 
 @app.get("/health", tags=["System"])

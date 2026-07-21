@@ -14,6 +14,9 @@ from sqlalchemy.orm import selectinload
 
 from bayn.common.exceptions import ForbiddenError, NotFoundError, ValidationError
 from bayn.core.i18n import DEFAULT_LOCALE, t
+from bayn.features.identity.models import User
+from bayn.features.notifications import service as notifications_service
+from bayn.features.notifications.models import NotificationType
 from bayn.features.projects.models import Project, ProjectMembership, ProjectMembershipRole
 from bayn.features.tasks.models import Task, TaskAssignee, TaskEditor, TaskStatus
 from bayn.features.tasks.schemas import TaskCreateRequest, TaskMemberUpdateRequest, TaskUpdateRequest
@@ -74,6 +77,24 @@ async def _validate_assignees(db: AsyncSession, project_id: uuid.UUID, user_ids:
         raise ValidationError(t("task", "invalid_assignee", locale))
 
 
+def _notify_new_assignees(
+    db: AsyncSession, actor: User, project: Project, task: Task, new_ids: set[uuid.UUID]
+) -> None:
+    if not new_ids:
+        return
+    data = {
+        "actor_name_en": f"{actor.first_name_en} {actor.last_name_en}".strip(),
+        "actor_name_ar": f"{actor.first_name_ar} {actor.last_name_ar}".strip(),
+        "task_title": task.title,
+        "project_id": str(project.id),
+        "task_id": str(task.id),
+    }
+    for user_id in new_ids:
+        if user_id == actor.id:
+            continue  # you assigning yourself isn't news
+        notifications_service.create_notification(db, user_id, NotificationType.task_assigned, data)
+
+
 def _set_assignees(task: Task, user_ids: list[uuid.UUID]) -> None:
     # Diffed rather than clear-then-readd: an unchanged assignee must not be
     # deleted and reinserted in the same flush, since the DELETE and INSERT
@@ -113,6 +134,9 @@ async def create_task(
     _set_assignees(task, payload.assigned_to)
     db.add(task)
 
+    actor = await db.get(User, user_id)
+    _notify_new_assignees(db, actor, project, task, set(payload.assigned_to))
+
     await db.commit()
     return await _get_task(db, task.id, locale)
 
@@ -135,7 +159,13 @@ async def update_task(
 
     if assignees is not None:
         await _validate_assignees(db, task.project_id, assignees, locale)
+        previously_assigned = {a.user_id for a in task.assignees}
         _set_assignees(task, assignees)
+
+        newly_assigned = set(assignees) - previously_assigned
+        actor = await db.get(User, user_id)
+        project = await db.get(Project, task.project_id)
+        _notify_new_assignees(db, actor, project, task, newly_assigned)
 
     await db.commit()
     return await _get_task(db, task.id, locale)

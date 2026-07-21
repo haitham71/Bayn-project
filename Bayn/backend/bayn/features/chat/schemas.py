@@ -56,6 +56,12 @@ class DirectChatCreateRequest(BaseModel):
     recipient_id: uuid.UUID
 
 
+class UnreadCountResponse(BaseModel):
+    count: int
+    # see common.formatting.format_badge_count
+    display: str
+
+
 # ── Real-time WebSocket Protocol Schemas ──────────────────────────────────────
 
 class WSIncomingMessage(BaseModel):

@@ -65,6 +65,10 @@ class ConversationMember(Base):
     joined_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
+    # null means never opened this conversation — every message counts as unread
+    last_read_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
     # Relationships
     conversation: Mapped["Conversation"] = relationship(
