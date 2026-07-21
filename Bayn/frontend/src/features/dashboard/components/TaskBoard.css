@@ -1,0 +1,152 @@
+/* Task board — kanban columns and task cards. */
+
+.pd__board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.pd__col-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-supporting, #786c57);
+}
+
+.pd__col-count {
+  padding: 1px 8px;
+  border-radius: 10px;
+  background: var(--bg-surface-secondary, #d7cbb9);
+  color: var(--text-title, #0f3d2e);
+  font-size: 11px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.pd__col-empty {
+  font-size: 12px;
+  color: var(--text-supporting, #786c57);
+  font-style: italic;
+}
+
+.pd__task-card {
+  padding: 12px 13px;
+  margin-bottom: 10px;
+  border: 1px solid var(--bg-surface-secondary, #d7cbb9);
+  border-radius: 10px;
+  background: var(--bg-surface-primary, #ebe5dc);
+}
+
+.pd__task-title {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--text-title, #0f3d2e);
+}
+
+.pd__task-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pd__priority {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.pd__priority--low { background: var(--color-success-100); color: var(--color-success-700); }
+
+.pd__priority--medium { background: var(--color-warning-100); color: var(--color-warning-800); }
+
+.pd__priority--high { background: var(--color-error-100); color: var(--color-error-700); }
+
+.pd__due {
+  font-size: 11px;
+  color: var(--text-supporting, #786c57);
+}
+
+.pd__due--overdue {
+  color: var(--color-error-700);
+  font-weight: 700;
+}
+
+@media (max-width: 900px) {
+  .pd__board { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 720px) {
+  .pd__board { grid-template-columns: 1fr; }
+}
+
+/* ---- Task card footer: assignee + view-details ---- */
+
+.pd__task-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--bg-surface-secondary, #d7cbb9);
+}
+
+.pd__task-assignee {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.pd__task-avatar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--color-primary-300, #5ca18a), var(--color-primary-600, #0f3d2e));
+}
+
+.pd__task-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+.pd__task-avatar-fallback {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--color-neutral-100, #ebe5dc);
+  line-height: 1;
+}
+
+.pd__task-assignee-name {
+  font-size: 12px;
+  color: var(--text-supporting, #786c57);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pd__task-details {
+  flex-shrink: 0;
+  padding: 3px 8px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--btn-primary-default, #295e4d);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.pd__task-details:hover { background: var(--bg-surface-secondary, #d7cbb9); }

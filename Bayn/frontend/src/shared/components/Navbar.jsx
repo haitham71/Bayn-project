@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { useProfile } from '@/shared/hooks/useProfile';
 import Search from '@/assets/icons/search.svg?react';
 import Bell from '@/assets/icons/bell.svg?react';
@@ -9,6 +10,7 @@ import './Navbar.css';
 // message actions plus the signed-in user's profile chip on the trailing edge.
 export default function Navbar({ userName, onSearch }) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { data: profile } = useProfile();
   const name = userName || t('home.profileName');
   const initial = name.trim().charAt(0).toUpperCase();
@@ -40,7 +42,12 @@ export default function Navbar({ userName, onSearch }) {
           <MessageSquare width={24} height={24} aria-hidden="true" />
         </button>
 
-        <button type="button" className="bayn-topbar__profile">
+        <button
+          type="button"
+          className="bayn-topbar__profile"
+          onClick={() => navigate('/my-profile')}
+          aria-label={t('sidebar.profile')}
+        >
           {avatarUrl ? (
             <img src={avatarUrl} alt="" className="bayn-topbar__avatar bayn-topbar__avatar--img" />
           ) : (

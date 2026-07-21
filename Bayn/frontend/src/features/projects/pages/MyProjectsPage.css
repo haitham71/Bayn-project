@@ -1,5 +1,8 @@
+/* My projects page — layout, sections, cards grid, add button and side boxes. */
+
 /* My projects — dashboard: owned/working project sections + calendar rail.
    Shares the fixed floating sidebar with the other dashboard screens. */
+
 .mp {
   min-height: 100vh;
   background: var(--bg-surface-primary);
@@ -25,10 +28,12 @@
 }
 
 /* Section shell (bordered card holding the heading + project cards). */
+
 .mp__section {
-  border: 1px solid var(--bg-surface-secondary, #d7cbb9);
+  border: 1px solid var(--bg-surface-thirdary);
   border-radius: 8px;
-  box-shadow: 0 0 4px rgba(0, 0, 0, 0.25);
+  background: var(  --color-secondary-200);
+  box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.25);
   padding: 24px;
 }
 
@@ -47,104 +52,8 @@
   gap: 20px;
 }
 
-/* ---- Project card ---- */
-.mp__project {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  min-width: 0;
-  min-height: 180px;
-  padding: 16px;
-  border: 1px solid var(--bg-surface-secondary, #d7cbb9);
-  border-radius: 8px;
-  background: var(--bg-surface-primary, #ebe5dc);
-  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.12);
-}
-
-.mp__project-label {
-  font-family: var(--font-sans);
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text-title, #0f3d2e);
-}
-
-.mp__project-title {
-  margin: 0;
-  text-align: center;
-  font-family: var(--font-sans);
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text-title, #0f3d2e);
-  overflow-wrap: anywhere;
-  word-break: break-word;
-  /* Reserve two lines so pills and footer line up across cards no matter the
-     title length; anything longer is clamped with an ellipsis. */
-  min-height: 2.8em;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.mp__pills {
-  display: flex;
-  flex-wrap: wrap;
-  align-content: flex-start;
-  gap: 10px;
-  min-height: 28px;
-}
-
-.mp__pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  border-radius: 20px;
-  background: var(--bg-surface-secondary, #d7cbb9);
-  color: var(--text-title, #0f3d2e);
-  font-size: 12px;
-  box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
-}
-
-.mp__project-foot {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: auto;
-}
-
-.mp__posted {
-  font-size: 12px;
-  color: var(--text-supporting, #786c57);
-}
-
-.mp__project-actions {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 8px;
-}
-
-.mp__link {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: var(--btn-primary-default, #295e4d);
-  font-family: var(--font-sans);
-  font-size: 16px;
-  cursor: pointer;
-  transition: opacity 0.15s ease;
-}
-
-.mp__link:hover {
-  opacity: 0.75;
-}
-
 /* ---- Post-new card ---- */
+
 .mp__add {
   display: flex;
   flex-direction: column;
@@ -178,14 +87,44 @@
 }
 
 /* ---- Calendar + meetings rail ---- */
+
 .mp__side {
   display: flex;
   flex-direction: column;
-  gap: 9px;
+  gap: 16px;
   padding: 12px;
   border: 1px solid var(--bg-surface-secondary, #d7cbb9);
   border-radius: 10px;
   box-shadow: 0 0 8px rgba(0, 0, 0, 0.25);
+}
+
+.mp__box {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.mp__box + .mp__box {
+  padding-top: 16px;
+  border-top: 1px solid var(--bg-surface-secondary, #d7cbb9);
+}
+
+.mp__box-title {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-title, #0f3d2e);
+}
+
+[dir='rtl'] .mp__box-title {
+  font-family: var(--font-ar);
+}
+
+.mp__box-empty {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-supporting, #786c57);
 }
 
 .mp__meetings {

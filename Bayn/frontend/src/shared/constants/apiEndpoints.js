@@ -34,11 +34,16 @@ export const API = {
   },
   projects: {
     base: '/projects',
-    mine: '/projects/mine',
+    mine: '/projects/me',
+  },
+  tasks: {
+    // Flat resource — project scoping is a query param, not a nested path.
+    base: '/tasks',
   },
   meetings: {
     base: '/meetings',
     requests: '/meetings/requests',
     joinRequests: '/meetings/join-requests',
+    team: '/meetings/team',
   },
 };

@@ -1,9 +1,13 @@
+/* Home page — layout, header, action pills, the shared card shell and
+   the team/applications card content. */
+
 .home {
   min-height: 100vh;
   background: var(--bg-surface-primary);
 }
 
 /* Clears the fixed floating sidebar rail (16px offset + 76px collapsed width). */
+
 .home__main {
   padding-block: 22px 40px;
   padding-inline: 108px 40px;
@@ -14,6 +18,7 @@
 }
 
 /* Greeting + quick actions */
+
 .home__header {
   display: flex;
   align-items: flex-start;
@@ -79,7 +84,17 @@
   color: var(--color-neutral-100);
 }
 
+.home__pill:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.home__pill--primary:disabled:hover {
+  background: var(--color-primary-600);
+}
+
 /* Main / side split */
+
 .home__grid {
   display: flex;
   align-items: flex-start;
@@ -97,6 +112,7 @@
 }
 
 /* Cards */
+
 .home__cards {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -110,7 +126,7 @@
   padding: 20px;
   border: 1px solid var(--bg-surface-thirdary);
   border-radius: 30px;
-  background: var(--bg-surface-primary);
+  background: var(--color-secondary-200);
   box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.25);
 }
 
@@ -119,6 +135,7 @@
 }
 
 /* Leading-edge aligned title: top-left in LTR, top-right in RTL. */
+
 .home__card-title {
   margin: 0;
   text-align: start;
@@ -131,144 +148,185 @@
   flex: 1 1 auto;
 }
 
-/* Schedule card */
-.home__schedule {
-  padding: 15px;
-  border: 1px solid var(--bg-surface-thirdary);
-  border-radius: 16px;
-  background: var(--bg-surface-primary);
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
-}
+/* Current team card — project name (title-sized) + a "next project" arrow. */
 
-.home__schedule-head {
+.home__team-switch {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #ebebed;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
 }
 
-.home__schedule-title {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 600;
-  color: #1a1a1a;
+.home__team-project {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--btn-primary-default, #295e4d);
+  /* up to two lines so a longer title still shows */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
 }
 
-.home__schedule-date {
-  font-size: 11px;
-  color: #737373;
+.home__team-next {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  border: 1px solid var(--bg-surface-thirdary);
+  border-radius: 50%;
+  background: #f7f2ea;
+  color: var(--text-title);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
 }
 
-.home__schedule-list {
+.home__team-next:hover {
+  background: var(--bg-surface-secondary);
+}
+
+[dir='rtl'] .home__team-next svg {
+  transform: scaleX(-1);
+}
+
+.home__team-empty {
+  margin: 28px 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-supporting);
+}
+
+.home__team-list {
   list-style: none;
-  margin: 14px 0 0;
+  margin: 16px 0 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
+  max-height: 150px;
+  overflow-y: auto;
 }
 
-.home__meeting {
-  position: relative;
-  padding: 8px 12px 10px;
-  padding-inline-start: 16px;
-  border-radius: 10px;
-  background: var(--tint);
-}
-
-.home__meeting::before {
-  content: '';
-  position: absolute;
-  inset-inline-start: 0;
-  top: 6px;
-  bottom: 6px;
-  width: 4px;
-  border-radius: 2px;
-  background: var(--accent);
-}
-
-.home__meeting-time {
-  font-size: 10px;
-  color: #737373;
-}
-
-.home__meeting-name {
-  display: block;
-  margin-top: 2px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #1a1a1a;
-}
-
-.home__meeting-people {
+.home__team-member {
   display: flex;
   align-items: center;
-  margin-top: 8px;
+  gap: 10px;
 }
 
-.home__meeting-person {
-  position: relative;
-  display: inline-flex;
-}
-
-.home__meeting-person:not(:first-child) {
-  margin-inline-start: -6px;
-}
-
-.home__meeting-person:hover {
-  z-index: 2;
-}
-
-.home__meeting-avatar {
+.home__team-avatar {
   display: grid;
   place-items: center;
-  width: 20px;
-  height: 20px;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
   border-radius: 50%;
-  color: var(--color-neutral-100);
-  font-size: 8px;
-  font-weight: 700;
-  border: 1.5px solid var(--color-neutral-100);
+  background: var(--btn-primary-default);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
   overflow: hidden;
 }
 
-.home__meeting-avatar--img {
-  display: block;
+.home__team-avatar--img {
   object-fit: cover;
 }
 
-/* Name tooltip on avatar hover. */
-.home__meeting-tooltip {
-  position: absolute;
-  bottom: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 4px 10px;
-  border-radius: 6px;
-  background: var(--color-primary-600, #0f3d2e);
-  color: var(--color-neutral-100, #ebe5dc);
-  font-size: 12px;
+.home__team-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.home__team-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-title);
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.12s ease;
-  z-index: 3;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
 }
 
-.home__meeting-person:hover .home__meeting-tooltip {
-  opacity: 1;
+.home__team-role {
+  font-size: 12px;
+  color: var(--text-supporting);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.home__meeting-extra {
-  margin-inline-start: 6px;
-  font-size: 9px;
-  font-weight: 500;
-  color: #737373;
+.home__team-badge {
+  flex: 0 0 auto;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: rgba(119, 181, 160, 0.2);
+  color: var(--text-title);
+  font-size: 11px;
+}
+
+.home__team-badge--owner {
+  background: var(--color-primary-300, #76c3a9);
+}
+
+/* Application's status — latest join requests + their stage. */
+
+.home__status-list {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.home__status-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.home__status-badge {
+  flex: 0 0 auto;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.home__status-badge--pending {
+  background: #f4e3c7;
+  color: #8a5a12;
+}
+
+.home__status-badge--signing {
+  background: #dfeafd;
+  color: #285e9e;
+}
+
+.home__status-badge--meeting {
+  background: #ece3d3;
+  color: var(--text-title, #0f3d2e);
+}
+
+.home__status-badge--approved {
+  background: var(--color-primary-300, #76c3a9);
+  color: var(--text-title, #0f3d2e);
+}
+
+.home__status-badge--rejected {
+  background: #f3d9d5;
+  color: #9a3b2e;
 }
 
 /* Floating support button */
+
 .home__support {
   position: fixed;
   inset-inline-end: 32px;
@@ -293,11 +351,11 @@
 }
 
 /* Responsive: stack the schedule under the main content on narrow viewports. */
+
 @media (max-width: 1080px) {
   .home__grid {
     flex-direction: column;
   }
-
   .home__col-side {
     flex: 1 1 auto;
     width: 100%;
@@ -309,40 +367,10 @@
   .home__main {
     padding-inline: 96px 20px;
   }
-
   .home__cards {
     grid-template-columns: 1fr;
   }
-
   .home__title {
     font-size: 32px;
   }
-}
-
-.home__schedule-empty {
-  margin: 8px 0;
-  font-size: 14px;
-  color: var(--text-supporting, #786c57);
-}
-
-.home__meeting-join {
-  align-self: flex-start;
-  margin-top: 4px;
-  padding: 0;
-  border: none;
-  background: none;
-  font-family: inherit;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--btn-primary-default, #295e4d);
-  text-decoration: underline;
-  cursor: pointer;
-}
-
-/* Shown instead of the join link until the room opens. */
-.home__meeting-locked {
-  display: block;
-  margin-top: 4px;
-  font-size: 11px;
-  color: var(--text-supporting, #786c57);
 }

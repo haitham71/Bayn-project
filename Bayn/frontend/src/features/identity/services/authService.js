@@ -138,6 +138,9 @@ export const confirmPasswordChange = (token) =>
 export const getProfile = () => api.get(API.auth.profile).then((r) => r.data);
 export const updateProfile = (payload) => api.patch(API.auth.profile, payload).then((r) => r.data);
 
+// Soft-deletes the signed-in user's account (DELETE /auth/profile).
+export const deleteAccount = () => api.delete(API.auth.profile).then((r) => r.data);
+
 // Uploads the avatar as multipart/form-data and returns the updated profile
 // (which carries the fresh avatar_url). Let the browser set the boundary.
 export const uploadAvatar = (file) => {
