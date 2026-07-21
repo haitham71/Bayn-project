@@ -22,8 +22,7 @@ class DashboardTaskResponse(BaseModel):
     status: TaskStatus
     priority: TaskPriority
     due_date: datetime | None
-    assigned_to: uuid.UUID | None
-    # seconds until due_date (negative if overdue); null when there's no deadline
+    assigned_to: list[TeamMemberResponse]
     time_remaining_seconds: int | None = None
 
 
