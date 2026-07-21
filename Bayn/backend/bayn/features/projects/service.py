@@ -49,7 +49,7 @@ def _to_owner_info(user: User) -> OwnerInfo:
         id=user.id,
         name_en=f"{user.first_name_en} {user.last_name_en}".strip(),
         name_ar=f"{user.first_name_ar} {user.last_name_ar}".strip(),
-        job_title=user.job_title,
+        specialization_id=user.specialization_id,
         avatar_url=avatar_url,
     )
 
@@ -263,7 +263,7 @@ async def list_members(db: AsyncSession, project_id: uuid.UUID) -> list[ProjectM
             user_id=user.id,
             name_en=f"{user.first_name_en} {user.last_name_en}".strip(),
             name_ar=f"{user.first_name_ar} {user.last_name_ar}".strip(),
-            job_title=user.job_title,
+            specialization_id=user.specialization_id,
             specialization_en=spec[0] if spec else None,
             specialization_ar=spec[1] if spec else None,
             avatar_url=avatar_url,

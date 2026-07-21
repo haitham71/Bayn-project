@@ -42,6 +42,7 @@ from bayn.features.identity.models import (
 from bayn.features.identity.schemas import (
     OTPSendResponse,
     PendingSignupResponse,
+    PublicUserResponse,
     TokenResponse,
     UpdateProfileRequest,
     UserResponse,
@@ -59,7 +60,7 @@ _DUMMY_PASSWORD_HASH = hash_password(str(uuid.uuid4()))
 _PROFILE_COMPLETENESS_FIELDS = (
     "second_name_ar", "third_name_ar", "second_name_en", "third_name_en",
     "national_id", "birth_date", "country_id", "city_id",
-    "job_title", "industry_id", "years_of_experience",
+    "specialization_id", "industry_id", "years_of_experience",
     "avatar_key", "bio",
 )
 MAX_SKILLS_PER_USER = 7
@@ -109,7 +110,7 @@ async def _build_user_response(db: AsyncSession, user: User) -> UserResponse:
         phone_number=user.phone_number,
         country_id=user.country_id,
         city_id=user.city_id,
-        job_title=user.job_title,
+        specialization_id=user.specialization_id,
         years_of_experience=user.years_of_experience,
         industry_id=user.industry_id,
         git_profile=user.git_profile,
@@ -121,6 +122,32 @@ async def _build_user_response(db: AsyncSession, user: User) -> UserResponse:
         is_number_verified=user.is_number_verified,
         is_profile_complete=is_complete,
         missing_profile_fields=missing_fields,
+        created_at=user.created_at,
+    )
+
+
+def _build_public_user_response(user: User) -> PublicUserResponse:
+    """Profile view for a user other than the caller — no PII fields."""
+    avatar_url = None
+    if user.avatar_key:
+        try:
+            avatar_url = r2_client.get_avatar_url(user.avatar_key)
+        except StorageError:
+            avatar_url = None
+
+    return PublicUserResponse(
+        id=user.id,
+        first_name_ar=user.first_name_ar,
+        last_name_ar=user.last_name_ar,
+        first_name_en=user.first_name_en,
+        last_name_en=user.last_name_en,
+        username=user.username,
+        city_id=user.city_id,
+        specialization_id=user.specialization_id,
+        years_of_experience=user.years_of_experience,
+        industry_id=user.industry_id,
+        bio=user.bio,
+        avatar_url=avatar_url,
         created_at=user.created_at,
     )
 

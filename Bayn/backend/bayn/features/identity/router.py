@@ -19,6 +19,7 @@ from bayn.features.identity.schemas import (
     PendingOTPVerifyRequest,
     PendingResendRequest,
     PendingSignupResponse,
+    PublicUserResponse,
     RefreshTokenRequest,
     TokenResponse,
     UpdateProfileRequest,
@@ -31,7 +32,7 @@ from bayn.features.identity.schemas import (
     ChangePasswordRequest,
 )
 from bayn.features.identity import password_service
-from bayn.features.identity.service import _build_user_response
+from bayn.features.identity.service import _build_public_user_response, _build_user_response
 
 router = APIRouter(prefix="/auth", tags=["Identity"])
 
@@ -127,30 +128,30 @@ async def update_profile(
     return await service.update_profile(db, current_user, payload, locale)
 
 
-@router.delete("/profile", response_model=MessageResponse, summary="حذف الحساب (soft delete)")
-async def delete_profile(
-    current_user: User = Depends(get_current_active_user),
-    db: AsyncSession = Depends(get_db),
-) -> MessageResponse:
-    await service.soft_delete_account(db, current_user)
-    return MessageResponse(message="Account deleted successfully")
+#@router.delete("/profile", response_model=MessageResponse, summary="حذف الحساب (soft delete)")
+#async def delete_profile(
+#    current_user: User = Depends(get_current_active_user),
+#    db: AsyncSession = Depends(get_db),
+#) -> MessageResponse:
+#    await service.soft_delete_account(db, current_user)
+#    return MessageResponse(message="Account deleted successfully")
 
-@router.get("/profile/{user_id}", response_model=UserResponse, summary="جلب بيانات مستخدم آخر")
+@router.get("/profile/{user_id}", response_model=PublicUserResponse, summary="جلب بيانات مستخدم آخر")
 async def get_user_profile(
     user_id: uuid.UUID,
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
-) -> UserResponse:
+) -> PublicUserResponse:
     user = await service.get_user_by_id(db, user_id)
-    return await _build_user_response(db, user)
+    return _build_public_user_response(user)
 
-@router.get("/profile/username/{username}", response_model=UserResponse, summary="جلب بيانات مستخدم آخر بواسطة اسم المستخدم")
+@router.get("/profile/username/{username}", response_model=PublicUserResponse, summary="جلب بيانات مستخدم آخر بواسطة اسم المستخدم")
 async def get_user_profile_by_username(
     username: str,
     db: AsyncSession = Depends(get_db),
-) -> UserResponse:
+) -> PublicUserResponse:
     user = await service.get_user_by_username(db, username)
-    return await _build_user_response(db, user)
+    return _build_public_user_response(user)
 
 
 

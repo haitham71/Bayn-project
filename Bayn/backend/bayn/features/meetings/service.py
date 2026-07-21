@@ -290,7 +290,7 @@ async def requesters_map(db: AsyncSession, user_ids: list[uuid.UUID]) -> dict[uu
             id=user.id,
             name_en=f"{user.first_name_en} {user.last_name_en}".strip(),
             name_ar=f"{user.first_name_ar} {user.last_name_ar}".strip(),
-            job_title=user.job_title,
+            specialization_id=user.specialization_id,
             location_en=_location(user, arabic=False),
             location_ar=_location(user, arabic=True),
         )

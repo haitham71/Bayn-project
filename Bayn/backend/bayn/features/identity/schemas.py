@@ -128,7 +128,7 @@ class UpdateProfileRequest(BaseModel):
     third_name_en: Optional[str] = None
     country_id: Optional[uuid.UUID] = None
     city_id: Optional[uuid.UUID] = None
-    job_title: Optional[str] = None
+    specialization_id: Optional[uuid.UUID] = None
     years_of_experience: Optional[ExperienceRange] = None
     git_profile: Optional[str] = None
     industry_id: Optional[uuid.UUID] = None
@@ -211,7 +211,7 @@ class UserResponse(BaseModel):
 
     country_id: Optional[uuid.UUID]
     city_id: Optional[uuid.UUID]
-    job_title: Optional[str]
+    specialization_id: Optional[uuid.UUID]
     years_of_experience: Optional[ExperienceRange]
     industry_id: Optional[uuid.UUID]
     git_profile: Optional[str]
@@ -229,6 +229,34 @@ class UserResponse(BaseModel):
 
     created_at: datetime
 
+
+
+class PublicUserResponse(BaseModel):
+    """Profile view for a user other than the caller — excludes PII such as
+    email, phone number, national ID, and birth date."""
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+
+    first_name_ar: str
+    last_name_ar: str
+
+    first_name_en: str
+    last_name_en: str
+    
+    username: str
+    city_id: Optional[uuid.UUID]
+    specialization_id: Optional[uuid.UUID]
+    years_of_experience: Optional[ExperienceRange]
+    industry_id: Optional[uuid.UUID]
+    #git_profile: Optional[str]
+    bio: Optional[str]
+
+    avatar_url: Optional[str] = None
+
+    #role: str
+
+    #created_at: datetime
 
 
 class TokenResponse(BaseModel):
