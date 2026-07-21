@@ -131,18 +131,18 @@ export default function LandingPage() {
                   </div>
                   <div className="mk-rows">
                     <div className="mk-row">
-                      <div className="mk-av" style={{ background: '#295e4d' }}>AK</div>
-                      <div className="t"><b>Assaf Al-saeed</b><span>{t('landing.mock.roleBackend')}</span></div>
+                      <div className="mk-av" style={{ background: '#295e4d' }}>AS</div>
+                      <div className="t"><b>Assad Al-saeed</b><span>{t('landing.mock.roleBackend')}</span></div>
                       <span className="mk-tag">{t('landing.mock.owner')}</span>
                     </div>
                     <div className="mk-row">
-                      <div className="mk-av" style={{ background: '#786c57' }}>LM</div>
-                      <div className="t"><b>Lina Murad</b><span>{t('landing.mock.roleDesign')}</span></div>
+                      <div className="mk-av" style={{ background: '#786c57' }}>MK</div>
+                      <div className="t"><b>Mohammed Khalid</b><span>{t('landing.mock.roleDesign')}</span></div>
                       <span className="mk-tag">{t('landing.mock.design')}</span>
                     </div>
                     <div className="mk-row">
-                      <div className="mk-av" style={{ background: '#0f3d2e' }}>YR</div>
-                      <div className="t"><b>Yousef Rami</b><span>{t('landing.mock.roleMl')}</span></div>
+                      <div className="mk-av" style={{ background: '#0f3d2e' }}>YF</div>
+                      <div className="t"><b>Yasser Fahad</b><span>{t('landing.mock.roleMl')}</span></div>
                       <span className="mk-tag">{t('landing.mock.ai')}</span>
                     </div>
                   </div>
@@ -290,7 +290,6 @@ export default function LandingPage() {
             <div className="panel reveal">
               <div className="mk-head">
                 <div><div className="mk-title">{t('landing.dash.thisWeek')}</div><div className="mk-sub">{t('landing.dash.thisWeekMeta')}</div></div>
-                <span className="mk-badge" style={{ background: 'var(--green-deep)' }}>{t('landing.dash.live')}</span>
               </div>
               <div className="mk-rows">
                 <div className="mk-row"><div className="mk-av" style={{ background: '#295e4d' }}>✓</div><div className="t"><b>{t('landing.dash.review')}</b><span>{t('landing.dash.reviewMeta')}</span></div><span className="mk-tag">{t('landing.dash.done')}</span></div>
@@ -353,8 +352,6 @@ export default function LandingPage() {
             <div className="foot-col">
               <h4>{t('landing.footer.company')}</h4>
               <a href="#top">{t('landing.footer.aboutLink')}</a>
-              <a href="#top">{t('landing.footer.careers')}</a>
-              <a href="#top">{t('landing.footer.blog')}</a>
               <a href="#top">{t('landing.footer.contact')}</a>
             </div>
             <div className="foot-col">
