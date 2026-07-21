@@ -13,16 +13,53 @@ from bayn.features.identity.models import City, Country
 from bayn.features.catalog.models import (
     Industry, Skill, Specialization, UserSkill, UserSpecialization,
 )
+from bayn.features.catalog.schemas import UserCardResponse
 from bayn.features.identity.models import User
+from bayn.integrations.storage.cloudflare import StorageError, r2_client
 
 
-async def get_all_users(db: AsyncSession, locale: str = DEFAULT_LOCALE) -> list[User]:
-
+async def get_all_users(db: AsyncSession, locale: str = DEFAULT_LOCALE) -> list[UserCardResponse]:
     result = await db.execute(
-        select(User)
-        .where(User.deleted_at.is_(None))
+        select(User).where(User.deleted_at.is_(None))
     )
-    return result.scalars().all()
+    users = result.scalars().all()
+
+    # Each user's skill names, fetched in one query (mirrors projects.service.list_members).
+    user_ids = [user.id for user in users]
+    skill_map: dict[uuid.UUID, list[str]] = {}
+    if user_ids:
+        skill_rows = await db.execute(
+            select(UserSkill.user_id, Skill.name)
+            .join(Skill, UserSkill.skill_id == Skill.id)
+            .where(UserSkill.user_id.in_(user_ids))
+            .order_by(Skill.name)
+        )
+        for user_id, name in skill_rows.all():
+            skill_map.setdefault(user_id, []).append(name)
+
+    cards = []
+    for user in users:
+        avatar_url = None
+        if user.avatar_key:
+            try:
+                avatar_url = r2_client.get_avatar_url(user.avatar_key)
+            except StorageError:
+                avatar_url = None
+        cards.append(UserCardResponse(
+            id=user.id,
+            username=user.username,
+            first_name_ar=user.first_name_ar,
+            last_name_ar=user.last_name_ar,
+            first_name_en=user.first_name_en,
+            last_name_en=user.last_name_en,
+            specialization_id=user.specialization_id,
+            bio=user.bio,
+            industry_id=user.industry_id,
+            years_of_experience=user.years_of_experience,
+            skills=skill_map.get(user.id),
+            avatar_url=avatar_url,
+        ))
+    return cards
 
 async def get_all_countries(db: AsyncSession) -> list[Country]:
     result = await db.execute(select(Country).order_by(Country.name_en))

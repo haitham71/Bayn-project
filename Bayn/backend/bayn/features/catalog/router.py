@@ -94,8 +94,7 @@ async def get_all_users(
     db: AsyncSession = Depends(get_db),
     locale: str = Depends(get_locale),
 ) -> list[UserCardResponse]:
-    users = await service.get_all_users(db, locale)
-    return [UserCardResponse.from_orm(u) for u in users]
+    return await service.get_all_users(db, locale)
 
 
 
