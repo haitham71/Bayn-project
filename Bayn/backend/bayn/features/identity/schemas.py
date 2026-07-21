@@ -26,15 +26,15 @@ def _validate_saudi_phone(value: int, locale: str) -> int:
     phone = str(value).strip()
 
     if phone.startswith('+966'):
-        raise ValueError(t("validation", "phone_prefix_plus966", locale))
+        raise ValueError(t("identity", "validation.phone_prefix_plus966", locale))
     if phone.startswith('966'):
-        raise ValueError(t("validation", "phone_prefix_966", locale))
+        raise ValueError(t("identity", "validation.phone_prefix_966", locale))
     if phone.startswith('0'):
-        raise ValueError(t("validation", "phone_leading_zero", locale))
+        raise ValueError(t("identity", "validation.phone_leading_zero", locale))
     if not phone.isdigit():
-        raise ValueError(t("validation", "phone_digits_only", locale))
+        raise ValueError(t("identity", "validation.phone_digits_only", locale))
     if not re.match(r"^5\d{8}$", phone):
-        raise ValueError(t("validation", "phone_format", locale))
+        raise ValueError(t("identity", "validation.phone_format", locale))
 
     return int(phone)
 
@@ -68,7 +68,7 @@ class UserSignup(BaseModel):
     def validate_username(cls, value: str, info: ValidationInfo) -> str:
         if not re.match(r"^[a-zA-Z0-9_]{3,30}$", value):
             locale = _locale_from(info)
-            raise ValueError(t("validation", "username_format", locale))
+            raise ValueError(t("identity", "validation.username_format", locale))
         return value.lower()
 
     @field_validator("phone_number")
@@ -81,15 +81,15 @@ class UserSignup(BaseModel):
     def validate_password(cls, value: str, info: ValidationInfo) -> str:
         locale = _locale_from(info)
         if len(value) < 8:
-            raise ValueError(t("validation", "password_min_length", locale))
+            raise ValueError(t("identity", "validation.password_min_length", locale))
         if not re.search(r"[A-Z]", value):
-            raise ValueError(t("validation", "password_uppercase", locale))
+            raise ValueError(t("identity", "validation.password_uppercase", locale))
         if not re.search(r"[a-z]", value):
-            raise ValueError(t("validation", "password_lowercase", locale))
+            raise ValueError(t("identity", "validation.password_lowercase", locale))
         if not re.search(r"\d", value):
-            raise ValueError(t("validation", "password_number", locale))
+            raise ValueError(t("identity", "validation.password_number", locale))
         if not re.search(r"[@#$]", value):
-            raise ValueError(t("validation", "password_special_char", locale))
+            raise ValueError(t("identity", "validation.password_special_char", locale))
         return value
     
     @field_validator("birth_date")
@@ -98,7 +98,7 @@ class UserSignup(BaseModel):
         """Enforce that the registering user is 18 years or older."""
         if not value:
             locale = _locale_from(info)
-            raise ValueError(t("validation", "birth_date_required", locale))
+            raise ValueError(t("identity", "validation.birth_date_required", locale))
             
         today = date.today()
         age = today.year - value.year - ((today.month, today.day) < (value.month, value.day))
@@ -107,7 +107,7 @@ class UserSignup(BaseModel):
             locale = _locale_from(info)
             # add a key like "age_restriction" to translation files 
             # or a direct message fallback??
-            raise ValueError(t("validation", "age_restriction", locale))
+            raise ValueError(t("identity", "validation.age_restriction", locale))
             
         return value
     
@@ -118,16 +118,9 @@ class UserSignup(BaseModel):
         if not value:
             locale = _locale_from(info)
             # Pulls an error like "You must accept the terms to proceed" from json files
-            raise ValueError(t("validation", "terms_agreement_required", locale))
+            raise ValueError(t("identity", "validation.terms_agreement_required", locale))
         return value
-    
-    @field_validator("agreed_to_terms")
-    @classmethod
-    def validate_agreement(cls, v: bool, info) -> bool:
-        if not v:
-            # We catch this at the schema validation boundary before it hits the engine
-            raise ValueError("يجب عليك قبول الشروط والأحكام للمتابعة.")
-        return v
+
 
 class UserLogin(BaseModel):
     email: EmailStr
@@ -163,7 +156,7 @@ class UpdateProfileRequest(BaseModel):
             return None
         if not re.match(r"^[a-zA-Z0-9_]{3,30}$", value):
             locale = _locale_from(info)
-            raise ValueError(t("validation", "username_format", locale))
+            raise ValueError(t("identity", "validation.username_format", locale))
         return value.lower()
 
     @field_validator("phone_number")
