@@ -89,7 +89,7 @@ async def search_skills(
 
 profile_router = APIRouter(prefix="/profile", tags=["Profile"])
 
-@profile_router.get("/profile/users", response_model=list[UserCardResponse], summary="جلب بيانات جميع المستخدمين")
+@profile_router.get("/users", response_model=list[UserCardResponse], summary="جلب بيانات جميع المستخدمين")
 async def get_all_users(
     db: AsyncSession = Depends(get_db),
     locale: str = Depends(get_locale),
