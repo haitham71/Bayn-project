@@ -186,11 +186,6 @@ class User(Base):
 
     def __repr__(self) -> str:
         return f"<User {self.username} ({self.email})>"
-    
-    class User(base):
-        agreed_to_terms: bool = Column(Boolean, default=False, nullable=False)
-        agreed_to_terms_at: datetime = Column(DateTime(timezone=True), nullable=True)
-        terms_version_accepted: str = Column(String, nullable=True)
 
 
 class RefreshToken(Base):

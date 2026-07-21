@@ -2,11 +2,12 @@
 
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import func, select, desc
+from sqlalchemy import func, or_, select, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from bayn.common.exceptions import ConflictError, NotFoundError, ValidationError
+from bayn.common.formatting import format_badge_count
 from bayn.core.i18n import DEFAULT_LOCALE, t
 from bayn.features.identity.models import User
 from bayn.features.chat.models import Conversation, ConversationMember, Message
@@ -15,6 +16,7 @@ from bayn.features.chat.schemas import (
     ConversationMemberResponse,
     ConversationResponse,
     MessageResponse,
+    UnreadCountResponse,
 )
 from bayn.integrations.storage.cloudflare import StorageError, r2_client
 
@@ -373,3 +375,39 @@ async def send_message(
             )
 
     return new_message
+
+# ── Unread tracking ────────────────────────────────────────────────────────────
+
+async def get_unread_message_count(db: AsyncSession, user_id: uuid.UUID) -> UnreadCountResponse:
+    # a message counts as unread if it postdates the member's last_read_at for
+    # that conversation (or the member never read it at all) and isn't their own
+    count = await db.scalar(
+        select(func.count())
+        .select_from(Message)
+        .join(ConversationMember, ConversationMember.conversation_id == Message.conversation_id)
+        .where(
+            ConversationMember.user_id == user_id,
+            Message.sender_id != user_id,
+            or_(
+                ConversationMember.last_read_at.is_(None),
+                Message.created_at > ConversationMember.last_read_at,
+            ),
+        )
+    )
+    return UnreadCountResponse(count=count, display=format_badge_count(count))
+
+
+async def mark_conversation_read(
+    db: AsyncSession, conversation_id: uuid.UUID, user_id: uuid.UUID, locale: str = DEFAULT_LOCALE
+) -> None:
+    member = await db.scalar(
+        select(ConversationMember).where(
+            ConversationMember.conversation_id == conversation_id,
+            ConversationMember.user_id == user_id,
+        )
+    )
+    if not member:
+        raise NotFoundError(t("chat", "error.conversation_not_found", locale))
+
+    member.last_read_at = datetime.now(timezone.utc)
+    await db.commit()

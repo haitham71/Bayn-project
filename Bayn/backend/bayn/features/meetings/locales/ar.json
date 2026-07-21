@@ -31,6 +31,9 @@
   "attendance": {
     "not_found": "سجل الحضور غير موجود"
   },
+  "capacity": {
+    "platform_full": " جرّب وقتاً آخر."
+  },
   "join": {
     "owner_cannot_join": "أنت صاحب هذا المشروع، لا يمكنك الانضمام إليه.",
     "already_member": "أنت بالفعل ضمن هذا المشروع.",

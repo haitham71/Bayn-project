@@ -89,13 +89,12 @@ async def search_skills(
 
 profile_router = APIRouter(prefix="/profile", tags=["Profile"])
 
-@profile_router.get("/profile/users", response_model=list[UserCardResponse], summary="جلب بيانات جميع المستخدمين")
+@profile_router.get("/users", response_model=list[UserCardResponse], summary="جلب بيانات جميع المستخدمين")
 async def get_all_users(
     db: AsyncSession = Depends(get_db),
     locale: str = Depends(get_locale),
 ) -> list[UserCardResponse]:
-    users = await service.get_all_users(db, locale)
-    return [UserCardResponse.from_orm(u) for u in users]
+    return await service.get_all_users(db, locale)
 
 
 

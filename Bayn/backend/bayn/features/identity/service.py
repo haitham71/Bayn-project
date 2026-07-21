@@ -31,8 +31,8 @@ from bayn.core.security import (
     hash_password,
     verify_password,
 )
-from bayn.core.i18n import DEFAULT_LOCALE, t
-from bayn.features.catalog.models import UserSkill
+from bayn.core.i18n import DEFAULT_LOCALE, localized_name, t
+from bayn.features.catalog.models import Skill, Specialization, UserSkill, UserSpecialization
 from bayn.features.identity.models import (
     AuthenticaOTPLog,
     Country,
@@ -73,6 +73,30 @@ async def _count_user_skills(db: AsyncSession, user_id: uuid.UUID) -> int:
         select(func.count()).select_from(UserSkill).where(UserSkill.user_id == user_id)
     )
     return result.scalar_one()
+
+
+async def _get_user_skill_names(db: AsyncSession, user_id: uuid.UUID) -> list[str]:
+    result = await db.execute(
+        select(Skill.name)
+        .join(UserSkill, UserSkill.skill_id == Skill.id)
+        .where(UserSkill.user_id == user_id)
+        .order_by(Skill.name)
+    )
+    return list(result.scalars().all())
+
+
+async def _get_user_specialization_names(
+    db: AsyncSession, user_id: uuid.UUID, locale: str
+) -> list[str]:
+    # Specializations are a many-to-many (user_specializations), localized here to
+    # the request language so the public profile can show them by name.
+    result = await db.execute(
+        select(Specialization.name_en, Specialization.name_ar)
+        .join(UserSpecialization, UserSpecialization.specialization_id == Specialization.id)
+        .where(UserSpecialization.user_id == user_id)
+        .order_by(Specialization.name_en)
+    )
+    return [localized_name(name_en, name_ar, locale) for name_en, name_ar in result.all()]
 
 
 def _profile_completeness(user: User, skill_count: int) -> tuple[bool, list[str]]:
@@ -128,7 +152,9 @@ async def _build_user_response(db: AsyncSession, user: User) -> UserResponse:
     )
 
 
-def _build_public_user_response(user: User) -> PublicUserResponse:
+async def _build_public_user_response(
+    db: AsyncSession, user: User, locale: str = DEFAULT_LOCALE
+) -> PublicUserResponse:
     """Profile view for a user other than the caller — no PII fields."""
     avatar_url = None
     if user.avatar_key:
@@ -136,6 +162,9 @@ def _build_public_user_response(user: User) -> PublicUserResponse:
             avatar_url = r2_client.get_avatar_url(user.avatar_key)
         except StorageError:
             avatar_url = None
+
+    skills = await _get_user_skill_names(db, user.id)
+    specializations = await _get_user_specialization_names(db, user.id, locale)
 
     return PublicUserResponse(
         id=user.id,
@@ -148,6 +177,8 @@ def _build_public_user_response(user: User) -> PublicUserResponse:
         specialization_id=user.specialization_id,
         years_of_experience=user.years_of_experience,
         industry_id=user.industry_id,
+        skills=skills,
+        specializations=specializations,
         bio=user.bio,
         avatar_url=avatar_url,
         created_at=user.created_at,

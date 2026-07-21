@@ -4,6 +4,8 @@
     "contract_not_found": "The requested contract was not found locally.",
     "party_not_found": "One of the contract parties no longer exists.",
     "not_a_party": "You are not a party to this contract.",
-    "bad_webhook_key": "Invalid webhook credentials."
+    "bad_webhook_key": "Invalid webhook credentials.",
+    "national_id_required_owner": "The project owner must add their national ID to their profile before this NDA can be created.",
+    "national_id_required_requester": "You must add your national ID to your profile before this NDA can be created."
   }
 }

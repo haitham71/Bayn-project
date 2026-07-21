@@ -25,7 +25,10 @@ from bayn.features.projects.models import (
 
 
 @pytest_asyncio.fixture
-async def owner(test_user: User) -> User:
+async def owner(db, test_user: User) -> User:
+    # NDA creation on accept requires a real national_id (contracts.service._require_national_id)
+    test_user.national_id = "1000000001"
+    await db.flush()
     return test_user
 
 
@@ -39,6 +42,7 @@ async def member(db, test_country) -> User:
         password_hash=hash_password("TestPass123"),
         phone_country_id=test_country.id,
         phone_number=511111111,
+        national_id="1000000002",
         is_active=True,
     )
     db.add(user)
@@ -57,6 +61,7 @@ async def outsider(db, test_country) -> User:
         password_hash=hash_password("TestPass123"),
         phone_country_id=test_country.id,
         phone_number=522222222,
+        national_id="1000000003",
         is_active=True,
     )
     db.add(user)
@@ -620,3 +625,229 @@ class TestJoinFlow:
         assert cancel.status_code == 200
         await db.refresh(request)
         assert (await db.get(ProjectMeetingSlot, request.slot_id)).status == SlotStatus.available
+
+
+# ═══════════════════════════════════════════════════════
+# Platform-wide concurrent meeting cap
+# ═══════════════════════════════════════════════════════
+
+async def _make_member(db, test_country, tag: str) -> User:
+    user = User(
+        first_name_ar=f"عضو {tag}", last_name_ar="اختبار",
+        first_name_en=f"Member {tag}", last_name_en="Test",
+        birth_date=date(2000, 1, 1),
+        email=f"cap_{tag}@example.com", username=f"cap_member_{tag}",
+        password_hash=hash_password("TestPass123"),
+        phone_country_id=test_country.id,
+        phone_number=560000000 + hash(tag) % 1000,
+        national_id=f"300000{ord(tag[-1]):04d}",
+        is_active=True,
+    )
+    db.add(user)
+    await db.flush()
+    return user
+
+
+class TestPlatformCapacity:
+    """MAX_CONCURRENT_MEETINGS_PLATFORM caps how many meetings may overlap at
+    once across the whole platform, independent of project or user."""
+
+    @pytest_asyncio.fixture
+    async def crowded_project(self, db, owner: User, test_country) -> tuple[Project, list[User]]:
+        proj = Project(title="Capacity test", stage=ProjectStage.planning, team_members_needed=5)
+        db.add(proj)
+        await db.flush()
+        db.add(ProjectMembership(user_id=owner.id, project_id=proj.id, role=ProjectMembershipRole.OWNER))
+
+        members = [await _make_member(db, test_country, str(i)) for i in range(4)]
+        for m in members:
+            db.add(ProjectMembership(user_id=m.id, project_id=proj.id, role=ProjectMembershipRole.MEMBER))
+        await db.flush()
+        return proj, members
+
+    @pytest.mark.asyncio
+    async def test_fourth_overlapping_meeting_waits_then_schedules_once_capacity_frees(
+        self, client: AsyncClient, crowded_project, owner: User, mock_daily, mock_calcom, mock_nda,
+    ):
+        project, members = crowded_project
+        # identical window for all four — guarantees full overlap
+        payload = _request_payload(project.id, start_offset_hours=48)
+
+        meeting_ids = [
+            await _schedule_meeting(client, project.id, m, owner, mock_nda, payload=payload)
+            for m in members
+        ]
+
+        assert all(meeting_ids[:3])  # first 3 fill the cap of 3
+        assert meeting_ids[3] is None  # 4th is over capacity — left pending, not scheduled
+
+        # confirm it's still pending, not errored out or lost
+        listed = await client.get(
+            "/meetings/requests", params={"role": "incoming"}, headers=auth_headers_for(owner)
+        )
+        assert listed.status_code == 200
+        fourth = next(r for r in listed.json() if r["resulting_meeting_id"] is None)
+        assert fourth["status"] == "awaiting_signatures"
+
+    @pytest.mark.asyncio
+    async def test_deferred_meeting_schedules_once_an_earlier_one_frees_the_slot(
+        self, client: AsyncClient, db, crowded_project, owner: User, mock_daily, mock_calcom, mock_nda,
+    ):
+        project, members = crowded_project
+        payload = _request_payload(project.id, start_offset_hours=48)
+
+        first_three = members[:3]
+        fourth = members[3]
+
+        meeting_ids = [
+            await _schedule_meeting(client, project.id, m, owner, mock_nda, payload=payload)
+            for m in first_three
+        ]
+        assert all(meeting_ids)
+
+        blocked_id = await _schedule_meeting(client, project.id, fourth, owner, mock_nda, payload=payload)
+        assert blocked_id is None
+
+        # free up capacity by cancelling one of the scheduled meetings' request
+        from bayn.features.meetings.models import Meeting
+        await db.delete(await db.get(Meeting, uuid.UUID(meeting_ids[0])))
+        await db.commit()
+
+        listed = await client.get(
+            "/meetings/requests", params={"role": "incoming"}, headers=auth_headers_for(owner)
+        )
+        assert listed.status_code == 200
+        retried = next(r for r in listed.json() if r["requester_id"] == str(fourth.id))
+        assert retried["status"] == "scheduled"
+        assert retried["resulting_meeting_id"] is not None
+
+
+class TestTeamMeetingPlatformCapacity:
+
+    @pytest.mark.asyncio
+    async def test_team_meeting_rejected_when_platform_at_capacity(
+        self, client: AsyncClient, project_with_member: Project, owner: User, member: User,
+        mock_daily, mock_calcom, mock_nda,
+    ):
+        start = _future(72)
+        payload = {
+            "project_id": str(project_with_member.id),
+            "start_time": start.isoformat(),
+            "end_time": (start + timedelta(hours=1)).isoformat(),
+            "participant_ids": [],
+        }
+
+        for _ in range(3):
+            response = await client.post("/meetings/team", headers=auth_headers_for(owner), json=payload)
+            assert response.status_code == 201
+
+        response = await client.post("/meetings/team", headers=auth_headers_for(owner), json=payload)
+        assert response.status_code == 409
+
+
+# ═══════════════════════════════════════════════════════
+# Notifications
+# ═══════════════════════════════════════════════════════
+
+class TestMeetingNotifications:
+
+    async def _notifications_for(self, db, user_id):
+        from bayn.features.notifications.models import Notification
+        result = await db.execute(select(Notification).where(Notification.user_id == user_id))
+        return result.scalars().all()
+
+    @pytest.mark.asyncio
+    async def test_owner_notified_when_request_received(
+        self, client: AsyncClient, db, project_with_member: Project, member: User, owner: User,
+    ):
+        await client.post(
+            "/meetings/requests", headers=auth_headers_for(member), json=_request_payload(project_with_member.id)
+        )
+
+        notifications = await self._notifications_for(db, owner.id)
+        assert len(notifications) == 1
+        assert notifications[0].type.value == "meeting_request_received"
+        assert notifications[0].data["project_id"] == str(project_with_member.id)
+        assert notifications[0].data["actor_name_en"] == f"{member.first_name_en} {member.last_name_en}"
+
+    @pytest.mark.asyncio
+    async def test_owner_notified_when_join_request_received(
+        self, client: AsyncClient, db, project: Project, owner: User, outsider: User,
+    ):
+        slot = ProjectMeetingSlot(project_id=project.id, start_time=_future(24), end_time=_future(25))
+        db.add(slot)
+        await db.flush()
+
+        await client.post(
+            "/meetings/join-requests", headers=auth_headers_for(outsider),
+            json={"project_id": str(project.id), "slot_id": str(slot.id), "message": "hi"},
+        )
+
+        notifications = await self._notifications_for(db, owner.id)
+        assert len(notifications) == 1
+        assert notifications[0].type.value == "meeting_request_received"
+
+    @pytest.mark.asyncio
+    async def test_requester_notified_on_accept(
+        self, client: AsyncClient, db, project_with_member: Project, member: User, owner: User,
+        mock_daily, mock_calcom, mock_nda,
+    ):
+        create = await client.post(
+            "/meetings/requests", headers=auth_headers_for(member), json=_request_payload(project_with_member.id)
+        )
+        request_id = create.json()["id"]
+
+        await client.post(f"/meetings/requests/{request_id}/accept", headers=auth_headers_for(owner))
+
+        notifications = await self._notifications_for(db, member.id)
+        types = {n.type.value for n in notifications}
+        assert "meeting_request_accepted" in types
+
+    @pytest.mark.asyncio
+    async def test_requester_notified_on_reject(
+        self, client: AsyncClient, db, project_with_member: Project, member: User, owner: User,
+    ):
+        create = await client.post(
+            "/meetings/requests", headers=auth_headers_for(member), json=_request_payload(project_with_member.id)
+        )
+        request_id = create.json()["id"]
+
+        await client.post(f"/meetings/requests/{request_id}/reject", headers=auth_headers_for(owner))
+
+        notifications = await self._notifications_for(db, member.id)
+        types = {n.type.value for n in notifications}
+        assert "meeting_request_rejected" in types
+
+    @pytest.mark.asyncio
+    async def test_both_parties_notified_once_scheduled(
+        self, client: AsyncClient, db, project_with_member: Project, member: User, owner: User,
+        mock_daily, mock_calcom, mock_nda,
+    ):
+        await _schedule_meeting(client, project_with_member.id, member, owner, mock_nda)
+
+        owner_notifications = await self._notifications_for(db, owner.id)
+        member_notifications = await self._notifications_for(db, member.id)
+
+        assert any(n.type.value == "meeting_scheduled" for n in owner_notifications)
+        assert any(n.type.value == "meeting_scheduled" for n in member_notifications)
+
+    @pytest.mark.asyncio
+    async def test_invited_participant_notified_on_team_meeting(
+        self, client: AsyncClient, db, project_with_member: Project, member: User, owner: User,
+        mock_daily, mock_calcom, mock_nda,
+    ):
+        start = _future(48)
+        payload = {
+            "project_id": str(project_with_member.id),
+            "start_time": start.isoformat(),
+            "end_time": (start + timedelta(hours=1)).isoformat(),
+            "participant_ids": [str(member.id)],
+        }
+        response = await client.post("/meetings/team", headers=auth_headers_for(owner), json=payload)
+        assert response.status_code == 201
+
+        notifications = await self._notifications_for(db, member.id)
+        assert any(n.type.value == "meeting_scheduled" for n in notifications)
+        # the owner scheduled it themselves — no need to notify them of their own action
+        owner_notifications = await self._notifications_for(db, owner.id)
+        assert not any(n.type.value == "meeting_scheduled" for n in owner_notifications)

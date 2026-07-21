@@ -16,6 +16,7 @@ from bayn.features.projects.models import (
     ProjectMeetingSlot,
     ProjectMembership,
     ProjectMembershipRole,
+    ProjectTeamSlot,
     SlotStatus,
 )
 from bayn.features.projects.schemas import (
@@ -24,6 +25,7 @@ from bayn.features.projects.schemas import (
     ProjectCreateRequest,
     ProjectMemberResponse,
     ProjectUpdateRequest,
+    TeamSlotInput,
 )
 from bayn.integrations.storage.cloudflare import StorageError, r2_client
 
@@ -69,6 +71,29 @@ async def owners_map(db: AsyncSession, project_ids: list[uuid.UUID]) -> dict[uui
     return {pid: _to_owner_info(user) for pid, user in result.all()}
 
 
+async def _validate_team_slot_specializations(
+    db: AsyncSession, team_slots: list[TeamSlotInput], locale: str
+) -> None:
+    spec_ids = {slot.specialization_id for slot in team_slots}
+    spec_ids |= {slot.alternate_specialization_id for slot in team_slots if slot.alternate_specialization_id}
+    if not spec_ids:
+        return
+    result = await db.execute(select(Specialization.id).where(Specialization.id.in_(spec_ids)))
+    existing = set(result.scalars().all())
+    if spec_ids - existing:
+        raise ValidationError(t("projects", "project.invalid_team_slot_specialization", locale))
+
+
+def _build_team_slots(team_slots: list[TeamSlotInput]) -> list[ProjectTeamSlot]:
+    return [
+        ProjectTeamSlot(
+            specialization_id=slot.specialization_id,
+            alternate_specialization_id=slot.alternate_specialization_id,
+        )
+        for slot in team_slots
+    ]
+
+
 async def create_project(
     db: AsyncSession,
     owner_user_id: uuid.UUID,
@@ -78,6 +103,11 @@ async def create_project(
     if await _count_memberships(db, owner_user_id) >= MAX_MEMBERSHIPS_PER_USER:
         raise ConflictError(t("projects", "membership.limit_reached", locale))
 
+    # One seat per team_slots entry, always — see ProjectTeamSlot's docstring.
+    if len(payload.team_slots) != payload.team_members_needed:
+        raise ValidationError(t("projects", "project.team_slots_count_mismatch", locale))
+    await _validate_team_slot_specializations(db, payload.team_slots, locale)
+
     # Fetch chosen skills up front and attach them while the project is still a
     # transient object — assigning the collection after it's persisted would
     # trigger a (sync) lazy load and blow up under async. Unknown ids are dropped.
@@ -86,8 +116,9 @@ async def create_project(
         result = await db.execute(select(Skill).where(Skill.id.in_(payload.skill_ids)))
         skills = result.scalars().all()
 
-    project = Project(**payload.model_dump(exclude={"slots", "skill_ids"}))
+    project = Project(**payload.model_dump(exclude={"slots", "skill_ids", "team_slots"}))
     project.skills = skills
+    project.team_slots = _build_team_slots(payload.team_slots)
     db.add(project)
     await db.flush()  # assigns project.id without ending the transaction
 
@@ -158,7 +189,7 @@ async def get_project(db: AsyncSession, project_id: uuid.UUID, locale: str = DEF
     result = await db.execute(
         select(Project)
         .where(Project.id == project_id)
-        .options(selectinload(Project.skills))
+        .options(selectinload(Project.skills), selectinload(Project.team_slots))
         .execution_options(populate_existing=True)
     )
     project = result.scalar_one_or_none()
@@ -213,11 +244,24 @@ async def update_project(
     await _require_owner(db, project_id, user_id, locale)
 
     data = payload.model_dump(exclude_unset=True)
-    # skill_ids isn't a column — replace the relationship separately. project.skills
-    # is already loaded (selectin, above), so assigning it won't lazy-load.
+    # skill_ids/team_slots aren't columns — replace the relationships separately.
+    # project.skills/team_slots are already loaded (selectin, above), so
+    # assigning them won't lazy-load.
     skill_ids = data.pop("skill_ids", None)
+    team_slots_provided = "team_slots" in data
+    data.pop("team_slots", None)
+
     for field, value in data.items():
         setattr(project, field, value)
+
+    if team_slots_provided:
+        if len(payload.team_slots) != project.team_members_needed:
+            raise ValidationError(t("projects", "project.team_slots_count_mismatch", locale))
+        await _validate_team_slot_specializations(db, payload.team_slots, locale)
+        project.team_slots = _build_team_slots(payload.team_slots)
+    elif "team_members_needed" in data and len(project.team_slots) != project.team_members_needed:
+        # team_members_needed changed alone — the seat breakdown must be updated to match.
+        raise ValidationError(t("projects", "project.team_slots_count_mismatch", locale))
 
     if skill_ids is not None:
         result = await db.execute(select(Skill).where(Skill.id.in_(skill_ids)))

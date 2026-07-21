@@ -20,7 +20,8 @@ from bayn.common.exceptions import ConflictError, NotFoundError, ValidationError
 from bayn.features.catalog.models import (
     Industry, Skill, Specialization, UserSkill, UserSpecialization,
 )
-from bayn.features.identity.models import Country
+from bayn.features.identity.models import Country, User
+from bayn.integrations.storage.cloudflare import StorageError
 from bayn.features.catalog import service
 
 
@@ -54,6 +55,80 @@ def mock_t():
     """Stub i18n lookups so tests don't depend on real translation files."""
     with patch.object(service, "t", side_effect=lambda domain, key, locale: key):
         yield
+
+
+def make_user(**overrides) -> MagicMock:
+    defaults = dict(
+        id=uuid.uuid4(),
+        username="user",
+        first_name_ar="اسم", last_name_ar="عائلة",
+        first_name_en="Name", last_name_en="Family",
+        specialization_id=None,
+        bio=None,
+        industry_id=None,
+        years_of_experience=None,
+        avatar_key=None,
+    )
+    defaults.update(overrides)
+    return MagicMock(spec=User, **defaults)
+
+
+def make_skill_rows_result(rows: list[tuple[uuid.UUID, str]]) -> MagicMock:
+    """`get_all_users`'s skill query reads rows via `.all()` directly (not
+    `.scalars().all()`, since each row is a (user_id, name) tuple)."""
+    result = MagicMock()
+    result.all.return_value = rows
+    return result
+
+
+
+# get_all_users
+
+
+async def test_get_all_users_attaches_skills_and_avatar_url(db):
+    alice = make_user(username="alice", specialization_id=uuid.uuid4(), avatar_key="avatars/alice.png")
+    bob = make_user(username="bob")  # no skills, no avatar
+
+    db.execute.side_effect = [
+        make_execute_result(scalars_all=[alice, bob]),
+        make_skill_rows_result([(alice.id, "Python"), (alice.id, "SQL")]),
+    ]
+
+    with patch.object(service.r2_client, "get_avatar_url", return_value="https://cdn.example/alice.png"):
+        cards = await service.get_all_users(db)
+
+    assert len(cards) == 2
+    alice_card = next(c for c in cards if c.username == "alice")
+    bob_card = next(c for c in cards if c.username == "bob")
+
+    assert alice_card.skills == ["Python", "SQL"]
+    assert alice_card.avatar_url == "https://cdn.example/alice.png"
+    assert alice_card.specialization_id == alice.specialization_id
+
+    assert bob_card.skills is None
+    assert bob_card.avatar_url is None
+
+
+async def test_get_all_users_empty_skips_skill_query(db):
+    db.execute.return_value = make_execute_result(scalars_all=[])
+
+    cards = await service.get_all_users(db)
+
+    assert cards == []
+    db.execute.assert_awaited_once()  # skill query is skipped when there are no users
+
+
+async def test_get_all_users_avatar_storage_error_falls_back_to_none(db):
+    user = make_user(avatar_key="avatars/broken.png")
+    db.execute.side_effect = [
+        make_execute_result(scalars_all=[user]),
+        make_skill_rows_result([]),
+    ]
+
+    with patch.object(service.r2_client, "get_avatar_url", side_effect=StorageError("boom")):
+        cards = await service.get_all_users(db)
+
+    assert cards[0].avatar_url is None
 
 
 

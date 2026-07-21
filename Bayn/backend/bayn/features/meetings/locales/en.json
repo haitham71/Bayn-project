@@ -31,6 +31,9 @@
   "attendance": {
     "not_found": "Attendance record not found"
   },
+  "capacity": {
+    "platform_full": "Please try a different time."
+  },
   "join": {
     "owner_cannot_join": "You own this project, you can't join it.",
     "already_member": "You're already part of this project.",

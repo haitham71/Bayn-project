@@ -21,6 +21,7 @@ from sqlalchemy.pool import StaticPool
 from bayn.common.exceptions import NotFoundError
 from bayn.core.database import Base, get_db
 from bayn.core.security import create_access_token, hash_password
+from bayn.features.catalog.models import Specialization
 from bayn.features.identity.models import City, Country, User
 from bayn.main import app
 
@@ -105,6 +106,15 @@ async def test_country(db: AsyncSession) -> Country:
     return country
 
 @pytest_asyncio.fixture
+async def test_specialization(db: AsyncSession) -> Specialization:
+    specialization = Specialization(name_en="Backend Development", name_ar="تطوير الباك اند")
+    db.add(specialization)
+    await db.flush()
+    await db.refresh(specialization)
+    return specialization
+
+
+@pytest_asyncio.fixture
 async def test_city(db: AsyncSession, test_country: Country) -> City:
     city = City(
         country_id=test_country.id,
@@ -140,6 +150,28 @@ async def test_user(db: AsyncSession, test_country: Country) -> User:
 async def auth_headers(test_user: User) -> dict:
     token = create_access_token(test_user.id)
     return {"Authorization": f"Bearer {token}"}
+
+
+@pytest_asyncio.fixture
+async def other_user(db: AsyncSession, test_country: Country) -> User:
+    """A second distinct user, for tests checking data isolation between accounts."""
+    user = User(
+        first_name_ar="سلمى",
+        last_name_ar="خالد",
+        first_name_en="Salma",
+        last_name_en="Khalid",
+        birth_date=date(2000, 1, 1),
+        email="other@example.com",
+        username="salma_test",
+        password_hash=hash_password("TestPass123"),
+        phone_country_id=test_country.id,
+        phone_number=509876543,
+        is_active=True,
+    )
+    db.add(user)
+    await db.flush()
+    await db.refresh(user)
+    return user
 
 
 @pytest_asyncio.fixture

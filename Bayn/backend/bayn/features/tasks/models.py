@@ -6,7 +6,7 @@ from datetime import datetime
 
 from sqlalchemy import DateTime, Enum, ForeignKey, String, Text, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from bayn.core.database import Base
 
@@ -45,18 +45,39 @@ class Task(Base):
     )
     due_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
-    # the project member this task is assigned to (nullable — unassigned is valid)
-    assigned_to: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
-    )
-
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
     )
 
+    # project members this task is assigned to — empty list is valid (unassigned)
+    assignees: Mapped[list["TaskAssignee"]] = relationship(
+        "TaskAssignee", cascade="all, delete-orphan", order_by="TaskAssignee.created_at"
+    )
+
+    @property
+    def assigned_to(self) -> list[uuid.UUID]:
+        return [assignee.user_id for assignee in self.assignees]
+
     def __repr__(self) -> str:
         return f"<Task {self.title} ({self.status})>"
+
+
+class TaskAssignee(Base):
+    """A project member assigned to a task — a task may have any number."""
+    __tablename__ = "task_assignees"
+    __table_args__ = (UniqueConstraint("task_id", "user_id", name="uq_task_assignee"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    task_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("tasks.id", ondelete="CASCADE"), nullable=False
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    def __repr__(self) -> str:
+        return f"<TaskAssignee task={self.task_id} user={self.user_id}>"
 
 
 class TaskEditor(Base):
