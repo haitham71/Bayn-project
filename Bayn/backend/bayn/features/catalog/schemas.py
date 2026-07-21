@@ -2,6 +2,8 @@
 
 import uuid
 from datetime import datetime
+from typing import Optional
+from bayn.features.identity.models import ExperienceRange
 
 from pydantic import BaseModel, ConfigDict
 
@@ -23,13 +25,13 @@ class SkillResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: uuid.UUID
     name: str
-    is_approved: bool
+    #is_approved: bool
 
 
 class SpecializationResponse(BaseModel):
     id: uuid.UUID
     name: str
-    is_approved: bool
+    #is_approved: bool
 
 
 class IndustryResponse(BaseModel):
@@ -60,3 +62,20 @@ class UserSpecializationResponse(BaseModel):
     specialization_id: uuid.UUID
     specialization: SpecializationResponse
     created_at: datetime
+
+
+class UserCardResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    username: str
+    first_name_ar: str
+    last_name_ar: str
+    first_name_en: str
+    last_name_en: str
+    specialization_id: Optional[uuid.UUID] = None
+    bio: Optional[str] = None
+    industry_id: Optional[uuid.UUID] = None
+    years_of_experience: Optional[ExperienceRange] = None
+    skills: Optional[list[str]] = None
+    avatar_url: Optional[str] = None

@@ -12,6 +12,7 @@ from bayn.features.catalog.schemas import (
     AddSkillRequest, AddSpecializationRequest,
     CityResponse, CountryResponse, IndustryResponse, SkillResponse, SpecializationResponse,
     UserSkillResponse, UserSpecializationResponse,
+    UserCardResponse
 )
 from bayn.features.identity.dependencies import get_current_active_user
 from bayn.features.identity.models import User
@@ -87,6 +88,15 @@ async def search_skills(
 
 
 profile_router = APIRouter(prefix="/profile", tags=["Profile"])
+
+@profile_router.get("/profile/users", response_model=list[UserCardResponse], summary="جلب بيانات جميع المستخدمين")
+async def get_all_users(
+    db: AsyncSession = Depends(get_db),
+    locale: str = Depends(get_locale),
+) -> list[UserCardResponse]:
+    users = await service.get_all_users(db, locale)
+    return [UserCardResponse.from_orm(u) for u in users]
+
 
 
 @profile_router.get("/skills", response_model=list[UserSkillResponse], summary="List current user's skills")

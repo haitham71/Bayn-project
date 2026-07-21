@@ -13,7 +13,16 @@ from bayn.features.identity.models import City, Country
 from bayn.features.catalog.models import (
     Industry, Skill, Specialization, UserSkill, UserSpecialization,
 )
+from bayn.features.identity.models import User
 
+
+async def get_all_users(db: AsyncSession, locale: str = DEFAULT_LOCALE) -> list[User]:
+
+    result = await db.execute(
+        select(User)
+        .where(User.deleted_at.is_(None))
+    )
+    return result.scalars().all()
 
 async def get_all_countries(db: AsyncSession) -> list[Country]:
     result = await db.execute(select(Country).order_by(Country.name_en))
