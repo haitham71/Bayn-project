@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { getMyProjects } from '@/features/projects/services/projectService';
+import { getMyProjects, listProjectTasks } from '@/features/projects/services/projectService';
 import { listMeetings } from '@/features/meetings/services/meetingService';
 import Sidebar from '@/shared/components/Sidebar';
 import Navbar from '@/shared/components/Navbar';
@@ -31,9 +31,10 @@ function daysSince(iso) {
 }
 
 export default function MyProjectsPage({ onNavigate }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const { fullName } = useCurrentUser();
+  const { user, fullName } = useCurrentUser();
+  const locale = i18n.language === 'ar' ? 'ar' : 'en';
 
   const [meetings, setMeetings] = useState([]);
   useEffect(() => {
@@ -56,6 +57,26 @@ export default function MyProjectsPage({ onNavigate }) {
       })
       .catch(() => {});
   }, []);
+
+  // Tasks assigned to me across all my projects (there's no cross-project task
+  // endpoint, so gather each project's tasks and keep only my own).
+  const [myTasks, setMyTasks] = useState([]);
+  useEffect(() => {
+    if (!working.length || !user?.id) { setMyTasks([]); return; }
+    Promise.all(
+      working.map((p) =>
+        listProjectTasks(p.id)
+          .then((rows) => (rows || []).map((task) => ({ ...task, projectTitle: p.title })))
+          .catch(() => []),
+      ),
+    ).then((lists) => {
+      setMyTasks(
+        lists
+          .flat()
+          .filter((task) => task.assigned_to === user.id && (task.status || 'todo').toLowerCase() !== 'done'),
+      );
+    });
+  }, [working, user?.id]);
 
   return (
     <div className="mp">
@@ -145,7 +166,29 @@ export default function MyProjectsPage({ onNavigate }) {
           <aside className="mp__side">
             <section className="mp__box">
               <h2 className="mp__box-title">{t('myProjects.tasksTitle')}</h2>
-              <p className="mp__box-empty">{t('myProjects.tasksEmpty')}</p>
+              {myTasks.length === 0 ? (
+                <p className="mp__box-empty">{t('myProjects.tasksEmpty')}</p>
+              ) : (
+                <ul className="mp__tasks bayn-scroll">
+                  {myTasks.map((task) => {
+                    const status = (task.status || 'todo').toLowerCase();
+                    return (
+                      <li key={task.id} className="mp__task">
+                        <span className={`mp__task-dot mp__task-dot--${status}`} aria-hidden="true" />
+                        <div className="mp__task-info">
+                          <p className="mp__task-title">{task.title}</p>
+                          <p className="mp__task-project">{task.projectTitle}</p>
+                        </div>
+                        {task.due_date && (
+                          <span className="mp__task-due">
+                            {new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' }).format(new Date(task.due_date))}
+                          </span>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
             </section>
 
             <section className="mp__box">

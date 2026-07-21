@@ -11,7 +11,7 @@ import HomePage         from '@/features/home/pages/Homepage';
 import MyProfilePage    from '@/features/profile/pages/MyProfilePage';
 import MyProjectsPage   from '@/features/projects/pages/MyProjectsPage';
 import JoinRequestsPage from '@/features/projects/pages/JoinRequestsPage';
-import ProjectDashboardPage from '@/features/dashboard/ProjectDashboard';
+import ProjectDashboardPage from '@/features/dashboard/pages/ProjectDashboard';
 import SettingsPage from '@/features/settings/settings';
 import CreateIdeaPage   from '@/features/ideas/pages/CreateIdeaPage';
 import EditIdeaPage    from '@/features/ideas/pages/EditIdeaPage';

@@ -9,7 +9,7 @@ import ChevronRight from '@/assets/icons/chevron-right.svg?react';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
 import { useNow } from '@/shared/hooks/useNow';
 import { listMeetings, listMeetingRequests } from '@/features/meetings/services/meetingService';
-import { listProjects, getMyProjects, listProjectMembers } from '@/features/projects/services/projectService';
+import { listProjects, getMyProjects, listProjectMembers, listProjectTasks } from '@/features/projects/services/projectService';
 import { canJoin, minutesUntilOpen } from '@/features/meetings/lib/joinWindow';
 import { stageOf } from '@/features/meetings/lib/requestStatus';
 import { timeAgo } from '@/shared/lib/relativeTime';
@@ -20,6 +20,13 @@ const STAGE_LABEL = {
   planning: 'createIdea.stagePlanning',
   development: 'createIdea.stageDevelopment',
   launching: 'createIdea.stageLaunching',
+};
+
+// TaskPriority labels (reuse the dashboard's translation keys).
+const PRIORITY_KEY = {
+  low: 'projectDashboard.priorityLow',
+  medium: 'projectDashboard.priorityMedium',
+  high: 'projectDashboard.priorityHigh',
 };
 
 // How many recommended ideas to surface on the home page.
@@ -49,7 +56,7 @@ function greetingKey() {
 export default function HomePage({ onNavigate }) {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const { firstName, fullName } = useCurrentUser();
+  const { user, firstName, fullName } = useCurrentUser();
   const locale = i18n.language === 'ar' ? 'ar' : 'en';
 
   const [meetings, setMeetings] = useState([]);
@@ -97,6 +104,26 @@ export default function HomePage({ onNavigate }) {
       .catch(() => setStatusRequests([]));
   }, [statusProjectId]);
 
+  // Tasks assigned to me across my projects, excluding finished ones — the
+  // "current tasks" I still need to work on.
+  const [myTasks, setMyTasks] = useState([]);
+  useEffect(() => {
+    if (!myProjects.length || !user?.id) { setMyTasks([]); return; }
+    Promise.all(
+      myProjects.map((p) =>
+        listProjectTasks(p.id)
+          .then((rows) => (rows || []).map((task) => ({ ...task, projectTitle: p.title })))
+          .catch(() => []),
+      ),
+    ).then((lists) => {
+      setMyTasks(
+        lists
+          .flat()
+          .filter((task) => task.assigned_to === user.id && (task.status || 'todo').toLowerCase() !== 'done'),
+      );
+    });
+  }, [myProjects, user?.id]);
+
   const teamProject = myProjects.find((p) => p.id === teamProjectId) || null;
   function nextProject() {
     if (myProjects.length < 2) return;
@@ -134,7 +161,7 @@ export default function HomePage({ onNavigate }) {
 
   const tiles = [
     t('home.teamLabel'),
-    t('home.progressLabel'),
+    t('home.currentTasksLabel'),
     t('home.statusLabel'),
   ];
 
@@ -261,10 +288,40 @@ export default function HomePage({ onNavigate }) {
                   </div>
                 </article>
 
-                {/* Project progress — still a placeholder. */}
+                {/* Current tasks — assigned to me and not yet done. */}
                 <article className="home__card">
-                  <h2 className="home__card-title">{t('home.progressLabel')}</h2>
-                  <div className="home__card-body" />
+                  <h2 className="home__card-title">{t('home.currentTasksLabel')}</h2>
+                  <div className="home__card-body">
+                    {myTasks.length === 0 ? (
+                      <p className="home__team-empty">{t('home.tasksEmpty')}</p>
+                    ) : (
+                      <ul className="home__tasks bayn-scroll">
+                        {myTasks.map((task) => {
+                          const status = (task.status || 'todo').toLowerCase();
+                          const priority = (task.priority || 'low').toLowerCase();
+                          return (
+                            <li key={task.id} className="home__task">
+                              <span className={`home__task-dot home__task-dot--${status}`} aria-hidden="true" />
+                              <span className="home__task-info">
+                                <span className="home__task-title">{task.title}</span>
+                                <span className="home__task-project">{task.projectTitle}</span>
+                              </span>
+                              <span className="home__task-side">
+                                <span className={`home__task-priority home__task-priority--${priority}`}>
+                                  {t(PRIORITY_KEY[priority])}
+                                </span>
+                                {task.due_date && (
+                                  <span className="home__task-due">
+                                    {new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' }).format(new Date(task.due_date))}
+                                  </span>
+                                )}
+                              </span>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </div>
                 </article>
 
                 {/* Application's status — latest join requests for a chosen project. */}

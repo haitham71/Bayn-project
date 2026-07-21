@@ -143,7 +143,7 @@
     "postedDaysAgo": "Posted {{count}} days ago",
     "calendarTitle": "Your calendar",
     "tasksTitle": "Tasks",
-    "tasksEmpty": "No tasks yet.",
+    "tasksEmpty": "No tasks assigned to you yet.",
     "upcomingMeetings": "Upcoming meetings",
     "meetingJoinRequest": "Meeting for join request",
     "meetingWeeklyTeam": "Weekly team meeting"
@@ -437,7 +437,6 @@
     "roleMember": "Member",
     "statusNoProjects": "You don't own any project yet.",
     "statusEmpty": "No join requests yet.",
-    "progressLabel": "Project progress",
     "statusLabel": "Application's status",
     "recLabel": "Recommended for you · Explore new ideas",
     "recEmpty": "No ideas yet — be the first to post one!",
@@ -458,7 +457,9 @@
         "time": "16:30 - 17:00",
         "name": "Sprint Retrospective"
       }
-    ]
+    ],
+    "currentTasksLabel": "Current tasks",
+    "tasksEmpty": "No tasks assigned to you."
   },
   "projectDashboard": {
     "title": "Project Dashboard",

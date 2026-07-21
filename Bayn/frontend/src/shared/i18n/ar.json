@@ -143,7 +143,7 @@
     "postedDaysAgo": "نُشر قبل {{count}} أيام",
     "calendarTitle": "تقويمك",
     "tasksTitle": "المهام",
-    "tasksEmpty": "لا توجد مهام بعد.",
+    "tasksEmpty": "لا مهام مسندة إليك حتى الآن.",
     "upcomingMeetings": "الاجتماعات القادمة",
     "meetingJoinRequest": "اجتماع لطلب انضمام",
     "meetingWeeklyTeam": "اجتماع الفريق الأسبوعي"
@@ -437,7 +437,6 @@
     "roleMember": "عضو",
     "statusNoProjects": "لا تملك أي مشروع بعد.",
     "statusEmpty": "لا توجد طلبات انضمام بعد.",
-    "progressLabel": "تقدم المشروع",
     "statusLabel": "حالة الطلبات",
     "recLabel": "موصى به لك · استكشف أفكاراً جديدة",
     "recEmpty": "لا أفكار بعد — كن أول من ينشر فكرة!",
@@ -458,7 +457,9 @@
         "time": "16:30 - 17:00",
         "name": "مراجعة نهاية السبرنت"
       }
-    ]
+    ],
+    "currentTasksLabel": "المهام الحالية",
+    "tasksEmpty": "لا مهام مسندة إليك."
   },
   "projectDashboard": {
     "title": "لوحة المشروع",

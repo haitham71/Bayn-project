@@ -1,7 +1,11 @@
+/* Project Dashboard page — layout, stat cards, meeting scheduler,
+   team roster, join requests, upcoming meetings and contracts. */
+
 /* Project Dashboard — tasks, team, meetings, applications, contract, for a
    single selected project. Mirrors the layout conventions used by
    MyProjectsPage/JoinRequestsPage/MeetingsPage (fixed floating sidebar,
    108px inline-start offset for content). */
+
 .pd {
   height: 100vh;
   overflow-y: auto;
@@ -21,6 +25,7 @@
 }
 
 /* ---- Head: title + project switcher ---- */
+
 .pd__head {
   display: flex;
   align-items: center;
@@ -69,6 +74,7 @@
 }
 
 /* ---- Stat cards ---- */
+
 .pd__stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -110,9 +116,20 @@
   white-space: nowrap;
 }
 
-.pd__stat-flag--ok { background: var(--color-success-100); color: var(--color-success-700); }
-.pd__stat-flag--warn { background: var(--color-warning-100); color: var(--color-warning-800); }
-.pd__stat-flag--bad { background: var(--color-error-100); color: var(--color-error-700); }
+.pd__stat-flag--ok { 
+background: var(--color-success-100);
+color: var(--color-success-700); 
+}
+
+.pd__stat-flag--warn { 
+background: var(--color-warning-100); 
+color: var(--color-warning-800);
+}
+
+.pd__stat-flag--bad { 
+	background: var(--color-error-100);
+color: var(--color-error-700); 
+}
 
 .pd__stat-value {
   font-family: var(--font-sans);
@@ -127,6 +144,7 @@
 }
 
 /* ---- Shared panel shell ---- */
+
 .pd__panel {
   padding: 20px;
   border: 1px solid var(--bg-surface-secondary, #d7cbb9);
@@ -153,6 +171,7 @@
 /* Custom meeting picker in the team-attendance header. Native <select> can't
    restyle its option hover in Chromium (stays blue), so this is a fully
    controlled dropdown with a brand-green hover instead. */
+
 .pd__mpick {
   position: relative;
 }
@@ -250,8 +269,10 @@
 }
 
 /* ---- Schedule a meeting ---- */
+
 /* Sits beside the tasks board (the split's second column) with its fields
    stacked vertically. */
+
 .pd__schedule-form {
   display: flex;
   flex-direction: column;
@@ -302,11 +323,13 @@
 }
 
 /* Always-visible inline month calendar for the date field. */
+
 .pd__calendar-inline {
   border-radius: 16px;
 }
 
 /* Confirmation of the chosen day under the calendar. */
+
 .pd__field-note {
   margin: 2px 0 0;
   font-size: 12px;
@@ -316,6 +339,7 @@
 
 /* From / to time pickers side by side, reusing the shared Select so they match
    the create-idea page's scheduler exactly. */
+
 .pd__time-row {
   display: flex;
   align-items: flex-start;
@@ -360,6 +384,7 @@
 }
 
 /* Member picker (checkbox chips) for the schedule form. */
+
 .pd__members {
   list-style: none;
   margin: 0;
@@ -407,94 +432,9 @@
 }
 
 /* ---- Split: tasks board + team ---- */
-.pd__split {
-  display: grid;
-  /* Tasks board takes the remaining width; the schedule column is sized to fit
-     its 340px form (+ the panel's 20px padding either side) so there's no empty
-     space inside the card. */
-  grid-template-columns: minmax(0, 1fr) 380px;
-  gap: 20px;
-  align-items: start;
-}
-
-.pd__board {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
-}
-
-.pd__col-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-supporting, #786c57);
-}
-
-.pd__col-count {
-  padding: 1px 8px;
-  border-radius: 10px;
-  background: var(--bg-surface-secondary, #d7cbb9);
-  color: var(--text-title, #0f3d2e);
-  font-size: 11px;
-  text-transform: none;
-  letter-spacing: 0;
-}
-
-.pd__col-empty {
-  font-size: 12px;
-  color: var(--text-supporting, #786c57);
-  font-style: italic;
-}
-
-.pd__task-card {
-  padding: 12px 13px;
-  margin-bottom: 10px;
-  border: 1px solid var(--bg-surface-secondary, #d7cbb9);
-  border-radius: 10px;
-  background: var(--bg-surface-primary, #ebe5dc);
-}
-
-.pd__task-title {
-  margin: 0 0 8px;
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1.35;
-  color: var(--text-title, #0f3d2e);
-}
-
-.pd__task-meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.pd__priority {
-  font-size: 10.5px;
-  font-weight: 700;
-  padding: 3px 8px;
-  border-radius: 6px;
-}
-
-.pd__priority--low { background: var(--color-success-100); color: var(--color-success-700); }
-.pd__priority--medium { background: var(--color-warning-100); color: var(--color-warning-800); }
-.pd__priority--high { background: var(--color-error-100); color: var(--color-error-700); }
-
-.pd__due {
-  font-size: 11px;
-  color: var(--text-supporting, #786c57);
-}
-
-.pd__due--overdue {
-  color: var(--color-error-700);
-  font-weight: 700;
-}
 
 /* ---- Project team ---- */
+
 .pd__team {
   list-style: none;
   margin: 0;
@@ -538,6 +478,7 @@
 }
 
 /* ---- Team attendance (owner view) ---- */
+
 .pd__attendance-badge {
   font-size: 10.5px;
   font-weight: 700;
@@ -546,11 +487,23 @@
   white-space: nowrap;
 }
 
-.pd__attendance-badge--present { background: var(--color-success-100); color: var(--color-success-700); }
-.pd__attendance-badge--late { background: var(--color-warning-100); color: var(--color-warning-800); }
-.pd__attendance-badge--absent { background: var(--color-error-100); color: var(--color-error-700); }
+.pd__attendance-badge--present { 
+background: var(--color-success-100); 
+color: var(--color-success-700); 
+}
+
+.pd__attendance-badge--late {
+background: var(--color-warning-100);
+color: var(--color-warning-800);
+}
+
+.pd__attendance-badge--absent {
+background: var(--color-error-100);
+color: var(--color-error-700);
+}
 
 /* ---- Join requests (owner view) ---- */
+
 .pd__requests {
   list-style: none;
   margin: 0;
@@ -609,6 +562,7 @@
 }
 
 /* Join-request status badge — mirrors the home "Application's status" card. */
+
 .pd__req-stage {
   flex: 0 0 auto;
   margin-inline-start: auto;
@@ -619,11 +573,28 @@
   white-space: nowrap;
 }
 
-.pd__req-stage--pending { background: #f4e3c7; color: #8a5a12; }
-.pd__req-stage--signing { background: #dfeafd; color: #285e9e; }
-.pd__req-stage--meeting { background: #ece3d3; color: var(--text-title, #0f3d2e); }
-.pd__req-stage--approved { background: var(--color-primary-300, #76c3a9); color: var(--text-title, #0f3d2e); }
-.pd__req-stage--rejected { background: #f3d9d5; color: #9a3b2e; }
+.pd__req-stage--pending { 
+background: #f4e3c7; 
+color: #8a5a12; }
+
+.pd__req-stage--signing { 
+background: #dfeafd; 
+color: #285e9e; 
+}
+
+.pd__req-stage--meeting { 
+background: #ece3d3; 
+color: var(--text-title, #0f3d2e); 
+}
+
+.pd__req-stage--approved { 
+background: var(--color-primary-300, #76c3a9);
+color: var(--text-title, #0f3d2e); 
+}
+
+.pd__req-stage--rejected { 
+background: #f3d9d5; 
+color: #9a3b2e; }
 
 .pd__request-actions {
   display: flex;
@@ -631,14 +602,36 @@
 }
 
 /* ---- Row 3: recordings / meetings / applications ---- */
-.pd__row3 {
+
+/* Lower area: a narrow schedule card beside a stack of the team roster and,
+   under it, the smaller info cards. */
+.pd__lower {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.pd__lower .pd__schedule {
+  flex: 0 0 360px;
+}
+
+.pd__lower-cards {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.pd__cards-row {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 20px;
   align-items: start;
 }
 
 /* Upcoming meetings list */
+
 .pd__meetings {
   list-style: none;
   margin: 0;
@@ -649,6 +642,7 @@
 }
 
 /* Show ~4 meetings, then scroll for the rest. */
+
 .pd__meetings--scroll {
   max-height: 336px;
   overflow-y: auto;
@@ -715,6 +709,7 @@
 }
 
 /* Applications list */
+
 .pd__applications {
   list-style: none;
   margin: 0;
@@ -756,428 +751,36 @@
   white-space: nowrap;
 }
 
-.pd__status-pill--pending { background: var(--color-warning-100); color: var(--color-warning-800); }
-.pd__status-pill--accepted { background: var(--color-success-100); color: var(--color-success-700); }
-.pd__status-pill--rejected { background: var(--color-error-100); color: var(--color-error-700); }
+.pd__status-pill--pending { 
+background: var(--color-warning-100); 
+color: var(--color-warning-800); 
+}
+
+.pd__status-pill--accepted { 
+background: var(--color-success-100); 
+color: var(--color-success-700);
+}
+
+.pd__status-pill--rejected { 
+background: var(--color-error-100);
+color: var(--color-error-700);
+}
 
 .pd__contract {
   max-width: none;
 }
 
 @media (max-width: 1180px) {
-  .pd__split { grid-template-columns: 1fr; }
-  .pd__row3 { grid-template-columns: 1fr; }
-}
-
-@media (max-width: 900px) {
-  .pd__board { grid-template-columns: 1fr 1fr; }
+  .pd__lower { flex-direction: column; }
+  .pd__lower .pd__schedule { flex-basis: auto; width: 100%; max-width: 420px; }
 }
 
 @media (max-width: 720px) {
   .pd__main { padding-inline: 24px; }
-  .pd__board { grid-template-columns: 1fr; }
   .pd__stats { grid-template-columns: 1fr 1fr; }
-}
-
-/* ---- New-task side sheet (Notion-style task page) ---- */
-.pd__sheet-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-  background: rgba(15, 61, 46, 0.28);
-  backdrop-filter: blur(2px);
-}
-
-.pd__sheet {
-  position: fixed;
-  inset-block: 0;
-  inset-inline-end: 0;
-  width: min(600px, 100%);
-  height: 100vh;
-  overflow-y: auto;
-  background: var(--bg-surface-primary, #ebe5dc);
-  border-inline-start: 1.5px solid var(--bg-surface-secondary, #d7cbb9);
-  box-shadow: -12px 0 40px rgba(0, 0, 0, 0.22);
-  animation: pd-sheet-in 0.22s ease;
 }
 
 @keyframes pd-sheet-in {
   from { transform: translateX(var(--pd-sheet-from, 24px)); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }
 }
-
-[dir='rtl'] .pd__sheet { --pd-sheet-from: -24px; }
-
-.pd__sheet-bar {
-  display: flex;
-  padding: 14px 18px 0;
-}
-
-.pd__sheet-close {
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  border: none;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--text-supporting, #786c57);
-  cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease;
-}
-
-.pd__sheet-close:hover {
-  background: var(--bg-surface-secondary, #d7cbb9);
-  color: var(--text-title, #0f3d2e);
-}
-
-.pd__sheet-body {
-  display: flex;
-  flex-direction: column;
-  gap: 22px;
-  padding: 8px 40px 40px;
-}
-
-.pd__sheet-title {
-  width: 100%;
-  border: none;
-  background: transparent;
-  padding: 0;
-  font-family: var(--font-sans);
-  font-size: 32px;
-  font-weight: 700;
-  letter-spacing: -0.6px;
-  color: var(--text-title, #0f3d2e);
-}
-
-.pd__sheet-title::placeholder { color: rgba(120, 108, 87, 0.5); }
-.pd__sheet-title:focus { outline: none; }
-
-/* Property rows: icon+label on the leading side, control filling the rest —
-   the same shape Notion uses for a page's properties. */
-.pd__sheet-props {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.pd__prop {
-  display: grid;
-  grid-template-columns: 150px 1fr;
-  align-items: center;
-  gap: 12px;
-}
-
-.pd__prop-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13.5px;
-  font-weight: 600;
-  color: var(--text-supporting, #786c57);
-}
-
-.pd__prop-label svg { flex-shrink: 0; }
-
-.pd__prop-control.bayn-select { width: 100%; }
-
-/* Due-date field: a button that opens the themed CalendarPicker in a popover
-   (replaces the browser's un-stylable native date picker). */
-.pd__datewrap {
-  position: relative;
-  width: 100%;
-}
-
-.pd__datebtn {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  width: 100%;
-  padding: 10px 14px;
-  border: 1px solid var(--bg-surface-secondary, #d7cbb9);
-  border-radius: 9px;
-  background: var(--color-secondary-200, #ebe5dc);
-  font-family: var(--font-sans);
-  font-size: 14px;
-  color: var(--text-title, #0f3d2e);
-  cursor: pointer;
-  transition: border-color 0.15s ease, background-color 0.15s ease;
-}
-
-.pd__datebtn:hover { border-color: var(--input-border-hover, #bca98a); }
-.pd__datebtn--empty { color: var(--text-supporting, #786c57); }
-.pd__datebtn svg { flex-shrink: 0; color: var(--text-supporting, #786c57); }
-
-.pd__datepop {
-  position: absolute;
-  z-index: 30;
-  top: calc(100% + 6px);
-  inset-inline-start: 0;
-  padding: 10px;
-  border: 1px solid var(--input-border-hover, #bca98a);
-  border-radius: 16px;
-  background: var(--bg-surface-primary, #ebe5dc);
-  box-shadow: 0 12px 28px -10px rgba(4, 18, 14, 0.4);
-}
-
-.pd__date-clear {
-  display: block;
-  width: 100%;
-  margin-top: 8px;
-  padding: 7px;
-  border: none;
-  border-radius: 8px;
-  background: transparent;
-  font-family: var(--font-sans);
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--btn-primary-default, #295e4d);
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-}
-
-.pd__date-clear:hover { background: var(--bg-surface-secondary, #d7cbb9); }
-
-.pd__sheet-divider {
-  height: 1px;
-  border: none;
-  margin: 0;
-  background: var(--bg-surface-secondary, #d7cbb9);
-}
-
-.pd__sheet-desc {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.pd__sheet-textarea {
-  width: 100%;
-  min-height: 120px;
-  padding: 12px 14px;
-  border: 1px solid var(--bg-surface-secondary, #d7cbb9);
-  border-radius: 10px;
-  background: var(--color-secondary-200, #ebe5dc);
-  font-family: var(--font-sans);
-  font-size: 14px;
-  line-height: 1.55;
-  color: var(--text-body-2, #463e31);
-  resize: vertical;
-}
-
-.pd__sheet-textarea::placeholder { color: rgba(120, 108, 87, 0.55); }
-.pd__sheet-textarea:focus {
-  outline: none;
-  border-color: var(--btn-primary-default, #295e4d);
-}
-
-.pd__modal-error {
-  margin: 0;
-  font-size: 12.5px;
-  color: var(--color-error-700, #b23b3b);
-}
-
-.pd__sheet-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 4px;
-}
-
-/* Save/cancel always sit at the trailing edge, even when there's no delete. */
-.pd__sheet-actions-end {
-  display: flex;
-  gap: 10px;
-  margin-inline-start: auto;
-}
-
-.pd__sheet-delete {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 12px;
-  border: none;
-  border-radius: 9px;
-  background: transparent;
-  font-family: var(--font-sans);
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-error-700, #b23b3b);
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-}
-
-.pd__sheet-delete:hover { background: var(--color-error-100, rgba(178, 59, 59, 0.12)); }
-.pd__sheet-delete svg { flex-shrink: 0; }
-
-/* Inline delete confirmation, replacing the action row. */
-.pd__sheet-confirm {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 4px;
-  padding: 12px 14px;
-  border: 1px solid var(--color-error-100, rgba(178, 59, 59, 0.2));
-  border-radius: 10px;
-  background: rgba(178, 59, 59, 0.06);
-}
-
-.pd__sheet-confirm-msg {
-  font-size: 13.5px;
-  font-weight: 600;
-  color: var(--text-title, #0f3d2e);
-}
-
-.pd__sheet-confirm-btns {
-  display: flex;
-  gap: 10px;
-}
-
-.pd__sheet-delete-confirm {
-  padding: 8px 16px;
-  border: none;
-  border-radius: 8px;
-  background: var(--color-error-700, #b23b3b);
-  color: #fff;
-  font-family: var(--font-sans);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: opacity 0.15s ease;
-}
-
-.pd__sheet-delete-confirm:hover { opacity: 0.9; }
-.pd__sheet-delete-confirm:disabled { opacity: 0.6; cursor: progress; }
-
-@media (max-width: 640px) {
-  .pd__sheet-body { padding: 8px 22px 32px; }
-  .pd__prop { grid-template-columns: 1fr; align-items: start; gap: 6px; }
-}
-
-/* Property selects use an external icon+label, so drop the Select's own
-   floating label and vertically centre the value. The control's 44px min-height
-   fills the field and leaves no slack to centre in, so collapse it and let the
-   field's align-items:center place the value dead-centre. */
-.pd__prop-control .bayn-select__label { display: none; }
-.pd__prop-control .bayn-select__value { padding-block: 0; }
-.pd__prop-control .bayn-select__control { min-height: 0; }
-
-/* ---- Task card footer: assignee + view-details ---- */
-.pd__task-foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid var(--bg-surface-secondary, #d7cbb9);
-}
-
-.pd__task-assignee {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  min-width: 0;
-}
-
-.pd__task-avatar {
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  overflow: hidden;
-  background: linear-gradient(135deg, var(--color-primary-300, #5ca18a), var(--color-primary-600, #0f3d2e));
-}
-
-.pd__task-avatar img { width: 100%; height: 100%; object-fit: cover; }
-
-.pd__task-avatar-fallback {
-  font-family: var(--font-sans);
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--color-neutral-100, #ebe5dc);
-  line-height: 1;
-}
-
-.pd__task-assignee-name {
-  font-size: 12px;
-  color: var(--text-supporting, #786c57);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.pd__task-details {
-  flex-shrink: 0;
-  padding: 3px 8px;
-  border: none;
-  border-radius: 7px;
-  background: transparent;
-  font-family: var(--font-sans);
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--btn-primary-default, #295e4d);
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-}
-
-.pd__task-details:hover { background: var(--bg-surface-secondary, #d7cbb9); }
-
-/* Description shown as read-only text (non-owner view) instead of a textarea. */
-.pd__sheet-desc-text {
-  margin: 0;
-  padding: 2px;
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--text-body-2, #463e31);
-  white-space: pre-wrap;
-  overflow-wrap: break-word;
-}
-
-.pd__sheet-desc-text--empty {
-  color: var(--text-supporting, #786c57);
-  font-style: italic;
-}
-
-/* Read-only property values (non-owner view) — formatted display, not a
-   greyed-out disabled control. */
-.pd__prop-value {
-  display: inline-flex;
-  align-items: center;
-  min-height: 40px;
-  font-size: 14px;
-  color: var(--color-secondary-1000);
-}
-
-.pd__prop-value--muted { color: var(--text-supporting, #786c57); }
-.pd__prop-person {
-  gap: 8px;
-  color: var(--color-secondary-1000);
-  font-weight: 600;
-}
-
-.pd__status-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 5px 12px;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.pd__status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: currentColor;
-}
-
-.pd__status-tag--todo { background: var(--bg-surface-secondary, #d7cbb9); color: var(--text-supporting, #786c57); }
-.pd__status-tag--in_progress { background: var(--color-warning-100, #f5e6c8); color: var(--color-warning-800, #8a5a00); }
-.pd__status-tag--done { background: var(--color-success-100, #d8ebe0); color: var(--color-success-700, #2e7d55); }
