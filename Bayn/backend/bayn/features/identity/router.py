@@ -143,7 +143,7 @@ async def get_user_profile(
     db: AsyncSession = Depends(get_db),
 ) -> PublicUserResponse:
     user = await service.get_user_by_id(db, user_id)
-    return _build_public_user_response(user)
+    return await _build_public_user_response(db, user)
 
 @router.get("/profile/username/{username}", response_model=PublicUserResponse, summary="جلب بيانات مستخدم آخر بواسطة اسم المستخدم")
 async def get_user_profile_by_username(
@@ -151,7 +151,7 @@ async def get_user_profile_by_username(
     db: AsyncSession = Depends(get_db),
 ) -> PublicUserResponse:
     user = await service.get_user_by_username(db, username)
-    return _build_public_user_response(user)
+    return await _build_public_user_response(db, user)
 
 
 
