@@ -61,9 +61,6 @@ class Project(Base):
     )
     team_members_needed: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
 
-    specialization_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("specializations.id"), nullable=True
-    )
     industry_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("industries.id"), nullable=True
     )
@@ -90,9 +87,39 @@ class Project(Base):
     skills: Mapped[list["Skill"]] = relationship(
         "Skill", secondary=project_skills, lazy="selectin", order_by="Skill.name"
     )
+    # One row per open team seat — team_members_needed is just len(team_slots).
+    team_slots: Mapped[list["ProjectTeamSlot"]] = relationship(
+        "ProjectTeamSlot", cascade="all, delete-orphan", lazy="selectin", order_by="ProjectTeamSlot.created_at"
+    )
 
     def __repr__(self) -> str:
         return f"<Project {self.title}>"
+
+
+class ProjectTeamSlot(Base):
+    """One open seat on the project's team, described by the specialization(s)
+    that would fill it. `alternate_specialization_id` lets a seat accept
+    either of two specializations (e.g. "backend OR full-stack").
+
+    The service layer enforces one slot per seat: len(project.team_slots)
+    must equal project.team_members_needed."""
+    __tablename__ = "project_team_slots"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    project_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False
+    )
+    specialization_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("specializations.id"), nullable=False
+    )
+    alternate_specialization_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("specializations.id"), nullable=True
+    )
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    def __repr__(self) -> str:
+        return f"<ProjectTeamSlot project={self.project_id} spec={self.specialization_id}>"
 
 
 class ProjectMeetingSlot(Base):
@@ -138,3 +165,25 @@ class ProjectMembership(Base):
 
     def __repr__(self) -> str:
         return f"<ProjectMembership user={self.user_id} project={self.project_id} role={self.role}>"
+
+
+class ProjectFile(Base):
+    """A file a member uploaded to the project — an attachment or deliverable,
+    visible to the whole team."""
+    __tablename__ = "project_files"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    project_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False
+    )
+    uploaded_by: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+
+    file_key: Mapped[str] = mapped_column(String(500), nullable=False)
+    filename: Mapped[str] = mapped_column(String(255), nullable=False)
+    content_type: Mapped[str] = mapped_column(String(100), nullable=False)
+    size_bytes: Mapped[int] = mapped_column(Integer, nullable=False)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    def __repr__(self) -> str:
+        return f"<ProjectFile {self.filename} project={self.project_id}>"

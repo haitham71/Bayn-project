@@ -13,19 +13,23 @@ from bayn.features.catalog.models import Skill, Specialization, UserSpecializati
 from bayn.features.identity.models import User
 from bayn.features.projects.models import (
     Project,
+    ProjectFile,
     ProjectMeetingSlot,
     ProjectMembership,
     ProjectMembershipRole,
+    ProjectTeamSlot,
     SlotStatus,
 )
 from bayn.features.projects.schemas import (
     CalendarItemResponse,
     OwnerInfo,
     ProjectCreateRequest,
+    ProjectFileResponse,
     ProjectMemberResponse,
     ProjectUpdateRequest,
+    TeamSlotInput,
 )
-from bayn.integrations.storage.cloudflare import StorageError, r2_client
+from bayn.integrations.storage.cloudflare import InvalidFileError, StorageError, r2_client
 
 # a user can hold membership (owner or member) in at most this many projects at once
 MAX_MEMBERSHIPS_PER_USER = 2
@@ -69,6 +73,29 @@ async def owners_map(db: AsyncSession, project_ids: list[uuid.UUID]) -> dict[uui
     return {pid: _to_owner_info(user) for pid, user in result.all()}
 
 
+async def _validate_team_slot_specializations(
+    db: AsyncSession, team_slots: list[TeamSlotInput], locale: str
+) -> None:
+    spec_ids = {slot.specialization_id for slot in team_slots}
+    spec_ids |= {slot.alternate_specialization_id for slot in team_slots if slot.alternate_specialization_id}
+    if not spec_ids:
+        return
+    result = await db.execute(select(Specialization.id).where(Specialization.id.in_(spec_ids)))
+    existing = set(result.scalars().all())
+    if spec_ids - existing:
+        raise ValidationError(t("projects", "project.invalid_team_slot_specialization", locale))
+
+
+def _build_team_slots(team_slots: list[TeamSlotInput]) -> list[ProjectTeamSlot]:
+    return [
+        ProjectTeamSlot(
+            specialization_id=slot.specialization_id,
+            alternate_specialization_id=slot.alternate_specialization_id,
+        )
+        for slot in team_slots
+    ]
+
+
 async def create_project(
     db: AsyncSession,
     owner_user_id: uuid.UUID,
@@ -78,6 +105,11 @@ async def create_project(
     if await _count_memberships(db, owner_user_id) >= MAX_MEMBERSHIPS_PER_USER:
         raise ConflictError(t("projects", "membership.limit_reached", locale))
 
+    # One seat per team_slots entry, always — see ProjectTeamSlot's docstring.
+    if len(payload.team_slots) != payload.team_members_needed:
+        raise ValidationError(t("projects", "project.team_slots_count_mismatch", locale))
+    await _validate_team_slot_specializations(db, payload.team_slots, locale)
+
     # Fetch chosen skills up front and attach them while the project is still a
     # transient object — assigning the collection after it's persisted would
     # trigger a (sync) lazy load and blow up under async. Unknown ids are dropped.
@@ -86,8 +118,9 @@ async def create_project(
         result = await db.execute(select(Skill).where(Skill.id.in_(payload.skill_ids)))
         skills = result.scalars().all()
 
-    project = Project(**payload.model_dump(exclude={"slots", "skill_ids"}))
+    project = Project(**payload.model_dump(exclude={"slots", "skill_ids", "team_slots"}))
     project.skills = skills
+    project.team_slots = _build_team_slots(payload.team_slots)
     db.add(project)
     await db.flush()  # assigns project.id without ending the transaction
 
@@ -158,7 +191,7 @@ async def get_project(db: AsyncSession, project_id: uuid.UUID, locale: str = DEF
     result = await db.execute(
         select(Project)
         .where(Project.id == project_id)
-        .options(selectinload(Project.skills))
+        .options(selectinload(Project.skills), selectinload(Project.team_slots))
         .execution_options(populate_existing=True)
     )
     project = result.scalar_one_or_none()
@@ -202,6 +235,19 @@ async def _require_owner(
     return membership
 
 
+async def _require_member(
+    db: AsyncSession, project_id: uuid.UUID, user_id: uuid.UUID, locale: str
+) -> ProjectMembership:
+    membership = await db.scalar(
+        select(ProjectMembership).where(
+            ProjectMembership.project_id == project_id, ProjectMembership.user_id == user_id
+        )
+    )
+    if not membership:
+        raise ForbiddenError(t("projects", "membership.not_found", locale))
+    return membership
+
+
 async def update_project(
     db: AsyncSession,
     project_id: uuid.UUID,
@@ -213,11 +259,24 @@ async def update_project(
     await _require_owner(db, project_id, user_id, locale)
 
     data = payload.model_dump(exclude_unset=True)
-    # skill_ids isn't a column — replace the relationship separately. project.skills
-    # is already loaded (selectin, above), so assigning it won't lazy-load.
+    # skill_ids/team_slots aren't columns — replace the relationships separately.
+    # project.skills/team_slots are already loaded (selectin, above), so
+    # assigning them won't lazy-load.
     skill_ids = data.pop("skill_ids", None)
+    team_slots_provided = "team_slots" in data
+    data.pop("team_slots", None)
+
     for field, value in data.items():
         setattr(project, field, value)
+
+    if team_slots_provided:
+        if len(payload.team_slots) != project.team_members_needed:
+            raise ValidationError(t("projects", "project.team_slots_count_mismatch", locale))
+        await _validate_team_slot_specializations(db, payload.team_slots, locale)
+        project.team_slots = _build_team_slots(payload.team_slots)
+    elif "team_members_needed" in data and len(project.team_slots) != project.team_members_needed:
+        # team_members_needed changed alone — the seat breakdown must be updated to match.
+        raise ValidationError(t("projects", "project.team_slots_count_mismatch", locale))
 
     if skill_ids is not None:
         result = await db.execute(select(Skill).where(Skill.id.in_(skill_ids)))
@@ -326,3 +385,87 @@ async def get_project_calendar(
     ]
     items.sort(key=lambda item: item.date)
     return items
+
+
+# ── Project files ────────────────────────────────────────────────────────────
+
+def _to_file_response(file: ProjectFile) -> ProjectFileResponse:
+    return ProjectFileResponse(
+        id=file.id,
+        project_id=file.project_id,
+        uploaded_by=file.uploaded_by,
+        filename=file.filename,
+        content_type=file.content_type,
+        size_bytes=file.size_bytes,
+        file_url=r2_client.get_project_file_url(file.file_key),
+        created_at=file.created_at,
+    )
+
+
+async def upload_project_file(
+    db: AsyncSession,
+    project_id: uuid.UUID,
+    user_id: uuid.UUID,
+    filename: str,
+    file_bytes: bytes,
+    content_type: str,
+    locale: str = DEFAULT_LOCALE,
+) -> ProjectFileResponse:
+    await _require_member(db, project_id, user_id, locale)
+
+    try:
+        file_key = r2_client.upload_project_file(project_id, file_bytes, content_type)
+    except InvalidFileError as e:
+        raise ValidationError(e.message)
+    except StorageError:
+        raise ValidationError(t("projects", "file.upload_failed", locale))
+
+    file = ProjectFile(
+        project_id=project_id,
+        uploaded_by=user_id,
+        file_key=file_key,
+        filename=filename,
+        content_type=content_type,
+        size_bytes=len(file_bytes),
+    )
+    db.add(file)
+    await db.commit()
+    await db.refresh(file)
+    return _to_file_response(file)
+
+
+async def list_project_files(
+    db: AsyncSession, project_id: uuid.UUID, user_id: uuid.UUID, locale: str = DEFAULT_LOCALE
+) -> list[ProjectFileResponse]:
+    await _require_member(db, project_id, user_id, locale)
+
+    result = await db.execute(
+        select(ProjectFile)
+        .where(ProjectFile.project_id == project_id)
+        .order_by(ProjectFile.created_at.desc())
+    )
+    return [_to_file_response(f) for f in result.scalars().all()]
+
+
+async def delete_project_file(
+    db: AsyncSession, project_id: uuid.UUID, file_id: uuid.UUID, user_id: uuid.UUID, locale: str = DEFAULT_LOCALE
+) -> None:
+    membership = await _require_member(db, project_id, user_id, locale)
+
+    file = await db.scalar(
+        select(ProjectFile).where(ProjectFile.id == file_id, ProjectFile.project_id == project_id)
+    )
+    if not file:
+        raise NotFoundError(t("projects", "file.not_found", locale))
+
+    # the uploader can always remove their own file; otherwise only the owner can
+    if file.uploaded_by != user_id and membership.role != ProjectMembershipRole.OWNER:
+        raise ForbiddenError(t("projects", "file.delete_forbidden", locale))
+
+    try:
+        r2_client.delete_project_file(file.file_key)
+    except StorageError:
+        pass  # the DB row is the source of truth for listing; an orphaned R2 object isn't user-visible
+
+    await db.delete(file)
+    await db.commit()

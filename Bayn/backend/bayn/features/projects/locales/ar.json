@@ -1,7 +1,14 @@
 {
   "project": {
     "not_found": "المشروع غير موجود",
-    "owner_only": "هذا الإجراء متاح لمالك المشروع فقط"
+    "owner_only": "هذا الإجراء متاح لمالك المشروع فقط",
+    "team_slots_count_mismatch": "عدد مقاعد الفريق لازم يطابق team_members_needed",
+    "invalid_team_slot_specialization": "أحد مقاعد الفريق يشير لتخصص غير موجود"
+  },
+  "file": {
+    "upload_failed": "فشل رفع الملف. حاول مرة أخرى.",
+    "not_found": "الملف غير موجود",
+    "delete_forbidden": "فقط من رفع الملف أو مالك المشروع يستطيع يحذفه"
   },
   "membership": {
     "limit_reached": "وصلت للحد الأقصى (مشروعين) للعضوية",

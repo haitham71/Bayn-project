@@ -10,6 +10,7 @@ from bayn.common.exceptions import ForbiddenError
 from bayn.core.i18n import DEFAULT_LOCALE, t
 from bayn.features.dashboard.schemas import DashboardTaskResponse, ProjectDashboardResponse, TeamMemberResponse
 from bayn.features.identity.models import User
+from bayn.features.meetings import service as meetings_service
 from bayn.features.projects import service as projects_service
 from bayn.features.projects.models import ProjectMembership
 from bayn.features.tasks import service as tasks_service
@@ -56,7 +57,9 @@ async def get_project_dashboard(
     ]
 
     tasks = await tasks_service.list_tasks(db, project_id, user_id, status=None, locale=locale)
-    meetings = await tasks_service.list_meetings(db, project_id, user_id, status=None, locale=locale)
+    meetings = await meetings_service.list_meetings(db, user_id, project_id=project_id, locale=locale)
+
+    members_by_id = {member.id: member for member in team_members}
 
     now = datetime.now(timezone.utc)
     week_start, week_end = _week_bounds_utc(now)
@@ -77,7 +80,9 @@ async def get_project_dashboard(
             status=task.status,
             priority=task.priority,
             due_date=task.due_date,
-            assigned_to=task.assigned_to,
+            assigned_to=[
+                members_by_id[user_id] for user_id in task.assigned_to if user_id in members_by_id
+            ],
             time_remaining_seconds=(
                 int((_ensure_aware(task.due_date) - now).total_seconds()) if task.due_date else None
             ),
@@ -88,7 +93,7 @@ async def get_project_dashboard(
     total_meetings = len(meetings)
     meetings_this_week = sum(
         1 for meeting in meetings
-        if meeting.due_date is not None and week_start <= _ensure_aware(meeting.due_date) < week_end
+        if week_start <= _ensure_aware(meeting.start_time) < week_end
     )
 
     return ProjectDashboardResponse(

@@ -1,0 +1,12 @@
+{
+  "message": {
+    "meeting_request_received": "{actor_name} طلب اجتماعاً بخصوص {project_title}",
+    "meeting_request_accepted": "{actor_name} وافق على طلب اجتماعك بخصوص {project_title}",
+    "meeting_request_rejected": "{actor_name} رفض طلب اجتماعك بخصوص {project_title}",
+    "meeting_scheduled": "تم جدولة اجتماعك مع {actor_name} بخصوص {project_title}",
+    "task_assigned": "{actor_name} كلّفك بمهمة: {task_title}"
+  },
+  "errors": {
+    "not_found": "الإشعار غير موجود"
+  }
+}

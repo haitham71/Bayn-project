@@ -127,3 +127,18 @@ class MeetingAttendanceResponse(BaseModel):
     status: AttendanceStatus | None
     joined_at: datetime | None
     left_at: datetime | None
+
+
+class MeetingRecordingResponse(BaseModel):
+    url: str
+
+
+class DailyRecordingWebhookPayload(BaseModel):
+    """Body of Daily.co's "recording.ready-to-download" webhook call."""
+
+    class Payload(BaseModel):
+        recording_id: str
+        room_name: str
+
+    type: str
+    payload: Payload

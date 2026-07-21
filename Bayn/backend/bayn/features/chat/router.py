@@ -9,10 +9,12 @@ from bayn.core.security import decode_token
 from bayn.features.identity.dependencies import get_current_active_user
 from bayn.features.identity.models import User
 from bayn.features.chat.manager import manager
+from bayn.core.i18n import get_locale
 from bayn.features.chat.schemas import (
     ConversationResponse,
     DirectChatCreateRequest,
     MessageResponse,
+    UnreadCountResponse,
     WSIncomingMessage,
     WSOutgoingMessage,
 )
@@ -68,6 +70,24 @@ async def get_chat_history(
     )
 
 
+@router.get("/unread-count", response_model=UnreadCountResponse, summary="My unread chat message count")
+async def get_unread_count(
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> UnreadCountResponse:
+    return await service.get_unread_message_count(db, current_user.id)
+
+
+@router.post("/{conversation_id}/read", status_code=204, summary="Mark a conversation as read")
+async def mark_conversation_read(
+    conversation_id: uuid.UUID,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+    locale: str = Depends(get_locale),
+) -> None:
+    await service.mark_conversation_read(db, conversation_id, current_user.id, locale)
+
+
 # ── Live WebSocket Protocol ───────────────────────────────────────────────────
 
 @router.websocket("/ws")
@@ -113,6 +133,7 @@ async def websocket_endpoint(
                     conversation_id=incoming_msg.conversation_id,
                     sender_id=user.id,
                     content=incoming_msg.content,
+                    mentioned_user_ids=incoming_msg.mentioned_user_ids,
                 )
             except Exception as e:
                 # Catch database validation errors (e.g. user is no longer in this chat)

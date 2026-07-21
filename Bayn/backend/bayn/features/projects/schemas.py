@@ -28,16 +28,31 @@ class SlotsReplaceRequest(BaseModel):
     slots: list[MeetingSlotInput] = Field(default_factory=list)
 
 
+class TeamSlotInput(BaseModel):
+    """One team seat being requested — one specialization, or two if either
+    would fill the seat."""
+    specialization_id: uuid.UUID
+    alternate_specialization_id: uuid.UUID | None = None
+
+
+class TeamSlotResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    specialization_id: uuid.UUID
+    alternate_specialization_id: uuid.UUID | None = None
+
+
 class ProjectCreateRequest(BaseModel):
     title: str
     description: str | None = None
     more_info: str | None = None
-    specialization_id: uuid.UUID | None = None
     industry_id: uuid.UUID | None = None
     availability: datetime | None = None
     is_hidden: bool = False
     stage: ProjectStage
     team_members_needed: int = Field(ge=1, le=12)
+    # One entry per seat — length must equal team_members_needed.
+    team_slots: list[TeamSlotInput] = Field(default_factory=list)
     slots: list[MeetingSlotInput] = Field(default_factory=list)
     skill_ids: list[uuid.UUID] = Field(default_factory=list)
 
@@ -46,12 +61,14 @@ class ProjectUpdateRequest(BaseModel):
     title: str | None = None
     description: str | None = None
     more_info: str | None = None
-    specialization_id: uuid.UUID | None = None
     industry_id: uuid.UUID | None = None
     availability: datetime | None = None
     is_hidden: bool | None = None
     stage: ProjectStage | None = None
     team_members_needed: int | None = Field(default=None, ge=1, le=12)
+    # When present, replaces the seat breakdown wholesale — length must equal
+    # the resulting team_members_needed (the new value if given, else the current one).
+    team_slots: list[TeamSlotInput] | None = None
     # When present, replaces the project's skill set wholesale (omit to leave as-is).
     skill_ids: list[uuid.UUID] | None = None
 
@@ -71,12 +88,12 @@ class ProjectResponse(BaseModel):
     title: str
     description: str | None
     more_info: str | None
-    specialization_id: uuid.UUID | None
     industry_id: uuid.UUID | None
     availability: datetime | None
     is_hidden: bool
     stage: ProjectStage
     team_members_needed: int
+    team_slots: list[TeamSlotResponse] = Field(default_factory=list)
     created_at: datetime
     updated_at: datetime
     owner: OwnerInfo | None = None
@@ -107,6 +124,18 @@ class ProjectMemberResponse(BaseModel):
 class MyProjectResponse(ProjectResponse):
     """A project the current user belongs to, plus their role in it."""
     role: ProjectMembershipRole
+
+
+class ProjectFileResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    project_id: uuid.UUID
+    uploaded_by: uuid.UUID
+    filename: str
+    content_type: str
+    size_bytes: int
+    file_url: str
+    created_at: datetime
 
 
 class CalendarItemResponse(BaseModel):

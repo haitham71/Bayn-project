@@ -11,6 +11,7 @@ import logging
 import uuid
 from datetime import datetime, timedelta, timezone
 
+import httpx
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -39,6 +40,8 @@ from bayn.features.meetings.schemas import (
     RequesterInfo,
     SignatureState,
 )
+from bayn.features.notifications import service as notifications_service
+from bayn.features.notifications.models import NotificationType
 from bayn.integrations.storage.cloudflare import StorageError, r2_client
 from bayn.features.projects.models import (
     Project,
@@ -55,13 +58,33 @@ logger = logging.getLogger(__name__)
 
 MEETING_REQUEST_TTL = timedelta(days=7)
 MAX_MEETINGS_PER_DAY = 3
+# Daily.co/Cal.com's own limits.
+MAX_CONCURRENT_MEETINGS_PLATFORM = 3
 # How early participants may enter the video room before the meeting starts.
 JOIN_WINDOW = timedelta(minutes=5)
+
+
+async def _count_overlapping_meetings(db: AsyncSession, start: datetime, end: datetime) -> int:
+    result = await db.execute(
+        select(func.count()).select_from(Meeting).where(
+            Meeting.start_time < end, Meeting.end_time > start,
+        )
+    )
+    return result.scalar_one()
 
 
 def _ensure_aware(dt: datetime) -> datetime:
     # SQLite (tests) drops tzinfo on round-trip; Postgres preserves it
     return dt if dt.tzinfo is not None else dt.replace(tzinfo=timezone.utc)
+
+
+def _notification_data(actor: User, project: Project | None, **extra) -> dict:
+    return {
+        "actor_name_en": f"{actor.first_name_en} {actor.last_name_en}".strip(),
+        "actor_name_ar": f"{actor.first_name_ar} {actor.last_name_ar}".strip(),
+        "project_title": project.title if project else "",
+        **extra,
+    }
 
 
 def _day_bounds_utc(dt: datetime) -> tuple[datetime, datetime]:
@@ -120,6 +143,13 @@ async def create_meeting_request(
         expires_at=datetime.now(timezone.utc) + MEETING_REQUEST_TTL,
     )
     db.add(request)
+
+    requester = await db.get(User, requester_id)
+    notifications_service.create_notification(
+        db, owner_membership.user_id, NotificationType.meeting_request_received,
+        _notification_data(requester, project, project_id=str(project.id), meeting_request_id=str(request.id)),
+    )
+
     await db.commit()
     await db.refresh(request)
     return request
@@ -177,6 +207,13 @@ async def create_join_request(
         expires_at=datetime.now(timezone.utc) + MEETING_REQUEST_TTL,
     )
     db.add(request)
+
+    requester = await db.get(User, requester_id)
+    notifications_service.create_notification(
+        db, owner_membership.user_id, NotificationType.meeting_request_received,
+        _notification_data(requester, project, project_id=str(project.id), meeting_request_id=str(request.id)),
+    )
+
     await db.commit()
     await db.refresh(request)
     return request
@@ -447,6 +484,13 @@ async def accept_meeting_request(
         if slot:
             slot.status = SlotStatus.taken
 
+    owner = await db.get(User, owner_id)
+    project = await db.get(Project, request.project_id)
+    notifications_service.create_notification(
+        db, request.requester_id, NotificationType.meeting_request_accepted,
+        _notification_data(owner, project, project_id=str(request.project_id), meeting_request_id=str(request.id)),
+    )
+
     await db.commit()
     await db.refresh(request)
     return request
@@ -490,9 +534,28 @@ async def _schedule_meeting(
                 db.add(MeetingParticipant(
                     meeting_id=existing.id, user_id=request.requester_id, is_host=False
                 ))
+
+            owner = await db.get(User, request.owner_id)
+            notifications_service.create_notification(
+                db, request.requester_id, NotificationType.meeting_scheduled,
+                _notification_data(
+                    owner, project,
+                    project_id=str(request.project_id), meeting_request_id=str(request.id),
+                    meeting_id=str(existing.id),
+                ),
+            )
             return existing
 
     is_initial = not await _has_prior_meeting(db, request.requester_id, request.owner_id, request.project_id)
+
+    overlapping = await _count_overlapping_meetings(
+        db, _ensure_aware(request.proposed_start_time), _ensure_aware(request.proposed_end_time)
+    )
+    if overlapping >= MAX_CONCURRENT_MEETINGS_PLATFORM:
+        # ValidationError, not ConflictError: this runs inside refresh_request_state's
+        # best-effort retry (only catches ValidationError, same as room_creation_failed) —
+        # a ConflictError here would escape and break the read that triggered it.
+        raise ValidationError(t("meetings", "capacity.platform_full", locale))
 
     room_name = f"meeting-{uuid.uuid4().hex}"
     exp = int(_ensure_aware(request.proposed_end_time).timestamp()) + 3600
@@ -502,6 +565,7 @@ async def _schedule_meeting(
             name=room_name,
             exp_epoch_seconds=exp,
             nbf_epoch_seconds=nbf,
+            enable_recording="cloud",
         )
     except DailyError:
         raise ValidationError(t("meetings", "request.room_creation_failed", locale))
@@ -528,6 +592,7 @@ async def _schedule_meeting(
         is_initial_meeting=is_initial,
         calcom_booking_id=calcom_booking_id,
         video_link=room.get("url"),
+        room_name=room_name,
     )
     db.add(meeting)
     await db.flush()
@@ -555,6 +620,18 @@ async def _schedule_meeting(
     )
     for membership in memberships.scalars().all():
         db.add(MeetingAttendance(meeting_id=meeting.id, membership_id=membership.id))
+
+    owner = await db.get(User, request.owner_id)
+    requester = await db.get(User, request.requester_id)
+    notify_data = {"project_id": str(request.project_id), "meeting_request_id": str(request.id), "meeting_id": str(meeting.id)}
+    notifications_service.create_notification(
+        db, request.owner_id, NotificationType.meeting_scheduled,
+        _notification_data(requester, project, **notify_data),
+    )
+    notifications_service.create_notification(
+        db, request.requester_id, NotificationType.meeting_scheduled,
+        _notification_data(owner, project, **notify_data),
+    )
 
     return meeting
 
@@ -691,6 +768,14 @@ async def reject_meeting_request(
         raise ValidationError(t("meetings", "request.not_pending", locale))
 
     request.status = MeetingRequestStatus.rejected
+
+    owner = await db.get(User, owner_id)
+    project = await db.get(Project, request.project_id)
+    notifications_service.create_notification(
+        db, request.requester_id, NotificationType.meeting_request_rejected,
+        _notification_data(owner, project, project_id=str(request.project_id), meeting_request_id=str(request.id)),
+    )
+
     await db.commit()
     await db.refresh(request)
     return request
@@ -775,12 +860,16 @@ async def create_team_meeting(
         if any(uid not in members for uid in selected):
             raise ValidationError(t("meetings", "team.not_a_member", locale))
 
+    overlapping = await _count_overlapping_meetings(db, start, end)
+    if overlapping >= MAX_CONCURRENT_MEETINGS_PLATFORM:
+        raise ConflictError(t("meetings", "capacity.platform_full", locale))
+
     room_name = f"meeting-{uuid.uuid4().hex}"
     exp = int(end.timestamp())
     nbf = int((start - JOIN_WINDOW).timestamp())
     try:
         room = await daily_client.create_room(
-            name=room_name, exp_epoch_seconds=exp, nbf_epoch_seconds=nbf
+            name=room_name, exp_epoch_seconds=exp, nbf_epoch_seconds=nbf, enable_recording="cloud"
         )
     except DailyError:
         raise ValidationError(t("meetings", "request.room_creation_failed", locale))
@@ -800,6 +889,7 @@ async def create_team_meeting(
         end_time=end,
         is_initial_meeting=False,
         video_link=room.get("url"),
+        room_name=room_name,
     )
     db.add(meeting)
     await db.flush()
@@ -818,6 +908,13 @@ async def create_team_meeting(
     )
     for membership in memberships.scalars().all():
         db.add(MeetingAttendance(meeting_id=meeting.id, membership_id=membership.id))
+
+    owner = await db.get(User, owner_id)
+    for uid in selected:
+        notifications_service.create_notification(
+            db, uid, NotificationType.meeting_scheduled,
+            _notification_data(owner, project, project_id=str(project_id), meeting_id=str(meeting.id)),
+        )
 
     await db.commit()
     await db.refresh(meeting)
@@ -861,6 +958,46 @@ async def get_meeting(
         if not is_participant:
             raise ForbiddenError(t("meetings", "meeting.not_a_participant", locale))
     return meeting
+
+
+async def handle_recording_ready(
+    db: AsyncSession, recording_id: str, room_name: str, locale: str = DEFAULT_LOCALE
+) -> None:
+    """Pull a finished recording from Daily.co into our own R2 bucket.
+
+    Called from the recording-ready webhook. Best-effort: any failure here
+    just leaves recording_key null — there's no retry loop today, so a
+    transient failure means that meeting's recording is unavailable, not that
+    anything else breaks.
+    """
+    meeting = await db.scalar(select(Meeting).where(Meeting.room_name == room_name))
+    if meeting is None:
+        logger.warning("Recording ready for unknown room %s (recording %s)", room_name, recording_id)
+        return
+
+    try:
+        download_url = await daily_client.get_recording_access_link(recording_id)
+        async with httpx.AsyncClient() as client:
+            response = await client.get(download_url, follow_redirects=True)
+            response.raise_for_status()
+    except (DailyError, httpx.HTTPError):
+        logger.exception("Failed to fetch recording %s for meeting %s", recording_id, meeting.id)
+        return
+
+    content_type = response.headers.get("content-type", "video/mp4").split(";")[0]
+    try:
+        meeting.recording_key = r2_client.upload_meeting_recording(meeting.id, response.content, content_type)
+    except StorageError:
+        logger.exception("Failed to store recording %s for meeting %s", recording_id, meeting.id)
+        return
+
+    await db.commit()
+
+
+def get_meeting_recording_url(meeting: Meeting, locale: str = DEFAULT_LOCALE) -> str:
+    if not meeting.recording_key:
+        raise NotFoundError(t("meetings", "meeting.recording_not_ready", locale))
+    return r2_client.get_meeting_recording_url(meeting.recording_key)
 
 
 def _display_name(user: User, locale: str) -> str:

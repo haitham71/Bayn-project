@@ -1,22 +1,26 @@
 """Meetings router: propose/accept/reject/cancel meeting requests, list
 confirmed meetings, and record attendance."""
 
+import json
 import uuid
 from typing import Literal
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Header, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from bayn.common.exceptions import ForbiddenError
 from bayn.core.database import get_db
-from bayn.core.i18n import get_locale
+from bayn.core.i18n import DEFAULT_LOCALE, get_locale, t
 from bayn.features.identity.dependencies import get_current_active_user
 from bayn.features.identity.models import User
 from bayn.features.meetings import service
 from bayn.features.meetings.schemas import (
+    DailyRecordingWebhookPayload,
     JoinRequestCreate,
     MeetingAttendanceResponse,
     MeetingAttendanceUpdate,
     MeetingJoinResponse,
+    MeetingRecordingResponse,
     MeetingRequestCreate,
     MeetingRequestAccept,
     MeetingRequestFinalize,
@@ -24,6 +28,7 @@ from bayn.features.meetings.schemas import (
     MeetingResponse,
     TeamMeetingCreate,
 )
+from bayn.integrations.daily import verify_webhook_signature
 
 router = APIRouter(prefix="/meetings", tags=["Meetings"])
 
@@ -240,3 +245,49 @@ async def update_attendance(
     locale: str = Depends(get_locale),
 ) -> MeetingAttendanceResponse:
     return await service.update_attendance(db, meeting_id, current_user.id, payload, locale)
+
+
+@router.get(
+    "/{meeting_id}/recording", response_model=MeetingRecordingResponse, summary="Get a meeting's recording URL"
+)
+async def get_meeting_recording(
+    meeting_id: uuid.UUID,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+    locale: str = Depends(get_locale),
+) -> MeetingRecordingResponse:
+    meeting = await service.get_meeting(db, meeting_id, current_user.id, locale)  # enforces participant check
+    return MeetingRecordingResponse(url=service.get_meeting_recording_url(meeting, locale))
+
+
+@router.post("/webhooks/daily-recording", status_code=204, summary="Daily.co recording-ready callback")
+async def daily_recording_webhook(
+    request: Request,
+    x_webhook_timestamp: str | None = Header(default=None),
+    x_webhook_signature: str | None = Header(default=None),
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    raw_body = await request.body()
+
+    try:
+        body_json = json.loads(raw_body)
+    except ValueError:
+        body_json = {}
+
+    # Daily's webhook-registration handshake: an unsigned test ping that must
+    # get a 200 back to complete setup.
+    if body_json == {"test": "test"}:
+        return
+
+    if (
+        not x_webhook_timestamp
+        or not x_webhook_signature
+        or not verify_webhook_signature(x_webhook_timestamp, raw_body, x_webhook_signature)
+    ):
+        raise ForbiddenError(t("meetings", "webhook.bad_signature", DEFAULT_LOCALE))
+
+    payload = DailyRecordingWebhookPayload.model_validate(body_json)
+    if payload.type != "recording.ready-to-download":
+        return
+
+    await service.handle_recording_ready(db, payload.payload.recording_id, payload.payload.room_name)

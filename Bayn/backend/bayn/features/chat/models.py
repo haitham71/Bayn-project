@@ -2,12 +2,18 @@
 
 import uuid
 from datetime import datetime
-from sqlalchemy import DateTime, ForeignKey, String, UniqueConstraint, func
+from sqlalchemy import DateTime, ForeignKey, String, Column, Table, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from bayn.core.database import Base
 
+message_mentions = Table(
+    "message_mentions",
+    Base.metadata,
+    Column("message_id", UUID(as_uuid=True), ForeignKey("messages.id", ondelete="CASCADE"), primary_key=True),
+    Column("mentioned_user_id", UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True),
+)
 
 class Conversation(Base):
     __tablename__ = "conversations"
@@ -65,6 +71,10 @@ class ConversationMember(Base):
     joined_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
+    # null means never opened this conversation — every message counts as unread
+    last_read_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
     # Relationships
     conversation: Mapped["Conversation"] = relationship(
@@ -103,3 +113,4 @@ class Message(Base):
 
     def __repr__(self) -> str:
         return f"<Message id={self.id} sender={self.sender_id}>"
+    

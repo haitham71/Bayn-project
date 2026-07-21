@@ -19,7 +19,11 @@
     "not_found": "Meeting not found",
     "not_a_participant": "You're not a participant in this meeting",
     "no_room": "This meeting doesn't have a video room yet",
-    "join_link_failed": "Couldn't prepare the join link. Please try again."
+    "join_link_failed": "Couldn't prepare the join link. Please try again.",
+    "recording_not_ready": "This meeting's recording isn't ready yet"
+  },
+  "webhook": {
+    "bad_signature": "Invalid webhook signature"
   },
   "team": {
     "owner_only": "Only the project owner can schedule a team meeting",
@@ -30,6 +34,9 @@
   },
   "attendance": {
     "not_found": "Attendance record not found"
+  },
+  "capacity": {
+    "platform_full": "Please try a different time."
   },
   "join": {
     "owner_cannot_join": "You own this project, you can't join it.",
