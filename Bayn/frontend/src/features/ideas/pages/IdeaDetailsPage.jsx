@@ -9,7 +9,8 @@ import Input from '@/shared/components/Input';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
 import { getProject, getProjectSlots } from '@/features/projects/services/projectService';
 import { createJoinRequest } from '@/features/meetings/services/meetingService';
-import { getIndustries } from '@/features/identity/services/authService';
+import { getIndustries, getUserProfile } from '@/features/identity/services/authService';
+import { formatExperience } from '@/shared/lib/experience';
 import { getApiErrorMessage } from '@/shared/lib/apiError';
 import ArrowLeft from '@/assets/icons/arrow-left.svg?react';
 import Bookmark from '@/assets/icons/bookmark.svg?react';
@@ -18,7 +19,7 @@ import CalendarIcon from '@/assets/icons/calendar.svg?react';
 import UserCheck from '@/assets/icons/user-check.svg?react';
 import Flag from '@/assets/icons/flag.svg?react';
 import UserRound from '@/assets/icons/user-round.svg?react';
-import Star from '@/assets/icons/star.svg?react';
+import ChevronDown from '@/assets/icons/chevron-down.svg?react';
 import SendHorizontal from '@/assets/icons/send-horizontal.svg?react';
 import Send from '@/assets/icons/send.svg?react';
 import FileText from '@/assets/icons/file-text.svg?react';
@@ -48,6 +49,12 @@ export default function IdeaDetailsPage({ onNavigate }) {
   const [idea, setIdea] = useState(null);
   const [industries, setIndustries] = useState([]);
   const [slots, setSlots] = useState([]);
+
+  // The owner card is driven entirely by the owner's public profile (loaded on
+  // mount); "View profile" just expands to reveal the rest of it.
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [ownerProfile, setOwnerProfile] = useState(null);
+  const [ownerLoading, setOwnerLoading] = useState(true);
   const [selectedSlot, setSelectedSlot] = useState('');
   const [joinNote, setJoinNote] = useState('');
   const [loading, setLoading] = useState(true);
@@ -65,12 +72,37 @@ export default function IdeaDetailsPage({ onNavigate }) {
         setIdea(p);
         setIndustries(inds || []);
         setSlots(sl || []);
+        // Owner name, avatar, specialization, bio and skills all come from the
+        // owner's public profile — not duplicated onto the project payload.
+        if (p?.owner?.id) {
+          return getUserProfile(p.owner.id)
+            .then((data) => setOwnerProfile(data))
+            .catch(() => setOwnerProfile(null));
+        }
+        return undefined;
       })
       .catch(() => setIdea(null))
-      .finally(() => setLoading(false));
+      .finally(() => {
+        setLoading(false);
+        setOwnerLoading(false);
+      });
   }, [id]);
 
   const industryName = idea ? (industries.find((i) => i.id === idea.industry_id)?.name || '') : '';
+
+  const ownerName = ownerProfile
+    ? (i18n.language === 'ar'
+        ? `${ownerProfile.first_name_ar} ${ownerProfile.last_name_ar}`
+        : `${ownerProfile.first_name_en} ${ownerProfile.last_name_en}`).trim()
+    : (idea?.owner ? (i18n.language === 'ar' ? idea.owner.name_ar : idea.owner.name_en) : '—');
+  const ownerAvatar = ownerProfile?.avatar_url || idea?.owner?.avatar_url || null;
+  const ownerSpecName = ownerProfile?.specializations?.length
+    ? ownerProfile.specializations.join('، ')
+    : '';
+
+  function toggleProfile() {
+    setProfileOpen((v) => !v);
+  }
 
   const slotLabel = (s) => {
     const start = new Date(s.start_time);
@@ -194,35 +226,78 @@ export default function IdeaDetailsPage({ onNavigate }) {
                   <h2 className="id__panel-title">{t('ideaDetails.ownerTitle')}</h2>
                   <div className="id__owner">
                     <span className="id__owner-avatar" aria-hidden="true">
-                      {idea.owner?.avatar_url ? (
-                        <img src={idea.owner.avatar_url} alt="" className="id__owner-img" />
+                      {ownerAvatar ? (
+                        <img src={ownerAvatar} alt="" className="id__owner-img" />
                       ) : (
                         <UserRound width={30} height={30} />
                       )}
                     </span>
                     <div>
-                      <p className="id__owner-name">
-                        {idea.owner
-                          ? (i18n.language === 'ar' ? idea.owner.name_ar : idea.owner.name_en)
-                          : '—'}
-                      </p>
-                      <p className="id__owner-role">{idea.owner?.job_title || ''}</p>
+                      <p className="id__owner-name">{ownerName}</p>
+                      {ownerSpecName && <p className="id__owner-role">{ownerSpecName}</p>}
                     </div>
                   </div>
-                  <div className="id__owner-stats">
-                    <div className="id__stat">
-                      <span className="id__stat-num">—</span>
-                      <span className="id__stat-label">{t('ideaDetails.projects')}</span>
-                    </div>
-                    <div className="id__stat">
-                      <span className="id__stat-num">
-                        <Star width={14} height={14} aria-hidden="true" /> —
-                      </span>
-                      <span className="id__stat-label">{t('ideaDetails.rating')}</span>
+
+                  {/* Expands smoothly (grid-rows 0fr→1fr) to reveal the rest of
+                      the owner's public profile (already loaded on mount). */}
+                  <div className={`id__profile-exp${profileOpen ? ' id__profile-exp--open' : ''}`}>
+                    <div className="id__profile-exp-inner">
+                      {ownerLoading ? (
+                        <p className="id__profile-state">{t('ideaDetails.loadingProfile')}</p>
+                      ) : ownerProfile ? (
+                        <div className="id__profile">
+                          <hr className="id__divider" />
+                          {ownerProfile.username && (
+                            <p className="id__profile-username">@{ownerProfile.username}</p>
+                          )}
+                          {ownerProfile.years_of_experience && (
+                            <div className="id__profile-field">
+                              <span className="id__profile-label">{t('ideaDetails.experience')}</span>
+                              <span className="id__profile-value">
+                                {formatExperience(ownerProfile.years_of_experience, t)}
+                              </span>
+                            </div>
+                          )}
+                          {ownerProfile.bio && (
+                            <div className="id__profile-field">
+                              <span className="id__profile-label">{t('ideaDetails.bio')}</span>
+                              <p className="id__profile-bio">{ownerProfile.bio}</p>
+                            </div>
+                          )}
+                          {ownerProfile.skills?.length > 0 && (
+                            <div className="id__profile-field">
+                              <span className="id__profile-label">{t('ideaDetails.skills')}</span>
+                              <div className="id__tags">
+                                {ownerProfile.skills.map((s) => (
+                                  <span key={s} className="id__tag">{s}</span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <p className="id__profile-state">{t('ideaDetails.profileError')}</p>
+                      )}
                     </div>
                   </div>
-                  <Button variant="secondary" size="sm" className="id__view-profile" disabled>
-                    {t('ideaDetails.viewProfile')}
+
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="id__view-profile"
+                    onClick={toggleProfile}
+                    aria-expanded={profileOpen}
+                    disabled={!idea.owner?.id}
+                    trailingIcon={
+                      <ChevronDown
+                        width={18}
+                        height={18}
+                        className={`id__view-chev${profileOpen ? ' id__view-chev--up' : ''}`}
+                        aria-hidden="true"
+                      />
+                    }
+                  >
+                    {profileOpen ? t('ideaDetails.hideProfile') : t('ideaDetails.viewProfile')}
                   </Button>
                 </div>
 

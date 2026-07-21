@@ -54,6 +54,17 @@ body {
   font-family: var(--font-ar);
 }
 
+/* Native form controls don't inherit font-family by default (they fall back to
+   the browser font). Pull the app font in so buttons/inputs/textareas match the
+   rest of the page — Inter, or Tajawal in RTL. */
+button,
+input,
+select,
+textarea,
+optgroup {
+  font-family: inherit;
+}
+
 /* Reusable themed scrollbar (secondary-700 thumb). Apply to any scroll area. */
 .bayn-scroll {
   scrollbar-width: thin;

@@ -268,35 +268,77 @@
   color: var(--text-supporting, #786c57);
 }
 
-.id__owner-stats {
-  display: flex;
-  gap: 32px;
-  margin-bottom: 16px;
+.id__view-profile.bayn-btn {
+  width: 100%;
+  margin-top: 16px;
 }
 
-.id__stat {
+/* Chevron flips when the profile is expanded. */
+.id__view-chev {
+  transition: transform 0.2s ease;
+}
+
+.id__view-chev--up {
+  transform: rotate(180deg);
+}
+
+/* Owner "View profile" expander — animates open by growing the grid row from
+   0fr to 1fr, which transitions smoothly (unlike auto height). */
+.id__profile-exp {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s ease;
+}
+
+.id__profile-exp--open {
+  grid-template-rows: 1fr;
+}
+
+.id__profile-exp-inner {
+  overflow: hidden;
+}
+
+.id__profile {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 12px;
 }
 
-.id__stat-num {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-family: var(--font-sans);
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text-title, #0f3d2e);
-}
-
-.id__stat-label {
-  font-size: 12px;
+.id__profile-state {
+  margin: 12px 0 0;
+  font-size: 13px;
   color: var(--text-supporting, #786c57);
 }
 
-.id__view-profile.bayn-btn {
-  width: 100%;
+.id__profile-username {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-supporting, #786c57);
+}
+
+.id__profile-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.id__profile-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-supporting, #786c57);
+}
+
+.id__profile-value {
+  font-size: 14px;
+  color: var(--text-title, #0f3d2e);
+}
+
+.id__profile-bio {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-body, #4a4030);
+  overflow-wrap: anywhere;
 }
 
 /* Join — available slot picker */

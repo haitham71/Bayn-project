@@ -166,3 +166,8 @@ export const addSpecializationToProfile = (specialization_id) =>
   api.post(API.profile.specializations, { specialization_id }).then((r) => r.data);
 export const removeSpecializationFromProfile = (userSpecializationId) =>
   api.delete(`${API.profile.specializations}/${userSpecializationId}`).then((r) => r.data);
+
+// Another user's public profile (name, username, specialization, experience,
+// bio, skills) — no PII. Used by the idea page's "View profile" card.
+export const getUserProfile = (userId) =>
+  api.get(`${API.auth.profile}/${userId}`).then((r) => r.data);

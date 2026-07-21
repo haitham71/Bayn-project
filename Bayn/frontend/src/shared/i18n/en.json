@@ -247,8 +247,6 @@
     "aboutTitle": "About the Idea",
     "requiredSkills": "Required Skills",
     "ownerTitle": "About the Idea Owner",
-    "projects": "Projects",
-    "rating": "Rating",
     "viewProfile": "View Profile",
     "joinTitle": "Choose a meeting date and send a join request",
     "sendJoin": "Send Join Request",
@@ -262,7 +260,14 @@
     "step1": "Send a join request",
     "step2": "If the owner accepts, you both get an NDA by email",
     "step3": "Once you've both signed, the meeting is booked automatically",
-    "step4": "After the meeting, the owner decides whether you join the project"
+    "step4": "After the meeting, the owner decides whether you join the project",
+    "hideProfile": "Hide Profile",
+    "loadingProfile": "Loading profile…",
+    "profileError": "Couldn't load this profile.",
+    "specialization": "Specialization",
+    "experience": "Experience",
+    "bio": "Bio",
+    "skills": "Skills"
   },
   "joinRequests": {
     "back": "Back to your projects",
@@ -309,7 +314,12 @@
     "meetingTimes": "Meeting times",
     "saving": "Saving…",
     "saved": "Saved.",
-    "saveError": "Couldn't save, please try again."
+    "saveError": "Couldn't save, please try again.",
+    "viewProfile": "View Profile",
+    "hideProfile": "Hide Profile",
+    "experience": "Experience",
+    "bio": "Bio",
+    "loadingProfile": "Loading profile…"
   },
   "verification": {
     "title": "Enter verification code",
@@ -519,5 +529,9 @@
   },
   "profileView": {
     "memberSince": "Member since"
+  },
+  "experienceRange": {
+    "lessThan1": "Less than 1 year",
+    "years": "{{range}} years"
   }
 }
