@@ -39,19 +39,15 @@ def _full_name(user: User) -> str:
     return user.username
 
 
-def _national_id(user: User) -> str:
-    """TODO: drop this once national_id is required at signup — then read the
-    column directly and let a missing one be a validation error.
-
-    Until then accounts predate the field and it's still nullable, so signing
-    would break for them. Derived from the user id rather than randomised so a
-    given user keeps one identity across every contract they sign; shaped like a
-    Saudi national ID (10 digits, leading 1) only so Signature-System's format
-    check passes.
+def _require_national_id(user: User, locale: str, *, is_owner: bool) -> str:
+    """
+    The national ID a party signs the NDA under
+    A real government ID is a legal requirement on a signed contract
     """
     if user.national_id:
         return user.national_id
-    return "1" + f"{user.id.int % 1_000_000_000:09d}"
+    key = "errors.national_id_required_owner" if is_owner else "errors.national_id_required_requester"
+    raise ValidationError(t("contracts", key, locale))
 
 
 async def get_contract_for_request(db: AsyncSession, request_id: uuid.UUID) -> Contract | None:
@@ -65,9 +61,6 @@ async def create_nda_for_request(
 ) -> Contract:
     """Create the NDA gating `request` and hand it to Signature-System, which
     emails both parties their signing links.
-
-    Idempotent: an existing contract for the request is returned untouched, so a
-    retried accept can't double-send signing emails.
 
     The owner is party one — Signature-System emails them first, since it's
     their project's confidential information being protected.
@@ -87,10 +80,10 @@ async def create_nda_for_request(
         confidentiality_period_months=DEFAULT_CONFIDENTIALITY_MONTHS,
         party_one_user_id=owner.id,
         party_one_name=_full_name(owner),
-        party_one_national_id=_national_id(owner),
+        party_one_national_id=_require_national_id(owner, locale, is_owner=True),
         party_two_user_id=requester.id,
         party_two_name=_full_name(requester),
-        party_two_national_id=_national_id(requester),
+        party_two_national_id=_require_national_id(requester, locale, is_owner=False),
         status=ContractStatus.pending_party_one,
     )
 
@@ -117,8 +110,7 @@ async def create_nda_for_request(
 
     contract.generated_pdf_key = str(remote.get("id"))
 
-    # The remote contract exists even if its signing email didn't go out, so this
-    # is persisted like any other success — raising here would leave nothing for
+    # The remote contract exists even if its signing email didn't go out,
     # `get_contract_for_request` to find, and a retried accept would create a
     # second, orphaned contract on Signature-System's side. Logged instead so
     # ops can see owner.email never got their signing link.
