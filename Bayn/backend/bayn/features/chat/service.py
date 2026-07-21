@@ -337,3 +337,39 @@ async def get_conversation_messages(
     # Reverse list to make sure oldest message is first in the chronological chat log stream
     response_messages.reverse()
     return response_messages
+
+async def send_message(
+    db: AsyncSession, 
+    sender_id: UUID, 
+    payload: SendMessageRequest,
+    locale: str
+) -> ChatMessage:
+    # 1. Fetch mentioned users to verify they belong to the channel
+    mentioned_users = []
+    if payload.mentioned_user_ids:
+        stmt = select(User).where(User.id.in_(payload.mentioned_user_ids))
+        result = await db.execute(stmt)
+        mentioned_users = result.scalars().all()
+
+    # 2. Save message with linked mentions
+    new_message = ChatMessage(
+        sender_id=sender_id,
+        channel_id=payload.channel_id,
+        encrypted_content=payload.encrypted_content,
+        mentions=mentioned_users
+    )
+    db.add(new_message)
+    await db.commit()
+    await db.refresh(new_message)
+
+    # 3. Dispatch specific Mention events over WebSockets/Push
+    for user in mentioned_users:
+        if user.id != sender_id: # Don't notify yourself if you tag yourself
+            await notify_user_of_mention(
+                target_user_id=user.id,
+                channel_id=payload.channel_id,
+                sender_id=sender_id,
+                message_id=new_message.id
+            )
+
+    return new_message

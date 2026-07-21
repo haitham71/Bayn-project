@@ -113,6 +113,7 @@ async def websocket_endpoint(
                     conversation_id=incoming_msg.conversation_id,
                     sender_id=user.id,
                     content=incoming_msg.content,
+                    mentioned_user_ids=incoming_msg.mentioned_user_ids,
                 )
             except Exception as e:
                 # Catch database validation errors (e.g. user is no longer in this chat)

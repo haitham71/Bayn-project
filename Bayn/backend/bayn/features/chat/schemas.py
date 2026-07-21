@@ -1,6 +1,7 @@
 """Pydantic schemas for the Chat feature."""
 
 import uuid
+from uuid import UUID
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -29,6 +30,13 @@ class MessageResponse(BaseModel):
     created_at: datetime
     sender: ChatUserSummary
 
+    class SendMessageRequest(BaseModel):
+    encrypted_content: str = Field(..., description="Encrypted message payload")
+    channel_id: UUID
+    mentioned_user_ids: list[UUID] = Field(
+        default_factory=list, 
+        description="List of User UUIDs explicitly @mentioned in this message for notification routing"
+    )
 
 class ConversationMemberResponse(BaseModel):
     """Schema representing a member inside a specific conversation."""
