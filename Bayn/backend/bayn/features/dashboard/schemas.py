@@ -34,3 +34,5 @@ class ProjectDashboardResponse(BaseModel):
     completed_percentage: float
     incomplete_percentage: float
     tasks: list[DashboardTaskResponse]
+    total_meetings: int
+    meetings_due_this_week: int

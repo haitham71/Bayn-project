@@ -26,6 +26,8 @@ def _week_bounds_utc(now: datetime) -> tuple[datetime, datetime]:
     return start, start + timedelta(days=7)
 
 
+
+
 async def get_project_dashboard(
     db: AsyncSession, project_id: uuid.UUID, user_id: uuid.UUID, locale: str = DEFAULT_LOCALE
 ) -> ProjectDashboardResponse:
@@ -54,14 +56,15 @@ async def get_project_dashboard(
     ]
 
     tasks = await tasks_service.list_tasks(db, project_id, user_id, status=None, locale=locale)
+    meetings = await tasks_service.list_meetings(db, project_id, user_id, status=None, locale=locale)
 
     now = datetime.now(timezone.utc)
     week_start, week_end = _week_bounds_utc(now)
 
-    total = len(tasks)
+    total_tasks = len(tasks)
     done_count = sum(1 for task in tasks if task.status == TaskStatus.done)
-    completed_pct = round((done_count / total) * 100, 1) if total else 0.0
-    incomplete_pct = round(100 - completed_pct, 1) if total else 0.0
+    completed_pct = round((done_count / total_tasks) * 100, 1) if total_tasks else 0.0
+    incomplete_pct = round(100 - completed_pct, 1) if total_tasks else 0.0
     tasks_this_week = sum(
         1 for task in tasks
         if task.due_date is not None and week_start <= _ensure_aware(task.due_date) < week_end
@@ -82,9 +85,17 @@ async def get_project_dashboard(
         for task in tasks
     ]
 
+    total_meetings = len(meetings)
+    meetings_this_week = sum(
+        1 for meeting in meetings
+        if meeting.due_date is not None and week_start <= _ensure_aware(meeting.due_date) < week_end
+    )
+
     return ProjectDashboardResponse(
         team_members=team_members,
-        total_tasks=total,
+        total_tasks=total_tasks,
+        total_meetings=total_meetings,
+        meetings_due_this_week=meetings_this_week,
         tasks_due_this_week=tasks_this_week,
         completed_percentage=completed_pct,
         incomplete_percentage=incomplete_pct,
