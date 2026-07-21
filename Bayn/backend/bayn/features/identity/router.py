@@ -135,16 +135,16 @@ async def delete_profile(
     await service.soft_delete_account(db, current_user)
     return MessageResponse(message="Account deleted successfully")
 
-@router.get("/profile/{profile_id}", response_model=UserResponse, summary="جلب بيانات مستخدم آخر")
+@router.get("/profile/{user_id}", response_model=UserResponse, summary="جلب بيانات مستخدم آخر")
 async def get_user_profile(
-    profile_id: uuid.UUID,
+    user_id: uuid.UUID,
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ) -> UserResponse:
-    user = await service.get_user_by_id(db, profile_id)
+    user = await service.get_user_by_id(db, user_id)
     return await _build_user_response(db, user)
 
-@router.get("/profile/{username}", response_model=UserResponse, summary="جلب بيانات مستخدم آخر بواسطة اسم المستخدم")
+@router.get("/profile/username/{username}", response_model=UserResponse, summary="جلب بيانات مستخدم آخر بواسطة اسم المستخدم")
 async def get_user_profile_by_username(
     username: str,
     db: AsyncSession = Depends(get_db),
