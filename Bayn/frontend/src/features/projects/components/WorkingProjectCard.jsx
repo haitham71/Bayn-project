@@ -21,7 +21,7 @@ export default function WorkingProjectCard({ project: p }) {
         </span>
         <button type="button" className="mp__link" onClick={() => navigate(`/projects/${p.id}/dashboard`)}>
           {t('myProjects.dashboard')}
-          <LayoutDashboard width={20} height={20} aria-hidden="true" />
+          <LayoutDashboard width={18} height={18} aria-hidden="true" />
         </button>
       </div>
     </article>

@@ -79,20 +79,19 @@
   gap: 8px;
 }
 
+/* Same treatment as the ideas page's "View details" link (.im__details). */
 .mp__link {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 0;
   border: none;
-  background: transparent;
+  background: none;
+  padding: 0;
+  font-size: 12px;
   color: var(--btn-primary-default, #295e4d);
-  font-family: var(--font-sans);
-  font-size: 16px;
   cursor: pointer;
-  transition: opacity 0.15s ease;
 }
 
 .mp__link:hover {
-  opacity: 0.75;
+  text-decoration: underline;
 }

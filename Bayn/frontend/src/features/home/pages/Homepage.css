@@ -216,6 +216,9 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--bg-surface-secondary, #d7cbb9);
+  border-radius: 10px;
 }
 
 .home__team-avatar {
@@ -290,6 +293,9 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--bg-surface-secondary, #d7cbb9);
+  border-radius: 10px;
 }
 
 .home__status-badge {
