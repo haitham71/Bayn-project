@@ -132,7 +132,7 @@ async def delete_profile(
     db: AsyncSession = Depends(get_db),
 ) -> MessageResponse:
     await service.soft_delete_account(db, current_user)
-    return MessageResponse(message="Account deleted successfully")
+    return MessageResponse(message="Account deleted successfully")  # where is terminate account??
 
 
 # ── Avatar ────────────────────────────────────────────────────────────────────
