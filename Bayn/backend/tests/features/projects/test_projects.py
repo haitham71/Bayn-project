@@ -1,8 +1,13 @@
 """Projects feature tests: stage/team_members_needed are required at creation,
 and the team_slots breakdown must always match team_members_needed."""
 
+from unittest.mock import patch
+
 import pytest
 from httpx import AsyncClient
+
+from bayn.core.security import create_access_token
+from bayn.integrations.storage.cloudflare import InvalidFileError, r2_client
 
 
 def _payload(specialization_id, **overrides) -> dict:
@@ -147,3 +152,82 @@ class TestUpdateProject:
         )
         assert response.status_code == 200
         assert response.json()["team_members_needed"] == 5
+
+
+class TestProjectFiles:
+
+    @pytest.fixture(autouse=True)
+    def mock_storage(self):
+        with patch.object(r2_client, "upload_project_file", return_value="files/proj/abc.pdf") as up, \
+             patch.object(r2_client, "get_project_file_url", return_value="https://cdn.example/files/proj/abc.pdf"), \
+             patch.object(r2_client, "delete_project_file", return_value=None):
+            yield up
+
+    async def _create_project(self, client: AsyncClient, auth_headers: dict, test_specialization) -> str:
+        response = await client.post("/projects", headers=auth_headers, json=_payload(test_specialization.id))
+        return response.json()["id"]
+
+    @pytest.mark.asyncio
+    async def test_member_uploads_and_lists_file(
+        self, client: AsyncClient, auth_headers: dict, test_specialization,
+    ):
+        project_id = await self._create_project(client, auth_headers, test_specialization)
+
+        upload = await client.post(
+            f"/projects/{project_id}/files", headers=auth_headers,
+            files={"file": ("spec.pdf", b"%PDF-1.4 fake", "application/pdf")},
+        )
+        assert upload.status_code == 201
+        data = upload.json()
+        assert data["filename"] == "spec.pdf"
+        assert data["file_url"] == "https://cdn.example/files/proj/abc.pdf"
+
+        listed = await client.get(f"/projects/{project_id}/files", headers=auth_headers)
+        assert listed.status_code == 200
+        assert len(listed.json()) == 1
+
+    @pytest.mark.asyncio
+    async def test_non_member_cannot_upload_or_list(
+        self, client: AsyncClient, auth_headers: dict, test_specialization, other_user, db,
+    ):
+        project_id = await self._create_project(client, auth_headers, test_specialization)
+        other_headers = {"Authorization": f"Bearer {create_access_token(other_user.id)}"}
+
+        upload = await client.post(
+            f"/projects/{project_id}/files", headers=other_headers,
+            files={"file": ("spec.pdf", b"%PDF-1.4 fake", "application/pdf")},
+        )
+        assert upload.status_code == 403
+
+        listed = await client.get(f"/projects/{project_id}/files", headers=other_headers)
+        assert listed.status_code == 403
+
+    @pytest.mark.asyncio
+    async def test_uploader_can_delete_own_file(
+        self, client: AsyncClient, auth_headers: dict, test_specialization,
+    ):
+        project_id = await self._create_project(client, auth_headers, test_specialization)
+        upload = await client.post(
+            f"/projects/{project_id}/files", headers=auth_headers,
+            files={"file": ("spec.pdf", b"%PDF-1.4 fake", "application/pdf")},
+        )
+        file_id = upload.json()["id"]
+
+        response = await client.delete(f"/projects/{project_id}/files/{file_id}", headers=auth_headers)
+        assert response.status_code == 204
+
+        listed = await client.get(f"/projects/{project_id}/files", headers=auth_headers)
+        assert listed.json() == []
+
+    @pytest.mark.asyncio
+    async def test_invalid_file_type_rejected(
+        self, client: AsyncClient, auth_headers: dict, test_specialization,
+    ):
+        project_id = await self._create_project(client, auth_headers, test_specialization)
+
+        with patch.object(r2_client, "upload_project_file", side_effect=InvalidFileError("nope")):
+            response = await client.post(
+                f"/projects/{project_id}/files", headers=auth_headers,
+                files={"file": ("virus.exe", b"MZ", "application/x-msdownload")},
+            )
+        assert response.status_code == 400

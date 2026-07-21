@@ -2,7 +2,7 @@
 
 import uuid
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, File, Query, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from bayn.core.database import get_db
@@ -15,6 +15,7 @@ from bayn.features.projects.schemas import (
     MeetingSlotResponse,
     MyProjectResponse,
     ProjectCreateRequest,
+    ProjectFileResponse,
     ProjectMemberResponse,
     ProjectResponse,
     ProjectUpdateRequest,
@@ -137,6 +138,52 @@ async def replace_slots(
     locale: str = Depends(get_locale),
 ) -> list[MeetingSlotResponse]:
     return await service.replace_slots(db, project_id, current_user.id, payload.slots, locale)
+
+
+@projects_router.get(
+    "/{project_id}/files", response_model=list[ProjectFileResponse], summary="List a project's files"
+)
+async def list_project_files(
+    project_id: uuid.UUID,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+    locale: str = Depends(get_locale),
+) -> list[ProjectFileResponse]:
+    return await service.list_project_files(db, project_id, current_user.id, locale)
+
+
+@projects_router.post(
+    "/{project_id}/files", response_model=ProjectFileResponse, status_code=201,
+    summary="Upload a file to a project (any member)",
+)
+async def upload_project_file(
+    project_id: uuid.UUID,
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+    locale: str = Depends(get_locale),
+) -> ProjectFileResponse:
+    file_bytes = await file.read()
+    return await service.upload_project_file(
+        db, project_id, current_user.id,
+        filename=file.filename or "file",
+        file_bytes=file_bytes,
+        content_type=file.content_type or "",
+        locale=locale,
+    )
+
+
+@projects_router.delete(
+    "/{project_id}/files/{file_id}", status_code=204, summary="Delete a project file (uploader or owner)"
+)
+async def delete_project_file(
+    project_id: uuid.UUID,
+    file_id: uuid.UUID,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+    locale: str = Depends(get_locale),
+) -> None:
+    await service.delete_project_file(db, project_id, file_id, current_user.id, locale)
 
 
 @projects_router.get(

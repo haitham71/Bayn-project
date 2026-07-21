@@ -13,6 +13,7 @@ from bayn.features.catalog.models import Skill, Specialization, UserSpecializati
 from bayn.features.identity.models import User
 from bayn.features.projects.models import (
     Project,
+    ProjectFile,
     ProjectMeetingSlot,
     ProjectMembership,
     ProjectMembershipRole,
@@ -23,11 +24,12 @@ from bayn.features.projects.schemas import (
     CalendarItemResponse,
     OwnerInfo,
     ProjectCreateRequest,
+    ProjectFileResponse,
     ProjectMemberResponse,
     ProjectUpdateRequest,
     TeamSlotInput,
 )
-from bayn.integrations.storage.cloudflare import StorageError, r2_client
+from bayn.integrations.storage.cloudflare import InvalidFileError, StorageError, r2_client
 
 # a user can hold membership (owner or member) in at most this many projects at once
 MAX_MEMBERSHIPS_PER_USER = 2
@@ -233,6 +235,19 @@ async def _require_owner(
     return membership
 
 
+async def _require_member(
+    db: AsyncSession, project_id: uuid.UUID, user_id: uuid.UUID, locale: str
+) -> ProjectMembership:
+    membership = await db.scalar(
+        select(ProjectMembership).where(
+            ProjectMembership.project_id == project_id, ProjectMembership.user_id == user_id
+        )
+    )
+    if not membership:
+        raise ForbiddenError(t("projects", "membership.not_found", locale))
+    return membership
+
+
 async def update_project(
     db: AsyncSession,
     project_id: uuid.UUID,
@@ -370,3 +385,87 @@ async def get_project_calendar(
     ]
     items.sort(key=lambda item: item.date)
     return items
+
+
+# ── Project files ────────────────────────────────────────────────────────────
+
+def _to_file_response(file: ProjectFile) -> ProjectFileResponse:
+    return ProjectFileResponse(
+        id=file.id,
+        project_id=file.project_id,
+        uploaded_by=file.uploaded_by,
+        filename=file.filename,
+        content_type=file.content_type,
+        size_bytes=file.size_bytes,
+        file_url=r2_client.get_project_file_url(file.file_key),
+        created_at=file.created_at,
+    )
+
+
+async def upload_project_file(
+    db: AsyncSession,
+    project_id: uuid.UUID,
+    user_id: uuid.UUID,
+    filename: str,
+    file_bytes: bytes,
+    content_type: str,
+    locale: str = DEFAULT_LOCALE,
+) -> ProjectFileResponse:
+    await _require_member(db, project_id, user_id, locale)
+
+    try:
+        file_key = r2_client.upload_project_file(project_id, file_bytes, content_type)
+    except InvalidFileError as e:
+        raise ValidationError(e.message)
+    except StorageError:
+        raise ValidationError(t("projects", "file.upload_failed", locale))
+
+    file = ProjectFile(
+        project_id=project_id,
+        uploaded_by=user_id,
+        file_key=file_key,
+        filename=filename,
+        content_type=content_type,
+        size_bytes=len(file_bytes),
+    )
+    db.add(file)
+    await db.commit()
+    await db.refresh(file)
+    return _to_file_response(file)
+
+
+async def list_project_files(
+    db: AsyncSession, project_id: uuid.UUID, user_id: uuid.UUID, locale: str = DEFAULT_LOCALE
+) -> list[ProjectFileResponse]:
+    await _require_member(db, project_id, user_id, locale)
+
+    result = await db.execute(
+        select(ProjectFile)
+        .where(ProjectFile.project_id == project_id)
+        .order_by(ProjectFile.created_at.desc())
+    )
+    return [_to_file_response(f) for f in result.scalars().all()]
+
+
+async def delete_project_file(
+    db: AsyncSession, project_id: uuid.UUID, file_id: uuid.UUID, user_id: uuid.UUID, locale: str = DEFAULT_LOCALE
+) -> None:
+    membership = await _require_member(db, project_id, user_id, locale)
+
+    file = await db.scalar(
+        select(ProjectFile).where(ProjectFile.id == file_id, ProjectFile.project_id == project_id)
+    )
+    if not file:
+        raise NotFoundError(t("projects", "file.not_found", locale))
+
+    # the uploader can always remove their own file; otherwise only the owner can
+    if file.uploaded_by != user_id and membership.role != ProjectMembershipRole.OWNER:
+        raise ForbiddenError(t("projects", "file.delete_forbidden", locale))
+
+    try:
+        r2_client.delete_project_file(file.file_key)
+    except StorageError:
+        pass  # the DB row is the source of truth for listing; an orphaned R2 object isn't user-visible
+
+    await db.delete(file)
+    await db.commit()

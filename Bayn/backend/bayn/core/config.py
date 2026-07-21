@@ -37,6 +37,8 @@ class Settings(BaseSettings):
     DAILY_API_KEY: str | None = None
     DAILY_API_URL: str | None = None
     DAILY_DOMAIN: str | None = None
+    # shared secret Daily.co sends back on its recording-ready webhook call
+    DAILY_WEBHOOK_SECRET: str | None = None
 
     SMTP_HOST: str | None = None
     SMTP_PORT: int = 587

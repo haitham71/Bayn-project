@@ -3,7 +3,7 @@ meeting exists, the owner's post-meeting call, and attendance."""
 
 import uuid
 from datetime import date, datetime, timedelta, timezone
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 import pytest_asyncio
@@ -851,3 +851,123 @@ class TestMeetingNotifications:
         # the owner scheduled it themselves — no need to notify them of their own action
         owner_notifications = await self._notifications_for(db, owner.id)
         assert not any(n.type.value == "meeting_scheduled" for n in owner_notifications)
+
+
+# ═══════════════════════════════════════════════════════
+# Recordings
+# ═══════════════════════════════════════════════════════
+
+class TestMeetingRecording:
+
+    async def _team_meeting(self, client, owner, project_with_member, mock_daily, mock_calcom) -> str:
+        start = _future(48)
+        payload = {
+            "project_id": str(project_with_member.id),
+            "start_time": start.isoformat(),
+            "end_time": (start + timedelta(hours=1)).isoformat(),
+            "participant_ids": [],
+        }
+        response = await client.post("/meetings/team", headers=auth_headers_for(owner), json=payload)
+        return response.json()["id"]
+
+    @pytest.mark.asyncio
+    async def test_recording_not_ready_returns_404(
+        self, client: AsyncClient, project_with_member: Project, owner: User, mock_daily, mock_calcom,
+    ):
+        meeting_id = await self._team_meeting(client, owner, project_with_member, mock_daily, mock_calcom)
+
+        response = await client.get(f"/meetings/{meeting_id}/recording", headers=auth_headers_for(owner))
+        assert response.status_code == 404
+
+    @pytest.mark.asyncio
+    async def test_non_participant_forbidden_from_recording(
+        self, client: AsyncClient, project_with_member: Project, owner: User, outsider: User,
+        mock_daily, mock_calcom,
+    ):
+        meeting_id = await self._team_meeting(client, owner, project_with_member, mock_daily, mock_calcom)
+
+        response = await client.get(f"/meetings/{meeting_id}/recording", headers=auth_headers_for(outsider))
+        assert response.status_code == 403
+
+    @pytest.mark.asyncio
+    async def test_recording_url_returned_once_stored(
+        self, client: AsyncClient, db, project_with_member: Project, owner: User, mock_daily, mock_calcom,
+    ):
+        from bayn.features.meetings.models import Meeting
+        meeting_id = await self._team_meeting(client, owner, project_with_member, mock_daily, mock_calcom)
+        meeting = await db.get(Meeting, uuid.UUID(meeting_id))
+        meeting.recording_key = "meetings/some-id.mp4"
+        await db.commit()
+
+        from bayn.integrations.storage.cloudflare import r2_client
+        with patch.object(r2_client, "get_meeting_recording_url", return_value="https://cdn.example/meetings/some-id.mp4"):
+            response = await client.get(f"/meetings/{meeting_id}/recording", headers=auth_headers_for(owner))
+
+        assert response.status_code == 200
+        assert response.json()["url"] == "https://cdn.example/meetings/some-id.mp4"
+
+    @pytest.mark.asyncio
+    async def test_webhook_test_ping_accepted_without_signature(self, client: AsyncClient):
+        response = await client.post("/meetings/webhooks/daily-recording", json={"test": "test"})
+        assert response.status_code == 204
+
+    @pytest.mark.asyncio
+    async def test_webhook_rejects_missing_signature(self, client: AsyncClient):
+        response = await client.post(
+            "/meetings/webhooks/daily-recording",
+            json={"type": "recording.ready-to-download", "payload": {"recording_id": "r1", "room_name": "x"}},
+        )
+        assert response.status_code == 403
+
+    @pytest.mark.asyncio
+    async def test_webhook_stores_recording_on_valid_signature(
+        self, client: AsyncClient, db, project_with_member: Project, owner: User, mock_daily, mock_calcom,
+    ):
+        import base64
+        import hashlib
+        import hmac as hmac_lib
+        import json as json_lib
+
+        from bayn.core.config import settings
+        from bayn.features.meetings.models import Meeting
+
+        meeting_id = await self._team_meeting(client, owner, project_with_member, mock_daily, mock_calcom)
+        meeting = await db.get(Meeting, uuid.UUID(meeting_id))
+        room_name = meeting.room_name
+        assert room_name is not None
+
+        body = {
+            "type": "recording.ready-to-download",
+            "payload": {"recording_id": "rec-1", "room_name": room_name},
+        }
+        raw_body = json_lib.dumps(body).encode()
+        timestamp = "1700000000"
+        secret = base64.b64encode(b"test-webhook-secret").decode()
+        message = timestamp.encode() + b"." + raw_body
+        signature = base64.b64encode(hmac_lib.new(base64.b64decode(secret), message, hashlib.sha256).digest()).decode()
+
+        from bayn.features.meetings import service as meetings_service
+        with patch.object(settings, "DAILY_WEBHOOK_SECRET", secret), \
+             patch.object(meetings_service.daily_client, "get_recording_access_link", new=AsyncMock(return_value="https://daily-storage/x.mp4")), \
+             patch("httpx.AsyncClient") as mock_http, \
+             patch.object(meetings_service.r2_client, "upload_meeting_recording", return_value=f"meetings/{meeting_id}.mp4") as upload:
+            mock_response = MagicMock()
+            mock_response.raise_for_status = MagicMock()
+            mock_response.content = b"fake video bytes"
+            mock_response.headers = {"content-type": "video/mp4"}
+            mock_http.return_value.__aenter__.return_value.get = AsyncMock(return_value=mock_response)
+
+            response = await client.post(
+                "/meetings/webhooks/daily-recording",
+                content=raw_body,
+                headers={
+                    "Content-Type": "application/json",
+                    "X-Webhook-Timestamp": timestamp,
+                    "X-Webhook-Signature": signature,
+                },
+            )
+
+        assert response.status_code == 204
+        upload.assert_called_once()
+        await db.refresh(meeting)
+        assert meeting.recording_key == f"meetings/{meeting_id}.mp4"

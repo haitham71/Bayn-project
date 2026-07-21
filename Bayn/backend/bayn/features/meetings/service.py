@@ -11,6 +11,7 @@ import logging
 import uuid
 from datetime import datetime, timedelta, timezone
 
+import httpx
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -564,6 +565,7 @@ async def _schedule_meeting(
             name=room_name,
             exp_epoch_seconds=exp,
             nbf_epoch_seconds=nbf,
+            enable_recording="cloud",
         )
     except DailyError:
         raise ValidationError(t("meetings", "request.room_creation_failed", locale))
@@ -590,6 +592,7 @@ async def _schedule_meeting(
         is_initial_meeting=is_initial,
         calcom_booking_id=calcom_booking_id,
         video_link=room.get("url"),
+        room_name=room_name,
     )
     db.add(meeting)
     await db.flush()
@@ -866,7 +869,7 @@ async def create_team_meeting(
     nbf = int((start - JOIN_WINDOW).timestamp())
     try:
         room = await daily_client.create_room(
-            name=room_name, exp_epoch_seconds=exp, nbf_epoch_seconds=nbf
+            name=room_name, exp_epoch_seconds=exp, nbf_epoch_seconds=nbf, enable_recording="cloud"
         )
     except DailyError:
         raise ValidationError(t("meetings", "request.room_creation_failed", locale))
@@ -886,6 +889,7 @@ async def create_team_meeting(
         end_time=end,
         is_initial_meeting=False,
         video_link=room.get("url"),
+        room_name=room_name,
     )
     db.add(meeting)
     await db.flush()
@@ -954,6 +958,46 @@ async def get_meeting(
         if not is_participant:
             raise ForbiddenError(t("meetings", "meeting.not_a_participant", locale))
     return meeting
+
+
+async def handle_recording_ready(
+    db: AsyncSession, recording_id: str, room_name: str, locale: str = DEFAULT_LOCALE
+) -> None:
+    """Pull a finished recording from Daily.co into our own R2 bucket.
+
+    Called from the recording-ready webhook. Best-effort: any failure here
+    just leaves recording_key null — there's no retry loop today, so a
+    transient failure means that meeting's recording is unavailable, not that
+    anything else breaks.
+    """
+    meeting = await db.scalar(select(Meeting).where(Meeting.room_name == room_name))
+    if meeting is None:
+        logger.warning("Recording ready for unknown room %s (recording %s)", room_name, recording_id)
+        return
+
+    try:
+        download_url = await daily_client.get_recording_access_link(recording_id)
+        async with httpx.AsyncClient() as client:
+            response = await client.get(download_url, follow_redirects=True)
+            response.raise_for_status()
+    except (DailyError, httpx.HTTPError):
+        logger.exception("Failed to fetch recording %s for meeting %s", recording_id, meeting.id)
+        return
+
+    content_type = response.headers.get("content-type", "video/mp4").split(";")[0]
+    try:
+        meeting.recording_key = r2_client.upload_meeting_recording(meeting.id, response.content, content_type)
+    except StorageError:
+        logger.exception("Failed to store recording %s for meeting %s", recording_id, meeting.id)
+        return
+
+    await db.commit()
+
+
+def get_meeting_recording_url(meeting: Meeting, locale: str = DEFAULT_LOCALE) -> str:
+    if not meeting.recording_key:
+        raise NotFoundError(t("meetings", "meeting.recording_not_ready", locale))
+    return r2_client.get_meeting_recording_url(meeting.recording_key)
 
 
 def _display_name(user: User, locale: str) -> str:

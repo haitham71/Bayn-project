@@ -126,6 +126,18 @@ class MyProjectResponse(ProjectResponse):
     role: ProjectMembershipRole
 
 
+class ProjectFileResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    project_id: uuid.UUID
+    uploaded_by: uuid.UUID
+    filename: str
+    content_type: str
+    size_bytes: int
+    file_url: str
+    created_at: datetime
+
+
 class CalendarItemResponse(BaseModel):
     """A single entry on a project's calendar — either a task (placed by its
     deadline) or a meeting (placed by its start time)."""

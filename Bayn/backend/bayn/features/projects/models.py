@@ -165,3 +165,25 @@ class ProjectMembership(Base):
 
     def __repr__(self) -> str:
         return f"<ProjectMembership user={self.user_id} project={self.project_id} role={self.role}>"
+
+
+class ProjectFile(Base):
+    """A file a member uploaded to the project — an attachment or deliverable,
+    visible to the whole team."""
+    __tablename__ = "project_files"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    project_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False
+    )
+    uploaded_by: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+
+    file_key: Mapped[str] = mapped_column(String(500), nullable=False)
+    filename: Mapped[str] = mapped_column(String(255), nullable=False)
+    content_type: Mapped[str] = mapped_column(String(100), nullable=False)
+    size_bytes: Mapped[int] = mapped_column(Integer, nullable=False)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    def __repr__(self) -> str:
+        return f"<ProjectFile {self.filename} project={self.project_id}>"

@@ -12,9 +12,30 @@ from this domain, so callers should read `url` from create_room()'s return
 value rather than concatenating DAILY_DOMAIN themselves.
 """
 
+import base64
+import hashlib
+import hmac
+
 import httpx
 
 from bayn.core.config import settings
+
+
+def verify_webhook_signature(timestamp: str, raw_body: bytes, signature: str) -> bool:
+    """Verify a Daily.co webhook call.
+
+    Daily signs `"{timestamp}.{raw_json_body}"` with HMAC-SHA256 using the
+    base64-decoded webhook secret, then base64-encodes the digest — compared
+    against the X-Webhook-Signature header. DAILY_WEBHOOK_SECRET must be the
+    same secret given to Daily's `/webhooks` create call (its "hmac" field).
+    """
+    if not settings.DAILY_WEBHOOK_SECRET:
+        return False
+
+    secret = base64.b64decode(settings.DAILY_WEBHOOK_SECRET)
+    message = timestamp.encode() + b"." + raw_body
+    expected = base64.b64encode(hmac.new(secret, message, hashlib.sha256).digest()).decode()
+    return hmac.compare_digest(expected, signature)
 
 
 class DailyError(Exception):
@@ -37,6 +58,7 @@ class DailyClient:
         name: str,
         exp_epoch_seconds: int | None = None,
         nbf_epoch_seconds: int | None = None,
+        enable_recording: str | None = None,
     ) -> dict:
         """
         Create a video call room.
@@ -48,6 +70,9 @@ class DailyClient:
             exp_epoch_seconds: nobody can connect after this time.
             nbf_epoch_seconds: nobody can connect before this time. Daily enforces
                 this itself, so holding the room URL early is not enough to get in.
+            enable_recording: e.g. "cloud" to record every call in this room to
+                Daily's storage — pulled into our own R2 bucket once the
+                "recording.ready-to-download" webhook fires (see meetings.service).
 
         Returns:
             Daily's room object — includes "url", the joinable video link
@@ -61,6 +86,8 @@ class DailyClient:
             properties["exp"] = exp_epoch_seconds
         if nbf_epoch_seconds is not None:
             properties["nbf"] = nbf_epoch_seconds
+        if enable_recording is not None:
+            properties["enable_recording"] = enable_recording
 
         async with httpx.AsyncClient() as client:
             try:
@@ -78,6 +105,30 @@ class DailyClient:
             raise DailyError(f"Failed to create Daily room: {response.text}")
 
         return response.json()
+
+    async def get_recording_access_link(self, recording_id: str) -> str:
+        """
+        GET /recordings/{id}/access-link
+
+        Returns a temporary signed URL to download the finished recording —
+        called after the "recording.ready-to-download" webhook fires.
+        """
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.get(
+                    f"{self._base_url}/recordings/{recording_id}/access-link",
+                    headers=self._headers(),
+                )
+            except httpx.HTTPError as exc:
+                raise DailyError(f"Could not reach Daily.co: {exc}") from exc
+
+        if not response.is_success:
+            raise DailyError(f"Failed to get recording access link: {response.text}")
+
+        data = response.json()
+        # documented as "download_link" — fall back to "link" defensively in
+        # case Daily's field name differs from what's on record
+        return data.get("download_link") or data["link"]
 
     async def create_meeting_token(
         self,

@@ -5,6 +5,11 @@
     "team_slots_count_mismatch": "The number of team seats must match team_members_needed",
     "invalid_team_slot_specialization": "One of the team seats references a specialization that doesn't exist"
   },
+  "file": {
+    "upload_failed": "Failed to upload the file. Please try again.",
+    "not_found": "File not found",
+    "delete_forbidden": "Only the person who uploaded this file or the project owner can delete it"
+  },
   "membership": {
     "limit_reached": "You already hold the maximum of 2 project memberships",
     "already_joined": "You already joined this project",
