@@ -4,7 +4,6 @@ import House from '@/assets/icons/house.svg?react';
 import Lightbulb from '@/assets/icons/lightbulb.svg?react';
 import Presentation from '@/assets/icons/presentation.svg?react';
 import Video from '@/assets/icons/video.svg?react';
-import UserPlus from '@/assets/icons/user-plus.svg?react';
 import UserRound from '@/assets/icons/user-round.svg?react';
 import Settings from '@/assets/icons/settings.svg?react';
 import Languages from '@/assets/icons/languages.svg?react';
@@ -22,7 +21,6 @@ const defaultItems = [
   { key: 'ideas', page: 'ideas', labelKey: 'sidebar.ideas', icon: Lightbulb },
   { key: 'projects', page: 'myprojects', labelKey: 'sidebar.projects', icon: Presentation },
   { key: 'meetings', page: 'meetings', labelKey: 'sidebar.meetings', icon: Video },
-  { key: 'profiles', labelKey: 'sidebar.profiles', icon: UserPlus },
   { key: 'profile', page: 'myprofile', labelKey: 'sidebar.profile', icon: UserRound },
 ];
 
