@@ -428,7 +428,9 @@
     "recLabel": "Recommended for you · Explore new ideas",
     "recEmpty": "No ideas yet — be the first to post one!",
     "currentTasksLabel": "Current tasks",
-    "tasksEmpty": "No tasks assigned to you."
+    "tasksEmpty": "No tasks assigned to you.",
+    "supportTitle": "Contact us",
+    "supportHint": "Reach our team any time."
   },
   "projectDashboard": {
     "title": "Project Dashboard",

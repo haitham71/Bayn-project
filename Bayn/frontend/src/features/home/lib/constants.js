@@ -26,6 +26,10 @@ export const MEETING_ACCENTS = [
 export const AVATAR_COLORS = ['#0f3d2e', '#295e4d', '#5ca18a', '#c9baa1', '#463e31'];
 export const MAX_AVATARS = 3;
 
+// Support contact shown in the floating help card. Update to the real details.
+export const SUPPORT_EMAIL = 'support@beynsa.com';
+export const SUPPORT_PHONE = '+966 55 123 4567';
+
 // A user can belong to at most this many projects (owner + member) — mirrors
 // MyProjectsPage / the backend's MAX_MEMBERSHIPS_PER_USER.
 export const MAX_PROJECTS = 2;

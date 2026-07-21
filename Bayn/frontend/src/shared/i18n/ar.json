@@ -428,7 +428,9 @@
     "recLabel": "موصى به لك · استكشف أفكاراً جديدة",
     "recEmpty": "لا أفكار بعد — كن أول من ينشر فكرة!",
     "currentTasksLabel": "المهام الحالية",
-    "tasksEmpty": "لا مهام مسندة إليك."
+    "tasksEmpty": "لا مهام مسندة إليك.",
+    "supportTitle": "تواصل معنا",
+    "supportHint": "فريقنا متواجد لمساعدتك في أي وقت."
   },
   "projectDashboard": {
     "title": "لوحة المشروع",
