@@ -264,6 +264,9 @@ class PublicUserResponse(BaseModel):
     #git_profile: Optional[str]
     bio: Optional[str]
     skills: Optional[list[str]] = None
+    # The user's specializations, localized to the request language (they live in
+    # the user_specializations table, not the single specialization_id column).
+    specializations: Optional[list[str]] = None
     avatar_url: Optional[str] = None
 
     #role: str
