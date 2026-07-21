@@ -111,11 +111,40 @@ class UserSignup(BaseModel):
             
         return value
     
-    @field_validator("terms_accepted")
+#    @field_validator("terms_accepted")
+ #   @classmethod
+  #  def validate_must_accept_terms(cls, value: bool, info: ValidationInfo) -> bool:
+       # """Force the user to check the box; otherwise, halt the process."""
+      #  if not value:
+        #    locale = _locale_from(info)
+            # Pulls an error like "You must accept the terms to proceed" from json files
+     #       raise ValueError(t("validation", "terms_agreement_required", locale))
+    #    return value
+    
+   # @field_validator("agreed_to_terms")
+   # @classmethod
+   # def validate_agreement(cls, v: bool, info) -> bool:
+     #   if not v:
+            # We catch this at the schema validation boundary before it hits the engine
+    #        raise ValueError("يجب عليك قبول الشروط والأحكام للمتابعة.")
+   #     return v 
+
+# Terms Agreement Validation
+
+class UserSignUpRequest(BaseModel):
+    email: EmailStr
+    password: str
+    
+    # choose 'agreed_to_terms' or 'terms_accepted'
+    agreed_to_terms: bool = Field(..., description="يجب الموافقة على الشروط والأحكام")
+
+    # The Validator (Marked: Replaced hardcoded text with localized t())
+    @field_validator("agreed_to_terms")  # <-- Make sure this matches the field name above!
     @classmethod
     def validate_must_accept_terms(cls, value: bool, info: ValidationInfo) -> bool:
         """Force the user to check the box; otherwise, halt the process."""
         if not value:
+            # Dynamically resolves locale from validation context
             locale = _locale_from(info)
             # Pulls an error like "You must accept the terms to proceed" from json files
             raise ValueError(t("identity", "validation.terms_agreement_required", locale))

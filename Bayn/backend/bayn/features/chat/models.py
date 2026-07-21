@@ -2,11 +2,12 @@
 
 import uuid
 from datetime import datetime
-from sqlalchemy import DateTime, ForeignKey, String, UniqueConstraint, func
+from sqlalchemy import DateTime, ForeignKey, String, Column, Table, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from bayn.core.database import Base
+
 
 
 class Conversation(Base):
@@ -107,3 +108,4 @@ class Message(Base):
 
     def __repr__(self) -> str:
         return f"<Message id={self.id} sender={self.sender_id}>"
+    
