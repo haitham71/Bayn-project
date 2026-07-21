@@ -25,7 +25,10 @@ from bayn.features.projects.models import (
 
 
 @pytest_asyncio.fixture
-async def owner(test_user: User) -> User:
+async def owner(db, test_user: User) -> User:
+    # NDA creation on accept requires a real national_id (contracts.service._require_national_id)
+    test_user.national_id = "1000000001"
+    await db.flush()
     return test_user
 
 
@@ -39,6 +42,7 @@ async def member(db, test_country) -> User:
         password_hash=hash_password("TestPass123"),
         phone_country_id=test_country.id,
         phone_number=511111111,
+        national_id="1000000002",
         is_active=True,
     )
     db.add(user)
@@ -57,6 +61,7 @@ async def outsider(db, test_country) -> User:
         password_hash=hash_password("TestPass123"),
         phone_country_id=test_country.id,
         phone_number=522222222,
+        national_id="1000000003",
         is_active=True,
     )
     db.add(user)
