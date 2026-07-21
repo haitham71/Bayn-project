@@ -21,6 +21,7 @@ from sqlalchemy.pool import StaticPool
 from bayn.common.exceptions import NotFoundError
 from bayn.core.database import Base, get_db
 from bayn.core.security import create_access_token, hash_password
+from bayn.features.catalog.models import Specialization
 from bayn.features.identity.models import City, Country, User
 from bayn.main import app
 
@@ -103,6 +104,15 @@ async def test_country(db: AsyncSession) -> Country:
     await db.flush()
     await db.refresh(country)
     return country
+
+@pytest_asyncio.fixture
+async def test_specialization(db: AsyncSession) -> Specialization:
+    specialization = Specialization(name_en="Backend Development", name_ar="تطوير الباك اند")
+    db.add(specialization)
+    await db.flush()
+    await db.refresh(specialization)
+    return specialization
+
 
 @pytest_asyncio.fixture
 async def test_city(db: AsyncSession, test_country: Country) -> City:

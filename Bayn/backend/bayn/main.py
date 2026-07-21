@@ -10,7 +10,7 @@ from bayn.features.identity.router import router as identity_router
 # imported so their tables register on Base.metadata for migrations
 from bayn.features.catalog.models import Industry, Skill, Specialization, UserSkill, UserSpecialization
 from bayn.features.catalog.router import catalog_router, profile_router
-from bayn.features.projects.models import Project, ProjectMembership
+from bayn.features.projects.models import Project, ProjectMembership, ProjectTeamSlot
 from bayn.features.projects.router import projects_router
 from bayn.features.meetings.models import Meeting, MeetingAttendance, MeetingRequest
 from bayn.features.meetings.router import router as meetings_router
