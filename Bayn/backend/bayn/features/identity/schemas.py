@@ -263,7 +263,7 @@ class PublicUserResponse(BaseModel):
     industry_id: Optional[uuid.UUID]
     #git_profile: Optional[str]
     bio: Optional[str]
-
+    skills: Optional[list[str]] = None
     avatar_url: Optional[str] = None
 
     #role: str
