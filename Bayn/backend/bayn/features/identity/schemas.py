@@ -59,7 +59,9 @@ class UserSignup(BaseModel):
     phone_country_id: uuid.UUID
     phone_number: int
 
-    terms_accepted: bool
+    # terms_accepted: bool -which line, this one or the next line?-
+
+    terms_accepted: bool = Field(..., description="يجب الموافقة على الشروط والأحكام")
 
     @field_validator("username")
     @classmethod
@@ -108,7 +110,24 @@ class UserSignup(BaseModel):
             raise ValueError(t("validation", "age_restriction", locale))
             
         return value
-
+    
+    @field_validator("terms_accepted")
+    @classmethod
+    def validate_must_accept_terms(cls, value: bool, info: ValidationInfo) -> bool:
+        """Force the user to check the box; otherwise, halt the process."""
+        if not value:
+            locale = _locale_from(info)
+            # Pulls an error like "You must accept the terms to proceed" from json files
+            raise ValueError(t("validation", "terms_agreement_required", locale))
+        return value
+    
+    @field_validator("agreed_to_terms")
+    @classmethod
+    def validate_agreement(cls, v: bool, info) -> bool:
+        if not v:
+            # We catch this at the schema validation boundary before it hits the engine
+            raise ValueError("يجب عليك قبول الشروط والأحكام للمتابعة.")
+        return v
 
 class UserLogin(BaseModel):
     email: EmailStr
@@ -128,7 +147,7 @@ class UpdateProfileRequest(BaseModel):
     third_name_en: Optional[str] = None
     country_id: Optional[uuid.UUID] = None
     city_id: Optional[uuid.UUID] = None
-    job_title: Optional[str] = None
+    specialization_id: Optional[uuid.UUID] = None
     years_of_experience: Optional[ExperienceRange] = None
     git_profile: Optional[str] = None
     industry_id: Optional[uuid.UUID] = None
@@ -211,7 +230,7 @@ class UserResponse(BaseModel):
 
     country_id: Optional[uuid.UUID]
     city_id: Optional[uuid.UUID]
-    job_title: Optional[str]
+    specialization_id: Optional[uuid.UUID]
     years_of_experience: Optional[ExperienceRange]
     industry_id: Optional[uuid.UUID]
     git_profile: Optional[str]
@@ -229,6 +248,34 @@ class UserResponse(BaseModel):
 
     created_at: datetime
 
+
+
+class PublicUserResponse(BaseModel):
+    """Profile view for a user other than the caller — excludes PII such as
+    email, phone number, national ID, and birth date."""
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+
+    first_name_ar: str
+    last_name_ar: str
+
+    first_name_en: str
+    last_name_en: str
+    
+    username: str
+    city_id: Optional[uuid.UUID]
+    specialization_id: Optional[uuid.UUID]
+    years_of_experience: Optional[ExperienceRange]
+    industry_id: Optional[uuid.UUID]
+    #git_profile: Optional[str]
+    bio: Optional[str]
+
+    avatar_url: Optional[str] = None
+
+    #role: str
+
+    #created_at: datetime
 
 
 class TokenResponse(BaseModel):

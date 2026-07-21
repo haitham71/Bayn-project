@@ -61,7 +61,7 @@ class OwnerInfo(BaseModel):
     id: uuid.UUID
     name_en: str
     name_ar: str
-    job_title: str | None = None
+    specialization_id: uuid.UUID | None = None
     avatar_url: str | None = None
 
 
@@ -97,7 +97,7 @@ class ProjectMemberResponse(BaseModel):
     user_id: uuid.UUID
     name_en: str
     name_ar: str
-    job_title: str | None = None
+    specialization_id: uuid.UUID | None = None
     specialization_en: str | None = None
     specialization_ar: str | None = None
     avatar_url: str | None = None

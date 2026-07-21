@@ -10,6 +10,7 @@ Run:
 """
 
 import re
+import uuid
 from datetime import date
 from unittest.mock import AsyncMock
 
@@ -408,7 +409,7 @@ class TestProfile:
         response = await client.patch(
             "/auth/profile",
             headers=auth_headers,
-            json={"job_title": "Backend Engineer"},
+            json={"specialization_id": str(uuid.uuid4())},
         )
 
         assert response.status_code == 200
@@ -487,7 +488,7 @@ class TestProfile:
         test_user.birth_date = date(1995, 1, 1)
         test_user.country_id = test_city.country_id
         test_user.city_id = test_city.id
-        test_user.job_title = "Backend Engineer"
+        test_user.specialization_id = test_city.country_id  # any non-null FK value; not committed
         test_user.industry_id = test_city.country_id  # any non-null FK value; not committed
         test_user.years_of_experience = ExperienceRange.less_than_1
         test_user.avatar_key = "avatars/test.png"
