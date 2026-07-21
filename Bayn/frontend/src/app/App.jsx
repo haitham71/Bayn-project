@@ -12,7 +12,7 @@ import MyProfilePage    from '@/features/profile/pages/MyProfilePage';
 import MyProjectsPage   from '@/features/projects/pages/MyProjectsPage';
 import JoinRequestsPage from '@/features/projects/pages/JoinRequestsPage';
 import ProjectDashboardPage from '@/features/dashboard/pages/ProjectDashboard';
-import SettingsPage from '@/features/settings/settings';
+import SettingsPage from '@/features/settings/pages/SettingsPage';
 import CreateIdeaPage   from '@/features/ideas/pages/CreateIdeaPage';
 import EditIdeaPage    from '@/features/ideas/pages/EditIdeaPage';
 import IdeasMarketplacePage from '@/features/ideas/pages/IdeasMarketplacePage';
@@ -20,7 +20,7 @@ import IdeaDetailsPage from '@/features/ideas/pages/IdeaDetailsPage';
 import MeetingsPage from '@/features/meetings/pages/MeetingsPage';
 // Lazy: pulls in the heavy Daily SDK only when a user actually opens a meeting.
 const MeetingRoomPage = lazy(() => import('@/features/meetings/pages/MeetingRoomPage'));
-import ProtectedRoute    from '@/shared/components/ProtectedRoute';
+import ProtectedRoute from './ProtectedRoute';
 
 // Pages navigate with short keys (onNavigate('home')); this maps each key to its
 // URL so the page components don't need to know about routing.

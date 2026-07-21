@@ -1,9 +1,13 @@
+/* Home page — layout, header, action pills, the shared card shell and
+   the team/applications card content. */
+
 .home {
   min-height: 100vh;
   background: var(--bg-surface-primary);
 }
 
 /* Clears the fixed floating sidebar rail (16px offset + 76px collapsed width). */
+
 .home__main {
   padding-block: 22px 40px;
   padding-inline: 108px 40px;
@@ -14,6 +18,7 @@
 }
 
 /* Greeting + quick actions */
+
 .home__header {
   display: flex;
   align-items: flex-start;
@@ -89,6 +94,7 @@
 }
 
 /* Main / side split */
+
 .home__grid {
   display: flex;
   align-items: flex-start;
@@ -106,6 +112,7 @@
 }
 
 /* Cards */
+
 .home__cards {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -128,6 +135,7 @@
 }
 
 /* Leading-edge aligned title: top-left in LTR, top-right in RTL. */
+
 .home__card-title {
   margin: 0;
   text-align: start;
@@ -140,122 +148,8 @@
   flex: 1 1 auto;
 }
 
-/* Recommended ideas */
-.home__rec-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-  gap: 14px;
-  margin-top: 16px;
-}
-
-.home__rec-empty {
-  margin: 24px 0;
-  text-align: center;
-  font-size: 14px;
-  color: var(--text-supporting, #786c57);
-}
-
-.home__rec-card {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 16px;
-  border: 1px solid var(--bg-surface-thirdary);
-  border-radius: 18px;
-  /* Warm cream — lighter than the beige parent so the card lifts, without the
-     harsh contrast of pure white. */
-  background: #f7f2ea;
-  text-align: start;
-  font-family: var(--font-sans);
-  cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-[dir='rtl'] .home__rec-card {
-  font-family: var(--font-ar);
-}
-
-.home__rec-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
-}
-
-.home__rec-owner {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-
-.home__rec-avatar {
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  flex: 0 0 auto;
-  border-radius: 50%;
-  background: var(--btn-primary-default, #295e4d);
-  color: #fff;
-  font-size: 12px;
-  font-weight: 600;
-  overflow: hidden;
-}
-
-.home__rec-avatar--img {
-  object-fit: cover;
-}
-
-.home__rec-owner-name {
-  font-size: 12px;
-  color: var(--text-supporting, #786c57);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.home__rec-title {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text-title, #0f3d2e);
-  /* two-line clamp keeps every card the same height */
-  min-height: 2.6em;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  overflow-wrap: anywhere;
-}
-
-.home__rec-stage {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  align-self: flex-start;
-  padding: 3px 10px;
-  border-radius: 20px;
-  background: var(--color-primary-300, #76c3a9);
-  color: var(--text-title, #0f3d2e);
-  font-size: 11px;
-}
-
-.home__rec-skills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: auto;
-}
-
-.home__rec-skill {
-  padding: 2px 8px;
-  border-radius: 20px;
-  background: rgba(119, 181, 160, 0.2);
-  color: var(--text-title, #0f3d2e);
-  font-size: 10px;
-  white-space: nowrap;
-}
-
 /* Current team card — project name (title-sized) + a "next project" arrow. */
+
 .home__team-switch {
   display: flex;
   align-items: center;
@@ -380,6 +274,7 @@
 }
 
 /* Application's status — latest join requests + their stage. */
+
 .home__status-list {
   list-style: none;
   margin: 16px 0 0;
@@ -430,146 +325,8 @@
   color: #9a3b2e;
 }
 
-/* Schedule card */
-.home__schedule {
-  padding: 15px;
-  border: 1px solid var(--bg-surface-thirdary);
-  border-radius: 16px;
-  background: var(--bg-surface-primary);
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
-}
-
-.home__schedule-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  padding-bottom: 12px;
-}
-
-.home__schedule-title {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 600;
-  color: #1a1a1a;
-}
-
-.home__schedule-date {
-  font-size: 11px;
-  color: #737373;
-}
-
-.home__schedule-list {
-  list-style: none;
-  margin: 14px 0 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  max-height: 475px;
-  overflow-y: auto;
-  padding-inline-end: 4px;
-}
-
-.home__meeting {
-  position: relative;
-  padding: 8px 12px 10px;
-  padding-inline-start: 16px;
-  border-radius: 10px;
-  background: var(--tint);
-}
-
-.home__meeting::before {
-  content: '';
-  position: absolute;
-  inset-inline-start: 0;
-  top: 6px;
-  bottom: 6px;
-  width: 4px;
-  border-radius: 2px;
-  background: var(--accent);
-}
-
-.home__meeting-time {
-  font-size: 10px;
-  color: #737373;
-}
-
-.home__meeting-name {
-  display: block;
-  margin-top: 2px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #1a1a1a;
-}
-
-.home__meeting-people {
-  display: flex;
-  align-items: center;
-  margin-top: 8px;
-}
-
-.home__meeting-person {
-  position: relative;
-  display: inline-flex;
-}
-
-.home__meeting-person:not(:first-child) {
-  margin-inline-start: -6px;
-}
-
-.home__meeting-person:hover {
-  z-index: 2;
-}
-
-.home__meeting-avatar {
-  display: grid;
-  place-items: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  color: var(--color-neutral-100);
-  font-size: 8px;
-  font-weight: 700;
-  border: 1.5px solid var(--color-neutral-100);
-  overflow: hidden;
-}
-
-.home__meeting-avatar--img {
-  display: block;
-  object-fit: cover;
-}
-
-/* Name tooltip on avatar hover. */
-.home__meeting-tooltip {
-  position: absolute;
-  bottom: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 4px 10px;
-  border-radius: 6px;
-  background: var(--color-primary-600, #0f3d2e);
-  color: var(--color-neutral-100, #ebe5dc);
-  font-size: 12px;
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.12s ease;
-  z-index: 3;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
-}
-
-.home__meeting-person:hover .home__meeting-tooltip {
-  opacity: 1;
-}
-
-.home__meeting-extra {
-  margin-inline-start: 6px;
-  font-size: 9px;
-  font-weight: 500;
-  color: #737373;
-}
-
 /* Floating support button */
+
 .home__support {
   position: fixed;
   inset-inline-end: 32px;
@@ -594,11 +351,11 @@
 }
 
 /* Responsive: stack the schedule under the main content on narrow viewports. */
+
 @media (max-width: 1080px) {
   .home__grid {
     flex-direction: column;
   }
-
   .home__col-side {
     flex: 1 1 auto;
     width: 100%;
@@ -610,130 +367,10 @@
   .home__main {
     padding-inline: 96px 20px;
   }
-
   .home__cards {
     grid-template-columns: 1fr;
   }
-
   .home__title {
     font-size: 32px;
   }
-}
-
-.home__schedule-empty {
-  margin: 8px 0;
-  font-size: 14px;
-  color: var(--text-supporting, #786c57);
-}
-
-.home__meeting-join {
-  align-self: flex-start;
-  margin-top: 4px;
-  padding: 0;
-  border: none;
-  background: none;
-  font-family: inherit;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--btn-primary-default, #295e4d);
-  text-decoration: underline;
-  cursor: pointer;
-}
-
-/* Shown instead of the join link until the room opens. */
-.home__meeting-locked {
-  display: block;
-  margin-top: 4px;
-  font-size: 11px;
-  color: var(--text-supporting, #786c57);
-}
-
-/* Current tasks (assigned to me, not done) in the home dashboard card. */
-.home__tasks {
-  list-style: none;
-  /* Extra top gap separates the list from the card title. */
-  margin: 16px 0 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  /* Cap the list at ~4 rows; the rest scrolls (keeps the card from growing). */
-  max-height: 232px;
-  overflow-y: auto;
-}
-
-.home__task {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
-  border: 1px solid var(--bg-surface-secondary, #d7cbb9);
-  border-radius: 10px;
-}
-
-.home__task-dot {
-  flex-shrink: 0;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-}
-
-.home__task-dot--todo { background: var(--text-supporting, #786c57); }
-.home__task-dot--in_progress { background: var(--color-warning-800, #8a5a00); }
-.home__task-dot--done { background: var(--color-success-700, #2e7d55); }
-
-.home__task-info {
-  flex: 1 1 auto;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.home__task-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-title, #0f3d2e);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.home__task-project {
-  font-size: 11.5px;
-  color: var(--text-supporting, #786c57);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-[dir='rtl'] .home__task-title,
-[dir='rtl'] .home__task-project {
-  font-family: var(--font-ar);
-}
-
-.home__task-side {
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 4px;
-}
-
-.home__task-priority {
-  padding: 1px 8px;
-  border-radius: 20px;
-  font-size: 10.5px;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.home__task-priority--low { background: var(--color-success-100, #d8ebe0); color: var(--color-success-700, #2e7d55); }
-.home__task-priority--medium { background: var(--color-warning-100, #f5e6c8); color: var(--color-warning-800, #8a5a00); }
-.home__task-priority--high { background: var(--color-error-100, #f3d6d6); color: var(--color-error-700, #b23b3b); }
-
-.home__task-due {
-  flex-shrink: 0;
-  font-size: 11.5px;
-  font-weight: 600;
-  color: var(--text-supporting, #786c57);
 }

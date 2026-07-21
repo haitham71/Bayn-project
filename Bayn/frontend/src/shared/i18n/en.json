@@ -191,7 +191,10 @@
     "stageDevelopment": "Development",
     "stageLaunching": "Launching",
     "requiredFields": "Please fill in the title, team size, and stage.",
-    "publishError": "Couldn't publish your idea, please try again."
+    "publishError": "Couldn't publish your idea, please try again.",
+    "editSummaryTitle": "Edit idea",
+    "editSummaryReady": "Update your idea's details",
+    "editSummaryHint": "Change what you need, then save — updates show on your idea page right away."
   },
   "ideas": {
     "title": "Ideas Marketplace",

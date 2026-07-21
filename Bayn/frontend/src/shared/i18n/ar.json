@@ -191,7 +191,10 @@
     "stageDevelopment": "التطوير",
     "stageLaunching": "الإطلاق",
     "requiredFields": "يرجى تعبئة العنوان وحجم الفريق والمرحلة.",
-    "publishError": "تعذّر نشر الفكرة، حاول مرة أخرى."
+    "publishError": "تعذّر نشر الفكرة، حاول مرة أخرى.",
+    "editSummaryTitle": "تعديل الفكرة",
+    "editSummaryReady": "حدّث تفاصيل فكرتك",
+    "editSummaryHint": "عدّل ما تحتاج ثم احفظ التغييرات — تظهر مباشرة في صفحة فكرتك."
   },
   "ideas": {
     "title": "سوق الأفكار",

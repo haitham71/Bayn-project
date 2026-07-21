@@ -1,0 +1,117 @@
+/* Recommended ideas card. */
+
+/* Recommended ideas */
+
+.home__rec-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.home__rec-empty {
+  margin: 24px 0;
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-supporting, #786c57);
+}
+
+.home__rec-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid var(--bg-surface-thirdary);
+  border-radius: 18px;
+  /* Warm cream — lighter than the beige parent so the card lifts, without the
+     harsh contrast of pure white. */
+  background: #f7f2ea;
+  text-align: start;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+[dir='rtl'] .home__rec-card {
+  font-family: var(--font-ar);
+}
+
+.home__rec-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+.home__rec-owner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.home__rec-avatar {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--btn-primary-default, #295e4d);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  overflow: hidden;
+}
+
+.home__rec-avatar--img {
+  object-fit: cover;
+}
+
+.home__rec-owner-name {
+  font-size: 12px;
+  color: var(--text-supporting, #786c57);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home__rec-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-title, #0f3d2e);
+  /* two-line clamp keeps every card the same height */
+  min-height: 2.6em;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.home__rec-stage {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  align-self: flex-start;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: var(--color-primary-300, #76c3a9);
+  color: var(--text-title, #0f3d2e);
+  font-size: 11px;
+}
+
+.home__rec-skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: auto;
+}
+
+.home__rec-skill {
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: rgba(119, 181, 160, 0.2);
+  color: var(--text-title, #0f3d2e);
+  font-size: 10px;
+  white-space: nowrap;
+}

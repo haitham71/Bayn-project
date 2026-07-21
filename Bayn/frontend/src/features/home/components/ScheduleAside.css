@@ -1,0 +1,171 @@
+/* Today's schedule aside — upcoming meetings. */
+
+/* Schedule card */
+
+.home__schedule {
+  padding: 15px;
+  border: 1px solid var(--bg-surface-thirdary);
+  border-radius: 16px;
+  background: var(--bg-surface-primary);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
+}
+
+.home__schedule-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding-bottom: 12px;
+}
+
+.home__schedule-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.home__schedule-date {
+  font-size: 11px;
+  color: #737373;
+}
+
+.home__schedule-list {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: 475px;
+  overflow-y: auto;
+  padding-inline-end: 4px;
+}
+
+.home__meeting {
+  position: relative;
+  padding: 8px 12px 10px;
+  padding-inline-start: 16px;
+  border-radius: 10px;
+  background: var(--tint);
+}
+
+.home__meeting::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 4px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+.home__meeting-time {
+  font-size: 10px;
+  color: #737373;
+}
+
+.home__meeting-name {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.home__meeting-people {
+  display: flex;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.home__meeting-person {
+  position: relative;
+  display: inline-flex;
+}
+
+.home__meeting-person:not(:first-child) {
+  margin-inline-start: -6px;
+}
+
+.home__meeting-person:hover {
+  z-index: 2;
+}
+
+.home__meeting-avatar {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  color: var(--color-neutral-100);
+  font-size: 8px;
+  font-weight: 700;
+  border: 1.5px solid var(--color-neutral-100);
+  overflow: hidden;
+}
+
+.home__meeting-avatar--img {
+  display: block;
+  object-fit: cover;
+}
+
+/* Name tooltip on avatar hover. */
+
+.home__meeting-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: var(--color-primary-600, #0f3d2e);
+  color: var(--color-neutral-100, #ebe5dc);
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease;
+  z-index: 3;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.home__meeting-person:hover .home__meeting-tooltip {
+  opacity: 1;
+}
+
+.home__meeting-extra {
+  margin-inline-start: 6px;
+  font-size: 9px;
+  font-weight: 500;
+  color: #737373;
+}
+
+.home__schedule-empty {
+  margin: 8px 0;
+  font-size: 14px;
+  color: var(--text-supporting, #786c57);
+}
+
+.home__meeting-join {
+  align-self: flex-start;
+  margin-top: 4px;
+  padding: 0;
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--btn-primary-default, #295e4d);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Shown instead of the join link until the room opens. */
+
+.home__meeting-locked {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--text-supporting, #786c57);
+}

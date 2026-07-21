@@ -58,3 +58,23 @@ export const updateTaskAsMember = (taskId, payload) =>
 // Delete a task (owner or a granted editor).
 export const deleteProjectTask = (taskId) =>
   api.delete(`${API.tasks.base}/${taskId}`).then((r) => r.data);
+
+// Tasks assigned to `userId` across the given projects, each tagged with its
+// project's title. There's no cross-project task endpoint, so this gathers each
+// project's tasks and filters. Pass includeDone=false to drop finished tasks.
+export const listAssignedTasks = (projects, userId, { includeDone = true } = {}) =>
+  Promise.all(
+    (projects || []).map((p) =>
+      listProjectTasks(p.id)
+        .then((rows) => (rows || []).map((task) => ({ ...task, projectTitle: p.title })))
+        .catch(() => []),
+    ),
+  ).then((lists) =>
+    lists
+      .flat()
+      .filter(
+        (task) =>
+          task.assigned_to === userId &&
+          (includeDone || (task.status || 'todo').toLowerCase() !== 'done'),
+      ),
+  );
