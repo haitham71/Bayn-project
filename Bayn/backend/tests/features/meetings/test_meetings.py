@@ -743,3 +743,111 @@ class TestTeamMeetingPlatformCapacity:
 
         response = await client.post("/meetings/team", headers=auth_headers_for(owner), json=payload)
         assert response.status_code == 409
+
+
+# ═══════════════════════════════════════════════════════
+# Notifications
+# ═══════════════════════════════════════════════════════
+
+class TestMeetingNotifications:
+
+    async def _notifications_for(self, db, user_id):
+        from bayn.features.notifications.models import Notification
+        result = await db.execute(select(Notification).where(Notification.user_id == user_id))
+        return result.scalars().all()
+
+    @pytest.mark.asyncio
+    async def test_owner_notified_when_request_received(
+        self, client: AsyncClient, db, project_with_member: Project, member: User, owner: User,
+    ):
+        await client.post(
+            "/meetings/requests", headers=auth_headers_for(member), json=_request_payload(project_with_member.id)
+        )
+
+        notifications = await self._notifications_for(db, owner.id)
+        assert len(notifications) == 1
+        assert notifications[0].type.value == "meeting_request_received"
+        assert notifications[0].data["project_id"] == str(project_with_member.id)
+        assert notifications[0].data["actor_name_en"] == f"{member.first_name_en} {member.last_name_en}"
+
+    @pytest.mark.asyncio
+    async def test_owner_notified_when_join_request_received(
+        self, client: AsyncClient, db, project: Project, owner: User, outsider: User,
+    ):
+        slot = ProjectMeetingSlot(project_id=project.id, start_time=_future(24), end_time=_future(25))
+        db.add(slot)
+        await db.flush()
+
+        await client.post(
+            "/meetings/join-requests", headers=auth_headers_for(outsider),
+            json={"project_id": str(project.id), "slot_id": str(slot.id), "message": "hi"},
+        )
+
+        notifications = await self._notifications_for(db, owner.id)
+        assert len(notifications) == 1
+        assert notifications[0].type.value == "meeting_request_received"
+
+    @pytest.mark.asyncio
+    async def test_requester_notified_on_accept(
+        self, client: AsyncClient, db, project_with_member: Project, member: User, owner: User,
+        mock_daily, mock_calcom, mock_nda,
+    ):
+        create = await client.post(
+            "/meetings/requests", headers=auth_headers_for(member), json=_request_payload(project_with_member.id)
+        )
+        request_id = create.json()["id"]
+
+        await client.post(f"/meetings/requests/{request_id}/accept", headers=auth_headers_for(owner))
+
+        notifications = await self._notifications_for(db, member.id)
+        types = {n.type.value for n in notifications}
+        assert "meeting_request_accepted" in types
+
+    @pytest.mark.asyncio
+    async def test_requester_notified_on_reject(
+        self, client: AsyncClient, db, project_with_member: Project, member: User, owner: User,
+    ):
+        create = await client.post(
+            "/meetings/requests", headers=auth_headers_for(member), json=_request_payload(project_with_member.id)
+        )
+        request_id = create.json()["id"]
+
+        await client.post(f"/meetings/requests/{request_id}/reject", headers=auth_headers_for(owner))
+
+        notifications = await self._notifications_for(db, member.id)
+        types = {n.type.value for n in notifications}
+        assert "meeting_request_rejected" in types
+
+    @pytest.mark.asyncio
+    async def test_both_parties_notified_once_scheduled(
+        self, client: AsyncClient, db, project_with_member: Project, member: User, owner: User,
+        mock_daily, mock_calcom, mock_nda,
+    ):
+        await _schedule_meeting(client, project_with_member.id, member, owner, mock_nda)
+
+        owner_notifications = await self._notifications_for(db, owner.id)
+        member_notifications = await self._notifications_for(db, member.id)
+
+        assert any(n.type.value == "meeting_scheduled" for n in owner_notifications)
+        assert any(n.type.value == "meeting_scheduled" for n in member_notifications)
+
+    @pytest.mark.asyncio
+    async def test_invited_participant_notified_on_team_meeting(
+        self, client: AsyncClient, db, project_with_member: Project, member: User, owner: User,
+        mock_daily, mock_calcom, mock_nda,
+    ):
+        start = _future(48)
+        payload = {
+            "project_id": str(project_with_member.id),
+            "start_time": start.isoformat(),
+            "end_time": (start + timedelta(hours=1)).isoformat(),
+            "participant_ids": [str(member.id)],
+        }
+        response = await client.post("/meetings/team", headers=auth_headers_for(owner), json=payload)
+        assert response.status_code == 201
+
+        notifications = await self._notifications_for(db, member.id)
+        assert any(n.type.value == "meeting_scheduled" for n in notifications)
+        # the owner scheduled it themselves — no need to notify them of their own action
+        owner_notifications = await self._notifications_for(db, owner.id)
+        assert not any(n.type.value == "meeting_scheduled" for n in owner_notifications)

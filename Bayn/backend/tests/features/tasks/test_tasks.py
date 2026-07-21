@@ -432,3 +432,58 @@ class TestProjectDashboard:
         assert dash.total_tasks == 1
         assert {m.id for m in dash.tasks[0].assigned_to} == {owner.id, member.id}
         assert all(m.name_en for m in dash.tasks[0].assigned_to)
+
+
+class TestTaskAssignedNotifications:
+
+    async def _notifications_for(self, db, user_id):
+        from sqlalchemy import select
+        from bayn.features.notifications.models import Notification
+        result = await db.execute(select(Notification).where(Notification.user_id == user_id))
+        return result.scalars().all()
+
+    @pytest.mark.asyncio
+    async def test_assignees_notified_on_create(
+        self, client: AsyncClient, db, project: Project, owner: User, member: User,
+    ):
+        await client.post(
+            "/tasks", headers=auth_headers_for(owner),
+            json=_payload(project.id, assigned_to=[str(member.id)]),
+        )
+
+        notifications = await self._notifications_for(db, member.id)
+        assert len(notifications) == 1
+        assert notifications[0].type.value == "task_assigned"
+        assert notifications[0].data["task_title"] == "Write the spec"
+        assert notifications[0].data["actor_name_en"] == f"{owner.first_name_en} {owner.last_name_en}"
+
+    @pytest.mark.asyncio
+    async def test_assigning_yourself_does_not_notify(
+        self, client: AsyncClient, db, project: Project, owner: User,
+    ):
+        await client.post(
+            "/tasks", headers=auth_headers_for(owner),
+            json=_payload(project.id, assigned_to=[str(owner.id)]),
+        )
+
+        assert await self._notifications_for(db, owner.id) == []
+
+    @pytest.mark.asyncio
+    async def test_only_newly_added_assignees_are_notified_on_update(
+        self, client: AsyncClient, db, project: Project, owner: User, member: User,
+    ):
+        create = await client.post(
+            "/tasks", headers=auth_headers_for(owner),
+            json=_payload(project.id, assigned_to=[str(member.id)]),
+        )
+        task_id = create.json()["id"]
+        assert len(await self._notifications_for(db, member.id)) == 1
+
+        # member stays assigned, owner is newly added — only owner should get a new notification
+        await client.put(
+            f"/tasks/{task_id}", headers=auth_headers_for(owner),
+            json={"assigned_to": [str(member.id), str(owner.id)]},
+        )
+
+        assert len(await self._notifications_for(db, member.id)) == 1  # unchanged
+        assert await self._notifications_for(db, owner.id) == []  # owner assigned themself — no notification

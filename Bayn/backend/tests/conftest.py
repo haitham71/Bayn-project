@@ -143,6 +143,28 @@ async def auth_headers(test_user: User) -> dict:
 
 
 @pytest_asyncio.fixture
+async def other_user(db: AsyncSession, test_country: Country) -> User:
+    """A second distinct user, for tests checking data isolation between accounts."""
+    user = User(
+        first_name_ar="سلمى",
+        last_name_ar="خالد",
+        first_name_en="Salma",
+        last_name_en="Khalid",
+        birth_date=date(2000, 1, 1),
+        email="other@example.com",
+        username="salma_test",
+        password_hash=hash_password("TestPass123"),
+        phone_country_id=test_country.id,
+        phone_number=509876543,
+        is_active=True,
+    )
+    db.add(user)
+    await db.flush()
+    await db.refresh(user)
+    return user
+
+
+@pytest_asyncio.fixture
 def mock_authentica():
     # patch the singleton so tests never hit the real Authentica API
     with patch("bayn.features.identity.service.authentica_client") as mock:
