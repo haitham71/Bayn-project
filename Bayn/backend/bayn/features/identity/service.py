@@ -80,7 +80,6 @@ def _profile_completeness(user: User, skill_count: int) -> tuple[bool, list[str]
 
 
 async def _build_user_response(db: AsyncSession, user: User) -> UserResponse:
-    # avatar_url is derived from avatar_key here; the schema knows nothing about R2
     avatar_url = None
     if user.avatar_key:
         try:
@@ -157,14 +156,6 @@ async def revoke_all_refresh_tokens_for_user(db: AsyncSession, user_id: uuid.UUI
 
 # ── Queries ───────────────────────────────────────────────────────────────────
 
-async def get_user_by_email(db: AsyncSession, email: str) -> User | None:
-    result = await db.execute(
-        select(User)
-        .where(User.email == email, User.deleted_at.is_(None))
-        .options(selectinload(User.phone_country))
-    )
-    return result.scalar_one_or_none()
-
 
 async def get_user_by_username(db: AsyncSession, username: str) -> User | None:
     result = await db.execute(
@@ -185,6 +176,7 @@ async def get_user_by_id(db: AsyncSession, user_id: uuid.UUID, locale: str = DEF
     if user is None:
         raise NotFoundError(t("identity", "auth.user_not_found", locale))
     return user
+
 
 
 # ── Signup (pending — no DB write until both OTPs are confirmed) ──────────────
