@@ -15,7 +15,7 @@ class TaskCreateRequest(BaseModel):
     status: TaskStatus = TaskStatus.todo
     priority: TaskPriority = TaskPriority.medium
     due_date: datetime | None = None
-    assigned_to: uuid.UUID | None = None
+    assigned_to: list[uuid.UUID] = Field(default_factory=list)
 
 
 class TaskUpdateRequest(BaseModel):
@@ -25,7 +25,7 @@ class TaskUpdateRequest(BaseModel):
     status: TaskStatus | None = None
     priority: TaskPriority | None = None
     due_date: datetime | None = None
-    assigned_to: uuid.UUID | None = None
+    assigned_to: list[uuid.UUID] | None = None
 
 
 class TaskMemberUpdateRequest(BaseModel):
@@ -49,6 +49,6 @@ class TaskResponse(BaseModel):
     status: TaskStatus
     priority: TaskPriority
     due_date: datetime | None
-    assigned_to: uuid.UUID | None
+    assigned_to: list[uuid.UUID]
     created_at: datetime
     updated_at: datetime

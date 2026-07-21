@@ -58,6 +58,8 @@ async def get_project_dashboard(
     tasks = await tasks_service.list_tasks(db, project_id, user_id, status=None, locale=locale)
     meetings = await tasks_service.list_meetings(db, project_id, user_id, status=None, locale=locale)
 
+    members_by_id = {member.id: member for member in team_members}
+
     now = datetime.now(timezone.utc)
     week_start, week_end = _week_bounds_utc(now)
 
@@ -77,7 +79,9 @@ async def get_project_dashboard(
             status=task.status,
             priority=task.priority,
             due_date=task.due_date,
-            assigned_to=task.assigned_to,
+            assigned_to=[
+                members_by_id[user_id] for user_id in task.assigned_to if user_id in members_by_id
+            ],
             time_remaining_seconds=(
                 int((_ensure_aware(task.due_date) - now).total_seconds()) if task.due_date else None
             ),
