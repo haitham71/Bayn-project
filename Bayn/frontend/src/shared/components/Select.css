@@ -8,6 +8,12 @@
   font-family: var(--font-sans);
 }
 
+/* Arabic text needs the Arabic typeface (Tajawal), not Inter — the value,
+   label, placeholder and menu options all inherit from here. */
+[dir='rtl'] .bayn-select {
+  font-family: var(--font-ar);
+}
+
 .bayn-select__field {
   position: relative;
   display: flex;
@@ -15,6 +21,9 @@
   gap: 8px;
   width: 100%;
   min-height: 56px;
+  /* Buttons don't inherit font-family by default — pull it from .bayn-select
+     so the value renders in the app font (Inter, or Tajawal in RTL). */
+  font-family: inherit;
   padding-block: 4px;
   padding-inline: 16px 8px;
   border: none;
@@ -172,4 +181,37 @@
 .bayn-select--disabled .bayn-select__label,
 .bayn-select--disabled .bayn-select__chev {
   color: var(--text-disabled-2, #606060);
+}
+
+/* Option avatars (people pickers) — image or first-letter fallback. */
+.bayn-select__value-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.bayn-select__avatar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--color-primary-300, #5ca18a), var(--color-primary-600, #0f3d2e));
+}
+
+.bayn-select__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.bayn-select__avatar-fallback {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-neutral-100, #ebe5dc);
+  line-height: 1;
 }

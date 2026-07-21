@@ -37,18 +37,24 @@ export const updateProject = (id, payload) =>
 export const replaceSlots = (id, slots) =>
   api.put(`${API.projects.base}/${id}/slots`, { slots }).then((r) => r.data);
 
-// A project's tasks. `params` supports backend filters, e.g. { status, priority }.
-export const getProjectTasks = (id, params) =>
-  api.get(API.tasks.forProject(id), { params }).then((r) => r.data);
+// ---- Tasks (flat /tasks resource; project scoping via query param) ----
 
-// Progress summary for a project's tasks: { percent_done, overdue_count, top_contributor }.
-export const getProjectTaskProgress = (id) =>
-  api.get(API.tasks.progress(id)).then((r) => r.data);
+// A project's tasks. Optional filter, e.g. { status }.
+export const listProjectTasks = (projectId, params) =>
+  api.get(API.tasks.base, { params: { project_id: projectId, ...params } }).then((r) => r.data);
 
-// Create a task on a project.
-export const createProjectTask = (id, payload) =>
-  api.post(API.tasks.forProject(id), payload).then((r) => r.data);
+// Create a task (owner or a granted editor).
+export const createProjectTask = (payload) =>
+  api.post(API.tasks.base, payload).then((r) => r.data);
 
-// Update a task (status, priority, assignee, etc.).
-export const updateProjectTask = (id, taskId, payload) =>
-  api.patch(`${API.tasks.forProject(id)}/${taskId}`, payload).then((r) => r.data);
+// Full update of a task — owner or a granted editor only.
+export const updateProjectTask = (taskId, payload) =>
+  api.put(`${API.tasks.base}/${taskId}`, payload).then((r) => r.data);
+
+// Member edit: toggle status and/or push the deadline later (any member).
+export const updateTaskAsMember = (taskId, payload) =>
+  api.patch(`${API.tasks.base}/${taskId}`, payload).then((r) => r.data);
+
+// Delete a task (owner or a granted editor).
+export const deleteProjectTask = (taskId) =>
+  api.delete(`${API.tasks.base}/${taskId}`).then((r) => r.data);

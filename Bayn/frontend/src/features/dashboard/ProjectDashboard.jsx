@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Sidebar from '@/shared/components/Sidebar';
@@ -9,10 +9,18 @@ import Clock from '@/assets/icons/clock.svg?react';
 import Calendar from '@/assets/icons/calendar.svg?react';
 import Send from '@/assets/icons/send-horizontal.svg?react';
 import Plus from '@/assets/icons/plus.svg?react';
+import Users from '@/assets/icons/users.svg?react';
+import LoaderCircle from '@/assets/icons/loader-circle.svg?react';
+import Flag from '@/assets/icons/flag.svg?react';
+import AlignLeft from '@/assets/icons/align-left.svg?react';
+import Trash2 from '@/assets/icons/trash-2.svg?react';
+import X from '@/assets/icons/x.svg?react';
 import CalendarPicker from '@/shared/components/Calendar';
 import Select from '@/shared/components/Select';
+import Input from '@/shared/components/Input';
+import Button from '@/shared/components/Button';
 import { stageOf } from '@/features/meetings/lib/requestStatus';
-import { getMyProjects, getProject, listProjectMembers } from '@/features/projects/services/projectService';
+import { getMyProjects, getProject, listProjectMembers, listProjectTasks, createProjectTask, updateProjectTask, updateTaskAsMember, deleteProjectTask } from '@/features/projects/services/projectService';
 import { listMeetings, listMeetingRequests, createTeamMeeting } from '@/features/meetings/services/meetingService';
 import './ProjectDashboard.css';
 
@@ -33,19 +41,6 @@ const PRIORITY_LABEL_KEY = {
 };
 
 const NOW = Date.now();
-const DAY = 86400000;
-const iso = (offset) => new Date(NOW + offset).toISOString();
-
-// Tasks aren't wired to the backend yet (no live endpoint), so this card keeps
-// running on sample data — same as the contracts card — until it's ready.
-const MOCK_TASKS = [
-  { id: 't1', title: 'Design the dashboard layout', status: 'in_progress', priority: 'high', due_date: iso(2 * DAY) },
-  { id: 't2', title: 'Set up the authentication flow', status: 'done', priority: 'medium' },
-  { id: 't3', title: 'Write the API documentation', status: 'todo', priority: 'low', due_date: iso(-1 * DAY) },
-  { id: 't4', title: 'Integrate the payment gateway', status: 'todo', priority: 'high', due_date: iso(5 * DAY) },
-  { id: 't5', title: 'Run a user testing session', status: 'in_progress', priority: 'medium' },
-  { id: 't6', title: 'Deploy to staging', status: 'done', priority: 'high' },
-];
 
 // Half-hour slots across the day, as "HH:MM" 24h values (labels get localized
 // where they're rendered).
@@ -69,15 +64,36 @@ export default function ProjectDashboardPage({ onNavigate }) {
   const { projectId: routeProjectId } = useParams();
   const locale = i18n.language === 'ar' ? 'ar' : 'en';
 
-  // Real project data. Tasks stay on sample data (no live endpoint yet).
+  // Real project data — projects, team, tasks, meetings and requests load live.
   const [myProjects, setMyProjects] = useState([]);
   const [projectId, setProjectId] = useState(routeProjectId || '');
   const [project, setProject] = useState(null);
   const [team, setTeam] = useState([]);
 
-  const [tasks] = useState(MOCK_TASKS);
-  const [progress] = useState(null); // derived from tasks below
-  const [tasksError] = useState(false);
+  const [tasks, setTasks] = useState([]);
+  const [tasksError, setTasksError] = useState(false);
+
+  // Task side sheet — create a new task, or view/edit an existing one.
+  const [showNewTask, setShowNewTask] = useState(false);
+  const [editingTaskId, setEditingTaskId] = useState(null); // null = create mode
+  const emptyTaskForm = { title: '', description: '', priority: 'medium', status: 'todo', due_date: '', assigned_to: '' };
+  const [taskForm, setTaskForm] = useState(emptyTaskForm);
+  const [creatingTask, setCreatingTask] = useState(false);
+  const [taskError, setTaskError] = useState('');
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deletingTask, setDeletingTask] = useState(false);
+  const [showDueCal, setShowDueCal] = useState(false);
+  const dueRef = useRef(null);
+
+  // Close the due-date calendar when clicking outside it.
+  useEffect(() => {
+    if (!showDueCal) return undefined;
+    function onDocClick(e) {
+      if (dueRef.current && !dueRef.current.contains(e.target)) setShowDueCal(false);
+    }
+    document.addEventListener('mousedown', onDocClick);
+    return () => document.removeEventListener('mousedown', onDocClick);
+  }, [showDueCal]);
 
   const [meetings, setMeetings] = useState([]);
   const [incomingRequests, setIncomingRequests] = useState([]);
@@ -108,6 +124,9 @@ export default function ProjectDashboardPage({ onNavigate }) {
     if (!projectId) return;
     getProject(projectId).then(setProject).catch(() => setProject(null));
     listProjectMembers(projectId).then((rows) => setTeam(rows || [])).catch(() => setTeam([]));
+    listProjectTasks(projectId)
+      .then((rows) => { setTasks(rows || []); setTasksError(false); })
+      .catch(() => { setTasks([]); setTasksError(true); });
   }, [projectId]);
 
   // My confirmed meetings (not project-scoped on the backend, so fetch the full
@@ -233,6 +252,86 @@ export default function ProjectDashboardPage({ onNavigate }) {
     }
   }
 
+  const memberById = (id) => team.find((m) => m.user_id === id) || null;
+
+  function openNewTask() {
+    setEditingTaskId(null);
+    setTaskForm(emptyTaskForm);
+    setTaskError('');
+    setConfirmDelete(false);
+    setShowNewTask(true);
+  }
+
+  function openTaskDetails(task) {
+    setEditingTaskId(task.id);
+    setTaskForm({
+      title: task.title || '',
+      description: task.description || '',
+      priority: (task.priority || 'medium').toLowerCase(),
+      status: (task.status || 'todo').toLowerCase(),
+      due_date: task.due_date ? toDateStr(new Date(task.due_date)) : '',
+      assigned_to: task.assigned_to || '',
+    });
+    setTaskError('');
+    setConfirmDelete(false);
+    setShowNewTask(true);
+  }
+
+  async function handleDeleteTask() {
+    if (!editingTaskId || deletingTask) return;
+    setDeletingTask(true);
+    setTaskError('');
+    try {
+      await deleteProjectTask(editingTaskId);
+      const rows = await listProjectTasks(projectId);
+      setTasks(rows || []);
+      setShowNewTask(false);
+      setEditingTaskId(null);
+      setTaskForm(emptyTaskForm);
+      setConfirmDelete(false);
+    } catch {
+      setTaskError(t('projectDashboard.taskDeleteFailed'));
+    } finally {
+      setDeletingTask(false);
+    }
+  }
+
+  async function handleSubmitTask(e) {
+    e.preventDefault();
+    if (!taskForm.title.trim() || creatingTask) return;
+    setCreatingTask(true);
+    setTaskError('');
+    const payload = {
+      title: taskForm.title.trim(),
+      description: taskForm.description.trim() || null,
+      status: taskForm.status,
+      priority: taskForm.priority,
+      due_date: taskForm.due_date ? new Date(taskForm.due_date).toISOString() : null,
+      assigned_to: taskForm.assigned_to || null,
+    };
+    // A non-owner assignee may change the status only (backend member tier).
+    try {
+      if (editingTaskId) {
+        if (isOwner) {
+          await updateProjectTask(editingTaskId, payload);
+        } else {
+          await updateTaskAsMember(editingTaskId, { status: taskForm.status });
+        }
+      } else {
+        await createProjectTask({ project_id: projectId, ...payload });
+      }
+      const rows = await listProjectTasks(projectId);
+      setTasks(rows || []);
+      setShowNewTask(false);
+      setTaskForm(emptyTaskForm);
+      setEditingTaskId(null);
+    } catch {
+      setTaskError(t(editingTaskId ? 'projectDashboard.taskUpdateFailed' : 'projectDashboard.taskCreateFailed'));
+    } finally {
+      setCreatingTask(false);
+    }
+  }
+
   const requesterName = (r) =>
     r.requester ? (locale === 'ar' ? r.requester.name_ar : r.requester.name_en) : '—';
 
@@ -240,6 +339,12 @@ export default function ProjectDashboardPage({ onNavigate }) {
     () => (projectId ? meetings.filter((m) => m.project_id === projectId) : meetings),
     [meetings, projectId],
   );
+
+  // A task's assignee (when not the owner) may edit its status only; the owner
+  // edits everything. Everyone else views read-only.
+  const isAssignee = Boolean(editingTaskId) && !!taskForm.assigned_to && taskForm.assigned_to === user?.id;
+  const canEditStatus = isOwner || isAssignee;
+  const sheetAssignee = memberById(taskForm.assigned_to);
 
   const now = Date.now();
   const upcomingMeetings = projectMeetings
@@ -255,13 +360,13 @@ export default function ProjectDashboardPage({ onNavigate }) {
     return map;
   }, [tasks]);
 
-  const overdueCount =
-    progress?.overdue_count ??
-    tasks.filter((task) => task.due_date && new Date(task.due_date).getTime() < now && task.status !== 'done').length;
+  const overdueCount = tasks.filter(
+    (task) => task.due_date && new Date(task.due_date).getTime() < now && task.status !== 'done',
+  ).length;
 
-  const completionPercent = progress?.percent_done ?? (
-    tasks.length ? Math.round((tasksByStatus.done.length / tasks.length) * 100) : 0
-  );
+  const completionPercent = tasks.length
+    ? Math.round((tasksByStatus.done.length / tasks.length) * 100)
+    : 0;
 
   const meetingsThisWeek = projectMeetings.filter(
     (m) => new Date(m.start_time).getTime() <= now + WEEK_MS && new Date(m.end_time).getTime() >= now,
@@ -349,10 +454,12 @@ export default function ProjectDashboardPage({ onNavigate }) {
             <section className="pd__panel">
               <div className="pd__panel-head">
                 <h3>{t('projectDashboard.tasks')}</h3>
-                <button type="button" className="pd__panel-link">
-                  <Plus width={16} height={16} aria-hidden="true" />
-                  {t('projectDashboard.newTask')}
-                </button>
+                {isOwner && (
+                  <button type="button" className="pd__panel-link" onClick={openNewTask}>
+                    <Plus width={16} height={16} aria-hidden="true" />
+                    {t('projectDashboard.newTask')}
+                  </button>
+                )}
               </div>
 
               {tasksError ? (
@@ -371,6 +478,7 @@ export default function ProjectDashboardPage({ onNavigate }) {
                         tasksByStatus[status].map((task) => {
                           const overdue =
                             task.due_date && new Date(task.due_date).getTime() < now && status !== 'done';
+                          const assignee = memberById(task.assigned_to);
                           return (
                             <div key={task.id} className="pd__task-card">
                               <p className="pd__task-title">{task.title}</p>
@@ -384,6 +492,25 @@ export default function ProjectDashboardPage({ onNavigate }) {
                                     {new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' }).format(new Date(task.due_date))}
                                   </span>
                                 )}
+                              </div>
+                              <div className="pd__task-foot">
+                                <span className="pd__task-assignee">
+                                  <span className="pd__task-avatar" aria-hidden="true">
+                                    {assignee?.avatar_url ? (
+                                      <img src={assignee.avatar_url} alt="" />
+                                    ) : (
+                                      <span className="pd__task-avatar-fallback">
+                                        {(assignee ? (locale === 'ar' ? assignee.name_ar : assignee.name_en) : '?').trim().charAt(0).toUpperCase()}
+                                      </span>
+                                    )}
+                                  </span>
+                                  <span className="pd__task-assignee-name">
+                                    {assignee ? (locale === 'ar' ? assignee.name_ar : assignee.name_en) : t('projectDashboard.taskAssigneeNone')}
+                                  </span>
+                                </span>
+                                <button type="button" className="pd__task-details" onClick={() => openTaskDetails(task)}>
+                                  {t('projectDashboard.taskViewDetails')}
+                                </button>
                               </div>
                             </div>
                           );
@@ -591,6 +718,210 @@ export default function ProjectDashboardPage({ onNavigate }) {
           </div>
         </main>
       </div>
+
+      {showNewTask && (
+        <div className="pd__sheet-overlay" onClick={() => !creatingTask && setShowNewTask(false)}>
+          <div className="pd__sheet" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+            <div className="pd__sheet-bar">
+              <button
+                type="button"
+                className="pd__sheet-close"
+                onClick={() => !creatingTask && setShowNewTask(false)}
+                aria-label={t('projectDashboard.taskCancel')}
+              >
+                <X width={18} height={18} aria-hidden="true" />
+              </button>
+            </div>
+
+            <form className="pd__sheet-body" onSubmit={handleSubmitTask}>
+              {/* eslint-disable-next-line jsx-a11y/no-autofocus */}
+              <input
+                className="pd__sheet-title"
+                value={taskForm.title}
+                onChange={(e) => setTaskForm((f) => ({ ...f, title: e.target.value }))}
+                placeholder={t('projectDashboard.newTaskTitle')}
+                readOnly={!isOwner}
+                autoFocus={!editingTaskId}
+              />
+
+              <div className="pd__sheet-props">
+                <div className="pd__prop">
+                  <span className="pd__prop-label"><Users width={15} height={15} aria-hidden="true" />{t('projectDashboard.taskAssigneeLabel')}</span>
+                  {isOwner ? (
+                    <Select
+                      label=""
+                      placeholder={t('projectDashboard.taskAssigneeNone')}
+                      value={taskForm.assigned_to}
+                      onChange={(v) => setTaskForm((f) => ({ ...f, assigned_to: v }))}
+                      options={[
+                        { value: '', label: t('projectDashboard.taskAssigneeNone') },
+                        ...team.map((m) => ({
+                          value: m.user_id,
+                          label: locale === 'ar' ? m.name_ar : m.name_en,
+                          avatar: m.avatar_url || null,
+                        })),
+                      ]}
+                      className="pd__prop-control"
+                    />
+                  ) : sheetAssignee ? (
+                    <span className="pd__prop-value pd__prop-person">
+                      <span className="pd__task-avatar" aria-hidden="true">
+                        {sheetAssignee.avatar_url ? (
+                          <img src={sheetAssignee.avatar_url} alt="" />
+                        ) : (
+                          <span className="pd__task-avatar-fallback">
+                            {(locale === 'ar' ? sheetAssignee.name_ar : sheetAssignee.name_en).trim().charAt(0).toUpperCase()}
+                          </span>
+                        )}
+                      </span>
+                      {locale === 'ar' ? sheetAssignee.name_ar : sheetAssignee.name_en}
+                    </span>
+                  ) : (
+                    <span className="pd__prop-value pd__prop-value--muted">{t('projectDashboard.taskAssigneeNone')}</span>
+                  )}
+                </div>
+                <div className="pd__prop">
+                  <span className="pd__prop-label"><LoaderCircle width={15} height={15} aria-hidden="true" />{t('projectDashboard.taskStatusLabel')}</span>
+                  {canEditStatus ? (
+                    <Select
+                      label=""
+                      value={taskForm.status}
+                      onChange={(v) => setTaskForm((f) => ({ ...f, status: v }))}
+                      options={STATUS_COLUMNS.map((s) => ({ value: s, label: t(STATUS_LABEL_KEY[s]) }))}
+                      className="pd__prop-control"
+                    />
+                  ) : (
+                    <span className="pd__prop-value">
+                      <span className={`pd__status-tag pd__status-tag--${taskForm.status}`}>
+                        <span className="pd__status-dot" />
+                        {t(STATUS_LABEL_KEY[taskForm.status] || STATUS_LABEL_KEY.todo)}
+                      </span>
+                    </span>
+                  )}
+                </div>
+                <div className="pd__prop">
+                  <span className="pd__prop-label"><Flag width={15} height={15} aria-hidden="true" />{t('projectDashboard.taskPriorityLabel')}</span>
+                  {isOwner ? (
+                    <Select
+                      label=""
+                      value={taskForm.priority}
+                      onChange={(v) => setTaskForm((f) => ({ ...f, priority: v }))}
+                      options={['low', 'medium', 'high'].map((p) => ({ value: p, label: t(PRIORITY_LABEL_KEY[p]) }))}
+                      className="pd__prop-control"
+                    />
+                  ) : (
+                    <span className="pd__prop-value">
+                      <span className={`pd__priority pd__priority--${(taskForm.priority || 'low')}`}>
+                        {t(PRIORITY_LABEL_KEY[taskForm.priority] || PRIORITY_LABEL_KEY.low)}
+                      </span>
+                    </span>
+                  )}
+                </div>
+                <div className="pd__prop">
+                  <span className="pd__prop-label"><Calendar width={15} height={15} aria-hidden="true" />{t('projectDashboard.taskDueLabel')}</span>
+                  {isOwner ? (
+                    <div className="pd__datewrap" ref={dueRef}>
+                      <button
+                        type="button"
+                        className={`pd__datebtn${taskForm.due_date ? '' : ' pd__datebtn--empty'}`}
+                        onClick={() => setShowDueCal((o) => !o)}
+                      >
+                        <span>
+                          {taskForm.due_date
+                            ? new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', year: 'numeric' }).format(parseDateStr(taskForm.due_date))
+                            : t('projectDashboard.taskDuePh')}
+                        </span>
+                        <Calendar width={16} height={16} aria-hidden="true" />
+                      </button>
+                      {showDueCal && (
+                        <div className="pd__datepop">
+                          <CalendarPicker
+                            className="pd__calendar-inline"
+                            initialDate={taskForm.due_date ? parseDateStr(taskForm.due_date) : new Date()}
+                            selectedDates={taskForm.due_date ? [parseDateStr(taskForm.due_date)] : []}
+                            onSelectDate={(d) => { setTaskForm((f) => ({ ...f, due_date: toDateStr(d) })); setShowDueCal(false); }}
+                          />
+                          {taskForm.due_date && (
+                            <button
+                              type="button"
+                              className="pd__date-clear"
+                              onClick={() => { setTaskForm((f) => ({ ...f, due_date: '' })); setShowDueCal(false); }}
+                            >
+                              {t('projectDashboard.taskDateClear')}
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <span className={`pd__prop-value${taskForm.due_date ? '' : ' pd__prop-value--muted'}`}>
+                      {taskForm.due_date
+                        ? new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', year: 'numeric' }).format(parseDateStr(taskForm.due_date))
+                        : t('projectDashboard.taskDuePh')}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <hr className="pd__sheet-divider" />
+
+              <div className="pd__sheet-desc">
+                <span className="pd__prop-label"><AlignLeft width={15} height={15} aria-hidden="true" />{t('projectDashboard.taskDescLabel')}</span>
+                {isOwner ? (
+                  <textarea
+                    className="pd__sheet-textarea"
+                    value={taskForm.description}
+                    onChange={(e) => setTaskForm((f) => ({ ...f, description: e.target.value }))}
+                    placeholder={t('projectDashboard.taskDescPh')}
+                    rows={6}
+                  />
+                ) : (
+                  <p className={`pd__sheet-desc-text${taskForm.description ? '' : ' pd__sheet-desc-text--empty'}`}>
+                    {taskForm.description || t('projectDashboard.taskNoDesc')}
+                  </p>
+                )}
+              </div>
+
+              {taskError && <p className="pd__modal-error">{taskError}</p>}
+
+              {confirmDelete ? (
+                <div className="pd__sheet-confirm">
+                  <span className="pd__sheet-confirm-msg">{t('projectDashboard.taskDeleteConfirm')}</span>
+                  <div className="pd__sheet-confirm-btns">
+                    <Button type="button" variant="tertiary" size="sm" onClick={() => setConfirmDelete(false)} disabled={deletingTask}>
+                      {t('projectDashboard.taskCancel')}
+                    </Button>
+                    <button type="button" className="pd__sheet-delete-confirm" onClick={handleDeleteTask} disabled={deletingTask}>
+                      {deletingTask ? t('projectDashboard.taskDeleting') : t('projectDashboard.taskDelete')}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="pd__sheet-actions">
+                  {isOwner && editingTaskId && (
+                    <button type="button" className="pd__sheet-delete" onClick={() => setConfirmDelete(true)}>
+                      <Trash2 width={15} height={15} aria-hidden="true" />
+                      {t('projectDashboard.taskDelete')}
+                    </button>
+                  )}
+                  <div className="pd__sheet-actions-end">
+                    <Button type="button" variant="tertiary" size="sm" onClick={() => setShowNewTask(false)} disabled={creatingTask}>
+                      {canEditStatus ? t('projectDashboard.taskCancel') : t('projectDashboard.taskClose')}
+                    </Button>
+                    {canEditStatus && (
+                      <Button type="submit" size="sm" disabled={!taskForm.title.trim() || creatingTask}>
+                        {editingTaskId
+                          ? (creatingTask ? t('projectDashboard.taskSaving') : t('projectDashboard.taskSave'))
+                          : (creatingTask ? t('projectDashboard.taskCreating') : t('projectDashboard.taskCreate'))}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
