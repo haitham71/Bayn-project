@@ -141,6 +141,9 @@ async def get_user_profile(
     user_id: uuid.UUID,
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
+) -> MessageResponse:
+    await service.soft_delete_account(db, current_user)
+    return MessageResponse(message="Account deleted successfully")  # where is terminate account??
 ) -> PublicUserResponse:
     user = await service.get_user_by_id(db, user_id)
     return _build_public_user_response(user)

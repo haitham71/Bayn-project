@@ -2,15 +2,15 @@
 
 import enum
 import uuid
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from typing import Optional
 
-from sqlalchemy import Boolean, Date, DateTime, Enum, ForeignKey, Integer, String, func
+from sqlalchemy import Boolean, Date, DateTime, Column, Enum, ForeignKey, Integer, String, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from bayn.core.database import Base
+from bayn.core.database import Base # what is wrong with this line?
 
 
 # member name == value (both lowercase) so Postgres stores "user"/"admin";
@@ -154,7 +154,7 @@ class User(Base):
 
     # R2 object key like "avatars/uuid.jpg", not a full URL
     avatar_key: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
-    git_profile: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    git_profile: Mapped[Optional[str]] = mapped_column(String(255), nullable=True) #should we delete this?
 
     calcom_user_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     calcom_access_token: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
@@ -163,6 +163,8 @@ class User(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     is_email_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     is_number_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    terms_accepted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     # soft delete: non-null means deleted, row is retained for audit
     deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
@@ -184,6 +186,11 @@ class User(Base):
 
     def __repr__(self) -> str:
         return f"<User {self.username} ({self.email})>"
+    
+    class User(base):
+        agreed_to_terms: bool = Column(Boolean, default=False, nullable=False)
+        agreed_to_terms_at: datetime = Column(DateTime(timezone=True), nullable=True)
+        terms_version_accepted: str = Column(String, nullable=True)
 
 
 class RefreshToken(Base):
@@ -193,7 +200,7 @@ class RefreshToken(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
-    jti: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
+    jti: Mapped[str] = mapped_column(String(64), unique=True, nullable=False) # what is jti?
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     revoked_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)

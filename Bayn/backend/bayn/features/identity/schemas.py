@@ -59,7 +59,9 @@ class UserSignup(BaseModel):
     phone_country_id: uuid.UUID
     phone_number: int
 
-    terms_accepted: bool
+    # terms_accepted: bool -which line, this one or the next line?-
+
+    terms_accepted: bool = Field(..., description="يجب الموافقة على الشروط والأحكام")
 
     @field_validator("username")
     @classmethod
@@ -108,7 +110,24 @@ class UserSignup(BaseModel):
             raise ValueError(t("validation", "age_restriction", locale))
             
         return value
-
+    
+    @field_validator("terms_accepted")
+    @classmethod
+    def validate_must_accept_terms(cls, value: bool, info: ValidationInfo) -> bool:
+        """Force the user to check the box; otherwise, halt the process."""
+        if not value:
+            locale = _locale_from(info)
+            # Pulls an error like "You must accept the terms to proceed" from json files
+            raise ValueError(t("validation", "terms_agreement_required", locale))
+        return value
+    
+    @field_validator("agreed_to_terms")
+    @classmethod
+    def validate_agreement(cls, v: bool, info) -> bool:
+        if not v:
+            # We catch this at the schema validation boundary before it hits the engine
+            raise ValueError("يجب عليك قبول الشروط والأحكام للمتابعة.")
+        return v
 
 class UserLogin(BaseModel):
     email: EmailStr
