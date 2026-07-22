@@ -112,6 +112,7 @@ class ProjectMembershipResponse(BaseModel):
 class ProjectMemberResponse(BaseModel):
     """A project member with the public info needed to show them in a team list."""
     user_id: uuid.UUID
+    username: str
     name_en: str
     name_ar: str
     specialization_id: uuid.UUID | None = None
