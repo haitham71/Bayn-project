@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Sidebar from '@/shared/components/Sidebar';
@@ -12,10 +13,9 @@ import CircleCheck from '@/assets/icons/circle-check.svg?react';
 import CircleX from '@/assets/icons/circle-x.svg?react';
 import FilePen from '@/assets/icons/file-pen.svg?react';
 import Lightbulb from '@/assets/icons/lightbulb.svg?react';
+import { getProject } from '../services/projectService';
 import { useJoinRequests } from '../hooks/useJoinRequests';
-import { useProjectSettings } from '../hooks/useProjectSettings';
 import RequestCard from '../components/RequestCard';
-import ProjectSettingsRail from '../components/ProjectSettingsRail';
 import './JoinRequestsPage.css';
 
 export default function JoinRequestsPage({ onNavigate }) {
@@ -24,8 +24,14 @@ export default function JoinRequestsPage({ onNavigate }) {
   const { projectId } = useParams();
 
   const jr = useJoinRequests(projectId);
-  const settings = useProjectSettings(projectId);
   const { counts } = jr;
+
+  // Only the project's name is needed here — the chip under the page title.
+  const [project, setProject] = useState(null);
+  useEffect(() => {
+    if (!projectId) return;
+    getProject(projectId).then(setProject).catch(() => {});
+  }, [projectId]);
 
   const stats = [
     { icon: Clock, label: t('joinRequests.statPending'), value: counts.pending, note: t('joinRequests.newRequests') },
@@ -50,10 +56,10 @@ export default function JoinRequestsPage({ onNavigate }) {
         <main className="jr__body">
           <section className="jr__card jr__content">
             <h1 className="jr__title">{t('joinRequests.title')}</h1>
-            {settings.project?.title && (
+            {project?.title && (
               <span className="jr__project">
                 <Lightbulb width={16} height={16} aria-hidden="true" />
-                {settings.project.title}
+                {project.title}
               </span>
             )}
             <p className="jr__subtitle">{t('joinRequests.subtitle')}</p>
@@ -112,11 +118,6 @@ export default function JoinRequestsPage({ onNavigate }) {
 
             {jr.actionError && <p className="jr__error">{jr.actionError}</p>}
           </section>
-
-          {/* Right rail — manage this project's meeting slots + visibility */}
-          <aside className="jr__side">
-            <ProjectSettingsRail settings={settings} />
-          </aside>
         </main>
       </div>
 

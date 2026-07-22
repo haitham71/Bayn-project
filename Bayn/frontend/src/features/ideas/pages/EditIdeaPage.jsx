@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import DescriptionView from '@/shared/components/DescriptionView';
-import { getProject, updateProject } from '@/features/projects/services/projectService';
+import { getProject, getProjectSlots, replaceSlots, updateProject } from '@/features/projects/services/projectService';
+import { slotsToSchedulerValue, meetingsToSlots } from '@/features/meetings/lib/slots';
 import { getApiErrorMessage } from '@/shared/lib/apiError';
 import Sidebar from '@/shared/components/Sidebar';
 import Navbar from '@/shared/components/Navbar';
 import Button from '@/shared/components/Button';
+import MeetingScheduler from '@/shared/components/MeetingScheduler';
 import Eye from '@/assets/icons/eye.svg?react';
 import ArrowLeft from '@/assets/icons/arrow-left.svg?react';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
@@ -36,10 +38,16 @@ function slotsToNeeds(slots) {
 const needsKey = (needs) =>
   JSON.stringify((needs || []).map((r) => [r.specialization_id, r.alternate_specialization_id || '', Number(r.count) || 0]));
 
+// Same idea for the meeting slots — compare the payload the API would receive,
+// sorted so re-ordering the picked days alone doesn't count as a change.
+const slotsKey = (meetings) =>
+  JSON.stringify(meetingsToSlots(meetings).map((s) => `${s.start_time}|${s.end_time}`).sort());
+
 // Owner-facing editor for an existing idea/project. Title and description are
 // shown read-only (as on the idea view page); the rest of the announcement —
 // skills, team size, roles, category, stage, visibility — stays editable and is
-// saved via PATCH. Meeting slots have their own editor and aren't touched here.
+// saved via PATCH. The meeting times offered to applicants are edited here too,
+// and go out on their own endpoint alongside that PATCH.
 export default function EditIdeaPage({ onNavigate }) {
   const { t } = useTranslation();
   const { fullName } = useCurrentUser();
@@ -61,14 +69,19 @@ export default function EditIdeaPage({ onNavigate }) {
   const [saveMsg, setSaveMsg] = useState('');
   // Snapshot of the editable fields as loaded, to detect "nothing changed".
   const [committed, setCommitted] = useState(null);
+  // Meeting slots offered to applicants — the scheduler starts from what's saved
+  // and the picked days live in `meetings` until the owner saves.
+  const [schedInitial, setSchedInitial] = useState([]);
+  const [meetings, setMeetings] = useState([]);
 
   // Load the project once and prefill every field, including the chosen skills
   // and their name->id map (so a save can resend skill_ids).
   useEffect(() => {
     if (!id) return;
-    getProject(id)
-      .then((p) => {
+    Promise.all([getProject(id), getProjectSlots(id).catch(() => [])])
+      .then(([p, sl]) => {
         const skillNames = (p.skills || []).map((s) => s.name);
+        const sched = slotsToSchedulerValue(sl || []);
         const loaded = {
           roles: p.more_info || '',
           category: p.industry_id || '',
@@ -79,7 +92,10 @@ export default function EditIdeaPage({ onNavigate }) {
         };
         setForm({ title: p.title || '', description: p.description || '', ...loaded });
         seedSkillIds(p.skills);
-        setCommitted(loaded);
+        setSchedInitial(sched);
+        setMeetings(sched);
+        // meetings ride along in the baseline but aren't part of the idea form
+        setCommitted({ ...loaded, meetings: sched });
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -100,13 +116,15 @@ export default function EditIdeaPage({ onNavigate }) {
   // True when every editable field still matches what was loaded.
   const sameSkills = (a, b) =>
     a.length === b.length && [...a].sort().join('|') === [...b].sort().join('|');
+  const slotsUnchanged = committed && slotsKey(meetings) === slotsKey(committed.meetings);
   const unchanged =
     committed
     && form.category === committed.category
     && form.stage === committed.stage
     && needsKey(form.teamNeeds) === needsKey(committed.teamNeeds)
     && form.visibility === committed.visibility
-    && sameSkills(form.skills, committed.skills);
+    && sameSkills(form.skills, committed.skills)
+    && slotsUnchanged;
 
   async function handleSave() {
     setSaveError('');
@@ -142,6 +160,9 @@ export default function EditIdeaPage({ onNavigate }) {
           is_hidden: form.visibility === 'private',
           skill_ids: skillIds(),
         }),
+        // Slots are a separate endpoint — only touched when they actually moved,
+        // so saving the announcement can't wipe a slot an applicant already booked.
+        slotsUnchanged ? Promise.resolve() : replaceSlots(id, meetingsToSlots(meetings)),
         new Promise((resolve) => setTimeout(resolve, 1000)),
       ]);
       // Stay on the page after saving; refresh the baseline and confirm.
@@ -152,6 +173,7 @@ export default function EditIdeaPage({ onNavigate }) {
         teamNeeds: form.teamNeeds,
         visibility: form.visibility,
         skills: form.skills,
+        meetings,
       });
       setSaveMsg(t('createIdea.saved'));
     } catch (err) {
@@ -212,6 +234,18 @@ export default function EditIdeaPage({ onNavigate }) {
                 ]}
               />
             </ul>
+
+            {/* Times applicants can pick from when they ask to join. Mounted only
+                once the saved slots are in, so the scheduler seeds from them. */}
+            {!loading && (
+              <MeetingScheduler
+                title={t('createIdea.applicantMeetingTimes')}
+                value={schedInitial}
+                onChange={setMeetings}
+                maxDays={3}
+                maxSlots={3}
+              />
+            )}
 
             {saveError && <p className="ci__error">{saveError}</p>}
             {saveMsg && <p className="ci__success">{saveMsg}</p>}

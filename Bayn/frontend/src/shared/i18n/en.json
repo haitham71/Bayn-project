@@ -190,7 +190,8 @@
     "publishError": "Couldn't publish your idea, please try again.",
     "editSummaryTitle": "Edit idea",
     "editSummaryReady": "Update your idea's details",
-    "editSummaryHint": "Change what you need, then save — updates show on your idea page right away."
+    "editSummaryHint": "Change what you need, then save — updates show on your idea page right away.",
+    "applicantMeetingTimes": "Meeting times for applicants"
   },
   "markdown": {
     "bold": "Bold",
@@ -339,12 +340,6 @@
     "reject": "Reject",
     "empty": "No requests here yet.",
     "actionError": "That didn't go through, please try again.",
-    "saveEdit": "Save Edit",
-    "manageTitle": "Manage project",
-    "meetingTimes": "Meeting times",
-    "saving": "Saving…",
-    "saved": "Saved.",
-    "saveError": "Couldn't save, please try again.",
     "viewProfile": "View Profile",
     "hideProfile": "Hide Profile",
     "experience": "Experience",
