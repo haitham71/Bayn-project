@@ -1,0 +1,64 @@
+/* Support contact card (email + phone) — shared by the home page and the
+   identity layout. Positioning is the caller's responsibility. */
+.support-card {
+  width: 264px;
+  padding: 16px;
+  border-radius: 14px;
+  background: var(--bg-surface-primary, #ebe5dc);
+  border: 1px solid var(--bg-surface-secondary, #d7cbb9);
+  box-shadow: 0 14px 34px -10px rgba(4, 18, 14, 0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: support-card-in 0.16s ease;
+}
+
+@keyframes support-card-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.support-card__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-title, #0f3d2e);
+}
+
+.support-card__hint {
+  margin: 0 0 4px;
+  font-size: 12px;
+  color: var(--text-supporting, #786c57);
+}
+
+.support-card__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 10px;
+  background: var(--bg-surface-secondary, #d7cbb9);
+  color: var(--text-title, #0f3d2e);
+  text-decoration: none;
+  transition: background-color 0.15s ease;
+}
+
+.support-card__row:hover {
+  background: var(--input-bg-hover, #c9baa1);
+}
+
+.support-card__ico {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--color-primary-600, #0f3d2e);
+  color: var(--color-neutral-100, #ebe5dc);
+}
+
+.support-card__val {
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}

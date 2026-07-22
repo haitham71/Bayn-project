@@ -1,6 +1,9 @@
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import heroImage from '@/assets/images/register-photo-page-1.png';
 import Button from '@/shared/components/Button';
+import SupportCard from '@/shared/components/SupportCard';
 import Logo from '@/assets/logo/Bayn-svg.svg?react';
 import Home from '@/assets/icons/house.svg?react';
 import Headset from '@/assets/icons/headset.svg?react';
@@ -11,10 +14,30 @@ import './IdentityLayout.css';
 // side, branded hero image on the other. The form content is passed as children.
 export default function IdentityLayout({ children, contentClassName = '' }) {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
 
   const toggleLanguage = () => {
     i18n.changeLanguage(i18n.language === 'ar' ? 'en' : 'ar');
   };
+
+  // Support contact popover — closes on outside click or Escape.
+  const [supportOpen, setSupportOpen] = useState(false);
+  const supportRef = useRef(null);
+  useEffect(() => {
+    if (!supportOpen) return undefined;
+    function onDown(e) {
+      if (supportRef.current && !supportRef.current.contains(e.target)) setSupportOpen(false);
+    }
+    function onKey(e) {
+      if (e.key === 'Escape') setSupportOpen(false);
+    }
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [supportOpen]);
 
   return (
     <div className="identity-layout">
@@ -38,18 +61,24 @@ export default function IdentityLayout({ children, contentClassName = '' }) {
             size="md"
             className="identity-layout__circle"
             aria-label={t('auth.home')}
+            onClick={() => navigate('/')}
           >
             <Home width={22} height={22} aria-hidden="true" />
           </Button>
-          <Button
-            iconOnly
-            variant="primary"
-            size="md"
-            className="identity-layout__circle"
-            aria-label={t('auth.support')}
-          >
-            <Headset width={22} height={22} aria-hidden="true" />
-          </Button>
+          <div className="identity-layout__support" ref={supportRef}>
+            <Button
+              iconOnly
+              variant="primary"
+              size="md"
+              className="identity-layout__circle"
+              aria-label={t('auth.support')}
+              aria-expanded={supportOpen}
+              onClick={() => setSupportOpen((v) => !v)}
+            >
+              <Headset width={22} height={22} aria-hidden="true" />
+            </Button>
+            {supportOpen && <SupportCard className="identity-layout__support-card" />}
+          </div>
         </div>
 
         <button type="button" className="identity-layout__lang" onClick={toggleLanguage}>

@@ -3,11 +3,10 @@ import { useTranslation } from 'react-i18next';
 import Sidebar from '@/shared/components/Sidebar';
 import Navbar from '@/shared/components/Navbar';
 import Headset from '@/assets/icons/headset.svg?react';
-import Mail from '@/assets/icons/mail.svg?react';
-import Phone from '@/assets/icons/phone.svg?react';
+import SupportCard from '@/shared/components/SupportCard';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
 import { useHomeData } from '../hooks/useHomeData';
-import { MAX_PROJECTS, SUPPORT_EMAIL, SUPPORT_PHONE, greetingKey } from '../lib/constants';
+import { MAX_PROJECTS, greetingKey } from '../lib/constants';
 import TeamCard from '../components/TeamCard';
 import MyTasksCard from '../components/MyTasksCard';
 import ApplicationsCard from '../components/ApplicationsCard';
@@ -98,24 +97,7 @@ export default function HomePage({ onNavigate }) {
       </div>
 
       <div className="home__support-wrap" ref={supportRef}>
-        {supportOpen && (
-          <div className="home__support-card" role="dialog" aria-label={t('home.supportTitle')}>
-            <p className="home__support-title">{t('home.supportTitle')}</p>
-            <p className="home__support-hint">{t('home.supportHint')}</p>
-            <a className="home__support-row" href={`mailto:${SUPPORT_EMAIL}`}>
-              <span className="home__support-ico">
-                <Mail width={18} height={18} aria-hidden="true" />
-              </span>
-              <span className="home__support-val" dir="ltr">{SUPPORT_EMAIL}</span>
-            </a>
-            <a className="home__support-row" href={`tel:${SUPPORT_PHONE.replace(/\s/g, '')}`}>
-              <span className="home__support-ico">
-                <Phone width={18} height={18} aria-hidden="true" />
-              </span>
-              <span className="home__support-val" dir="ltr">{SUPPORT_PHONE}</span>
-            </a>
-          </div>
-        )}
+        {supportOpen && <SupportCard />}
         <button
           type="button"
           className="home__support"

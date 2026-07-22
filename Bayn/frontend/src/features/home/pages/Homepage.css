@@ -364,69 +364,6 @@
   transform: translateY(-2px);
 }
 
-.home__support-card {
-  width: 264px;
-  padding: 16px;
-  border-radius: 14px;
-  background: var(--bg-surface-primary, #ebe5dc);
-  border: 1px solid var(--bg-surface-secondary, #d7cbb9);
-  box-shadow: 0 14px 34px -10px rgba(4, 18, 14, 0.45);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  animation: home__support-in 0.16s ease;
-}
-
-@keyframes home__support-in {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.home__support-title {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text-title, #0f3d2e);
-}
-
-.home__support-hint {
-  margin: 0 0 4px;
-  font-size: 12px;
-  color: var(--text-supporting, #786c57);
-}
-
-.home__support-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px;
-  border-radius: 10px;
-  background: var(--bg-surface-secondary, #d7cbb9);
-  color: var(--text-title, #0f3d2e);
-  text-decoration: none;
-  transition: background-color 0.15s ease;
-}
-
-.home__support-row:hover {
-  background: var(--input-bg-hover, #c9baa1);
-}
-
-.home__support-ico {
-  display: grid;
-  place-items: center;
-  flex: 0 0 auto;
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: var(--color-primary-600, #0f3d2e);
-  color: var(--color-neutral-100, #ebe5dc);
-}
-
-.home__support-val {
-  font-size: 13px;
-  overflow-wrap: anywhere;
-}
-
 /* Responsive: stack the schedule under the main content on narrow viewports. */
 
 @media (max-width: 1080px) {
