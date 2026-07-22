@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useLangNavigate } from '@/shared/hooks/useLang';
 import Flag from '@/assets/icons/flag.svg?react';
 import LayoutDashboard from '@/assets/icons/layout-dashboard.svg?react';
 import { STAGE_LABEL } from '../lib/projects';
@@ -8,7 +8,7 @@ import './projectCard.css';
 // A project the current user works on (member or owner) — links to its dashboard.
 export default function WorkingProjectCard({ project: p }) {
   const { t } = useTranslation();
-  const navigate = useNavigate();
+  const navigate = useLangNavigate();
 
   return (
     <article className="mp__project">

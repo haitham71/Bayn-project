@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useLangNavigate, useLangSwitch } from '@/shared/hooks/useLang';
 import { getAnalyticsOverview } from '../services/analyticsService';
 import BaynLogo from '@/assets/logo/Bayn-svg.svg?react';
 import ArrowRight from '@/assets/icons/arrow-right.svg?react';
@@ -27,11 +27,10 @@ function Tick() {
 
 export default function LandingPage() {
   const { t, i18n } = useTranslation();
-  const navigate = useNavigate();
+  const navigate = useLangNavigate();
+  const toggleLang = useLangSwitch();
   const rootRef = useRef(null);
   const [stats, setStats] = useState({ users: 0, ideas: 0, teams: 0 });
-
-  const toggleLang = () => i18n.changeLanguage(i18n.language === 'ar' ? 'en' : 'ar');
   // Always Western digits — the big display font may not carry Arabic-Indic
   // glyphs, and the stat numbers read cleaner in Latin either way.
   const fmt = (n) => new Intl.NumberFormat('en-US').format(n || 0);

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLangNavigate } from '@/shared/hooks/useLang';
 import { useTranslation } from 'react-i18next';
 import Bell from '@/assets/icons/bell.svg?react';
 import Calendar from '@/assets/icons/calendar.svg?react';
@@ -32,7 +32,7 @@ export default function NotificationsMenu() {
   const { t, i18n } = useTranslation();
   const locale = i18n.language === 'ar' ? 'ar' : 'en';
 
-  const navigate = useNavigate();
+  const navigate = useLangNavigate();
   const [open, setOpen] = useState(false);
   const rootRef = useRef(null);
   const { items, unread, loading, load, markRead, markAllRead, remove, clearAll } = useNotifications();

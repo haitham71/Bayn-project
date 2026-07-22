@@ -4,10 +4,30 @@ import ar from './ar.json';
 import en from './en.json';
 
 const STORAGE_KEY = 'bayn-lang';
-const saved = typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEY) : null;
+export const SUPPORTED_LANGS = ['ar', 'en'];
 
-// Bayn is Arabic-first; a saved choice always wins.
-const defaultLang = saved || 'ar';
+// The language for a fresh visit with no URL prefix: a saved choice wins, then
+// the browser's preferred language (Accept-Language), then Arabic (Bayn is
+// Arabic-first).
+export function detectLang() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved && SUPPORTED_LANGS.includes(saved)) return saved;
+  } catch {
+    // storage unavailable — ignore
+  }
+  const prefs =
+    typeof navigator !== 'undefined'
+      ? (navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language])
+      : [];
+  for (const pref of prefs || []) {
+    const code = (pref || '').slice(0, 2).toLowerCase();
+    if (SUPPORTED_LANGS.includes(code)) return code;
+  }
+  return 'ar';
+}
+
+const defaultLang = detectLang();
 
 i18n.use(initReactI18next).init({
   resources: {

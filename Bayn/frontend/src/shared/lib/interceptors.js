@@ -42,8 +42,9 @@ export function attachInterceptors(api) {
       // broken protected page.
       if (status === 401) {
         clearTokens();
-        if (!window.location.pathname.startsWith('/login')) {
-          window.location.replace('/login');
+        if (!window.location.pathname.endsWith('/login')) {
+          const lang = i18n.language === 'ar' ? 'ar' : 'en';
+          window.location.replace(`/${lang}/login`);
         }
       }
 

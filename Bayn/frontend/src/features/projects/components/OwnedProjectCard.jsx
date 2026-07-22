@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useLangNavigate } from '@/shared/hooks/useLang';
 import Flag from '@/assets/icons/flag.svg?react';
 import UserCheck from '@/assets/icons/user-check.svg?react';
 import List from '@/assets/icons/list.svg?react';
@@ -9,7 +9,7 @@ import './projectCard.css';
 // A project the current user owns — with edit and join-requests shortcuts.
 export default function OwnedProjectCard({ project: p }) {
   const { t } = useTranslation();
-  const navigate = useNavigate();
+  const navigate = useLangNavigate();
 
   return (
     <article className="mp__project">

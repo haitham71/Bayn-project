@@ -1,8 +1,9 @@
-import { useState, lazy, Suspense } from 'react';
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { useState, useEffect, lazy, Suspense } from 'react';
+import { Routes, Route, Navigate, useNavigate, useParams, useLocation } from 'react-router-dom';
 import ProtectedRoute from './ProtectedRoute';
 import { isAuthenticated } from '@/shared/lib/authToken';
 import PageLoader from '@/shared/components/PageLoader';
+import i18n, { SUPPORTED_LANGS, detectLang } from '@/shared/i18n/i18n';
 
 // The public landing page is the first paint, so keep it eager (no chunk flash).
 import LandingPage from '@/features/landing/pages/LandingPage';
@@ -31,7 +32,7 @@ const MeetingsPage = lazy(() => import('@/features/meetings/pages/MeetingsPage')
 const MeetingRoomPage = lazy(() => import('@/features/meetings/pages/MeetingRoomPage'));
 
 // Pages navigate with short keys (onNavigate('home')); this maps each key to its
-// URL so the page components don't need to know about routing.
+// (language-less) URL. goTo() prepends the active /:lang prefix.
 const PATHS = {
   login: '/login',
   signup: '/signup',
@@ -49,29 +50,43 @@ const PATHS = {
   settings: '/settings',
 };
 
-export default function App() {
+// All the app's routes, mounted under /:lang. The active language is driven by
+// the URL prefix — visiting /ar/... or /en/... sets i18next accordingly.
+function LangApp() {
+  const { lang, '*': splat } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const [signupData, setSignupData] = useState({});
 
-  // Same onNavigate(key) API the pages already use, now backed by the router.
-  const goTo = (key) => navigate(PATHS[key] || '/login');
+  const isSupported = SUPPORTED_LANGS.includes(lang);
 
-  // Merge each step's slice so pages only touch their own fields and never
-  // clobber values captured on the other steps.
+  // Keep i18next in sync with the URL's language.
+  useEffect(() => {
+    if (isSupported && i18n.language !== lang) i18n.changeLanguage(lang);
+  }, [isSupported, lang]);
+
+  // A missing/unknown prefix (e.g. an old /login link or /ideas/5 without a
+  // language) is treated as a real path and redirected under the detected
+  // language, preserving the rest of the path and the query string.
+  if (!isSupported) {
+    const rebuilt = `/${lang}${splat ? `/${splat}` : ''}`;
+    return <Navigate to={`/${detectLang()}${rebuilt}${location.search}`} replace />;
+  }
+
+  const goTo = (key) => navigate(`/${lang}${PATHS[key] || '/login'}`);
   const patchData = (patch) => setSignupData((prev) => ({ ...prev, ...patch }));
 
   return (
-    <Suspense fallback={<PageLoader />}>
-      <Routes>
+    <Routes>
       {/* Public landing page; signed-in visitors go straight to their home. */}
-      <Route path="/" element={isAuthenticated() ? <Navigate to="/home" replace /> : <LandingPage />} />
-      <Route path="/login" element={<LoginPage onNavigate={goTo} />} />
+      <Route path="" element={isAuthenticated() ? <Navigate to="home" replace /> : <LandingPage />} />
+      <Route path="login" element={<LoginPage onNavigate={goTo} />} />
       <Route
-        path="/signup"
+        path="signup"
         element={<SignUpPage onNavigate={goTo} initialData={signupData} onDataChange={patchData} />}
       />
       <Route
-        path="/verification"
+        path="verification"
         element={(
           <VerificationPage
             email={signupData.email}
@@ -83,27 +98,38 @@ export default function App() {
         )}
       />
       <Route
-        path="/profile-setup"
+        path="profile-setup"
         element={<ProfileSetupPage onNavigate={goTo} initialData={signupData} onDataChange={patchData} />}
       />
-      <Route path="/confirm-password-change" element={<ConfirmPasswordChangePage />} />
-      <Route path="/forgot-password" element={<ForgotPasswordPage onNavigate={goTo} />} />
-      <Route path="/reset-password" element={<ResetPasswordPage onNavigate={goTo} />} />
-      <Route path="/home" element={<ProtectedRoute><HomePage onNavigate={goTo} /></ProtectedRoute>} />
-      <Route path="/ideas" element={<ProtectedRoute><IdeasMarketplacePage onNavigate={goTo} /></ProtectedRoute>} />
-      <Route path="/ideas/:id" element={<ProtectedRoute><IdeaDetailsPage onNavigate={goTo} /></ProtectedRoute>} />
-      <Route path="/my-profile" element={<ProtectedRoute><MyProfilePage onNavigate={goTo} /></ProtectedRoute>} />
-      <Route path="/my-projects" element={<ProtectedRoute><MyProjectsPage onNavigate={goTo} /></ProtectedRoute>} />
-      <Route path="/meetings" element={<ProtectedRoute><MeetingsPage onNavigate={goTo} /></ProtectedRoute>} />
-      <Route path="/meeting/:id" element={<ProtectedRoute><MeetingRoomPage onNavigate={goTo} /></ProtectedRoute>} />
-      <Route path="/join-requests" element={<ProtectedRoute><JoinRequestsPage onNavigate={goTo} /></ProtectedRoute>} />
-      <Route path="/join-requests/:projectId" element={<ProtectedRoute><JoinRequestsPage onNavigate={goTo} /></ProtectedRoute>} />
-      <Route path="/create-idea" element={<ProtectedRoute><CreateIdeaPage onNavigate={goTo} /></ProtectedRoute>} />
-      <Route path="/edit-idea/:id" element={<ProtectedRoute><EditIdeaPage onNavigate={goTo} /></ProtectedRoute>} />
-      <Route path="/projects/dashboard" element={<ProtectedRoute><ProjectDashboardPage onNavigate={goTo} /></ProtectedRoute>} />
-      <Route path="/projects/:projectId/dashboard" element={<ProtectedRoute><ProjectDashboardPage onNavigate={goTo} /></ProtectedRoute>} />
-      <Route path="/settings" element={<ProtectedRoute><SettingsPage onNavigate={goTo} /></ProtectedRoute>} />
-      <Route path="*" element={<Navigate to="/login" replace />} />
+      <Route path="confirm-password-change" element={<ConfirmPasswordChangePage />} />
+      <Route path="forgot-password" element={<ForgotPasswordPage onNavigate={goTo} />} />
+      <Route path="reset-password" element={<ResetPasswordPage onNavigate={goTo} />} />
+      <Route path="home" element={<ProtectedRoute><HomePage onNavigate={goTo} /></ProtectedRoute>} />
+      <Route path="ideas" element={<ProtectedRoute><IdeasMarketplacePage onNavigate={goTo} /></ProtectedRoute>} />
+      <Route path="ideas/:id" element={<ProtectedRoute><IdeaDetailsPage onNavigate={goTo} /></ProtectedRoute>} />
+      <Route path="my-profile" element={<ProtectedRoute><MyProfilePage onNavigate={goTo} /></ProtectedRoute>} />
+      <Route path="my-projects" element={<ProtectedRoute><MyProjectsPage onNavigate={goTo} /></ProtectedRoute>} />
+      <Route path="meetings" element={<ProtectedRoute><MeetingsPage onNavigate={goTo} /></ProtectedRoute>} />
+      <Route path="meeting/:id" element={<ProtectedRoute><MeetingRoomPage onNavigate={goTo} /></ProtectedRoute>} />
+      <Route path="join-requests" element={<ProtectedRoute><JoinRequestsPage onNavigate={goTo} /></ProtectedRoute>} />
+      <Route path="join-requests/:projectId" element={<ProtectedRoute><JoinRequestsPage onNavigate={goTo} /></ProtectedRoute>} />
+      <Route path="create-idea" element={<ProtectedRoute><CreateIdeaPage onNavigate={goTo} /></ProtectedRoute>} />
+      <Route path="edit-idea/:id" element={<ProtectedRoute><EditIdeaPage onNavigate={goTo} /></ProtectedRoute>} />
+      <Route path="projects/dashboard" element={<ProtectedRoute><ProjectDashboardPage onNavigate={goTo} /></ProtectedRoute>} />
+      <Route path="projects/:projectId/dashboard" element={<ProtectedRoute><ProjectDashboardPage onNavigate={goTo} /></ProtectedRoute>} />
+      <Route path="settings" element={<ProtectedRoute><SettingsPage onNavigate={goTo} /></ProtectedRoute>} />
+      <Route path="*" element={<Navigate to="login" replace />} />
+    </Routes>
+  );
+}
+
+export default function App() {
+  return (
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
+        <Route path="/:lang/*" element={<LangApp />} />
+        {/* No language in the URL — send the visitor to their detected language. */}
+        <Route path="*" element={<Navigate to={`/${detectLang()}`} replace />} />
       </Routes>
     </Suspense>
   );

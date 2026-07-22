@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLangNavigate } from '@/shared/hooks/useLang';
 import { useTranslation } from 'react-i18next';
 import Sidebar from '@/shared/components/Sidebar';
 import Navbar from '@/shared/components/Navbar';
@@ -33,7 +33,7 @@ function daysSince(iso) {
 
 export default function IdeasMarketplacePage({ onNavigate }) {
   const { t, i18n } = useTranslation();
-  const navigate = useNavigate();
+  const navigate = useLangNavigate();
   const { fullName } = useCurrentUser();
 
   const [ideas, setIdeas] = useState([]);

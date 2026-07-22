@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
+import { useLangNavigate } from '@/shared/hooks/useLang';
 import { useTranslation } from 'react-i18next';
 import Sidebar from '@/shared/components/Sidebar';
 import Navbar from '@/shared/components/Navbar';
@@ -53,7 +54,7 @@ const timeToMin = (hhmm) => {
 
 export default function ProjectDashboardPage({ onNavigate }) {
   const { t, i18n } = useTranslation();
-  const navigate = useNavigate();
+  const navigate = useLangNavigate();
   const { user, fullName } = useCurrentUser();
   const { projectId: routeProjectId } = useParams();
   const locale = i18n.language === 'ar' ? 'ar' : 'en';

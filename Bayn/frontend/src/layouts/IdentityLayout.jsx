@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLangNavigate, useLangSwitch } from '@/shared/hooks/useLang';
 import { useTranslation } from 'react-i18next';
 import heroImage from '@/assets/images/register-photo-page-1.png';
 import Button from '@/shared/components/Button';
@@ -13,12 +13,9 @@ import './IdentityLayout.css';
 // Split-screen shell for the identity/authentication flow: form column on one
 // side, branded hero image on the other. The form content is passed as children.
 export default function IdentityLayout({ children, contentClassName = '' }) {
-  const { t, i18n } = useTranslation();
-  const navigate = useNavigate();
-
-  const toggleLanguage = () => {
-    i18n.changeLanguage(i18n.language === 'ar' ? 'en' : 'ar');
-  };
+  const { t } = useTranslation();
+  const navigate = useLangNavigate();
+  const toggleLanguage = useLangSwitch();
 
   // Support contact popover — closes on outside click or Escape.
   const [supportOpen, setSupportOpen] = useState(false);

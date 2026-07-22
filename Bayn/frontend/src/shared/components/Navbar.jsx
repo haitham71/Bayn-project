@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useLangNavigate } from '@/shared/hooks/useLang';
 import { useProfile } from '@/shared/hooks/useProfile';
 import Search from '@/assets/icons/search.svg?react';
 import NotificationsMenu from '@/features/notifications/components/NotificationsMenu';
@@ -10,7 +10,7 @@ import './Navbar.css';
 // message actions plus the signed-in user's profile chip on the trailing edge.
 export default function Navbar({ userName, onSearch }) {
   const { t } = useTranslation();
-  const navigate = useNavigate();
+  const navigate = useLangNavigate();
   const { data: profile } = useProfile();
   const name = userName || t('home.profileName');
   const initial = name.trim().charAt(0).toUpperCase();

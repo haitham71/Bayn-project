@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useLangNavigate } from '@/shared/hooks/useLang';
 import Flag from '@/assets/icons/flag.svg?react';
 import { STAGE_LABEL } from '../lib/constants';
 import './RecommendedIdeas.css';
@@ -7,7 +7,7 @@ import './RecommendedIdeas.css';
 // A random handful of public ideas surfaced at the bottom of the main column.
 export default function RecommendedIdeas({ ideas }) {
   const { t, i18n } = useTranslation();
-  const navigate = useNavigate();
+  const navigate = useLangNavigate();
   const locale = i18n.language === 'ar' ? 'ar' : 'en';
 
   return (
