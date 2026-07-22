@@ -277,6 +277,16 @@ async def get_user_conversations(db: AsyncSession, user_id: uuid.UUID) -> list[C
                 sender=_build_user_summary(last_msg.sender),
             )
 
+        # Unread for this user: messages newer than their last_read_at, not their own.
+        my_member = next((m for m in conv.members if m.user_id == user_id), None)
+        my_last_read = my_member.last_read_at if my_member else None
+        unread_conds = [Message.conversation_id == conv.id, Message.sender_id != user_id]
+        if my_last_read is not None:
+            unread_conds.append(Message.created_at > my_last_read)
+        unread_count = await db.scalar(
+            select(func.count()).select_from(Message).where(*unread_conds)
+        )
+
         response_list.append(
             ConversationResponse(
                 id=conv.id,
@@ -292,6 +302,7 @@ async def get_user_conversations(db: AsyncSession, user_id: uuid.UUID) -> list[C
                     for m in conv.members
                 ],
                 last_message=last_msg_response,
+                unread_count=unread_count or 0,
             )
         )
 
@@ -433,10 +444,12 @@ async def get_conversation_messages(
 
 # ── Unread tracking ────────────────────────────────────────────────────────────
 
-async def get_unread_message_count(db: AsyncSession, user_id: uuid.UUID) -> UnreadCountResponse:
+async def get_unread_message_count(
+    db: AsyncSession, user_id: uuid.UUID, direct_only: bool = False
+) -> UnreadCountResponse:
     # a message counts as unread if it postdates the member's last_read_at for
     # that conversation (or the member never read it at all) and isn't their own
-    count = await db.scalar(
+    query = (
         select(func.count())
         .select_from(Message)
         .join(ConversationMember, ConversationMember.conversation_id == Message.conversation_id)
@@ -449,6 +462,12 @@ async def get_unread_message_count(db: AsyncSession, user_id: uuid.UUID) -> Unre
             ),
         )
     )
+    if direct_only:
+        # Only 1-on-1 rooms — project team chats have their own notification.
+        query = query.join(Conversation, Conversation.id == Message.conversation_id).where(
+            Conversation.project_id.is_(None)
+        )
+    count = await db.scalar(query)
     return UnreadCountResponse(count=count, display=format_badge_count(count))
 
 

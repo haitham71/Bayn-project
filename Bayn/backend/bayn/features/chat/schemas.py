@@ -63,6 +63,9 @@ class ConversationResponse(BaseModel):
     updated_at: datetime
     members: list[ConversationMemberResponse]
     last_message: MessageResponse | None = None
+    # Messages the requesting user hasn't read yet (0 in single-conversation
+    # responses; populated in the conversation list).
+    unread_count: int = 0
 
 
 class DirectChatCreateRequest(BaseModel):
