@@ -21,6 +21,7 @@ class NotificationType(str, enum.Enum):
     meeting_request_accepted = "meeting_request_accepted"
     meeting_request_rejected = "meeting_request_rejected"
     meeting_scheduled = "meeting_scheduled"
+    meeting_cancelled = "meeting_cancelled"
     task_assigned = "task_assigned"
 
 
