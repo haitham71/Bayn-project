@@ -666,6 +666,28 @@ color: #9a3b2e; }
 
 .pd__meeting-row:last-child { border-bottom: none; padding-bottom: 0; }
 
+/* Owner-only: cancel a team meeting from the row. */
+.pd__meeting-cancel {
+  margin-inline-start: auto;
+  align-self: center;
+  flex: 0 0 auto;
+  padding: 5px 10px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--input-error, #900000);
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.pd__meeting-cancel:hover {
+  background: rgba(144, 0, 0, 0.08);
+  border-color: rgba(144, 0, 0, 0.35);
+}
+
 .pd__meeting-date {
   flex-shrink: 0;
   display: flex;

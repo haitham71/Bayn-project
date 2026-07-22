@@ -472,6 +472,7 @@
     "scheduleFrom": "من",
     "scheduleTo": "إلى",
     "scheduleParticipants": "دعوة الأعضاء",
+    "scheduleSelectMembers": "اختر الأعضاء",
     "scheduleNoMembers": "لا يوجد أعضاء آخرين لدعوتهم بعد.",
     "scheduling": "جاري الجدولة…",
     "scheduleFailed": "تعذّرت جدولة الاجتماع. حاول مرة أخرى.",
@@ -500,7 +501,12 @@
     "taskDelete": "حذف",
     "taskDeleting": "جارٍ الحذف…",
     "taskDeleteConfirm": "حذف هذه المهمة؟",
-    "taskDeleteFailed": "تعذّر حذف المهمة. حاول مرة أخرى."
+    "taskDeleteFailed": "تعذّر حذف المهمة. حاول مرة أخرى.",
+    "cancelMeeting": "إلغاء الاجتماع",
+    "cancelMeetingTitle": "إلغاء الاجتماع؟",
+    "cancelMeetingMsg": "سيُلغى هذا الاجتماع للجميع، ولا يمكن التراجع.",
+    "cancelMeetingConfirm": "نعم، ألغِ",
+    "cancelMeetingKeep": "تراجع"
   },
   "settings": {
     "navAccount": "معلومات الحساب",

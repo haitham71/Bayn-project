@@ -31,6 +31,10 @@ export const listMeetings = () =>
 export const createTeamMeeting = (payload) =>
   api.post(API.meetings.team, payload).then((r) => r.data);
 
+// Owner cancels a team meeting they scheduled.
+export const cancelTeamMeeting = (meetingId) =>
+  api.delete(`${API.meetings.team}/${meetingId}`).then((r) => r.data);
+
 // A personalised join URL — the room link plus a Daily token carrying the
 // caller's name, so they join under their real name without being asked to type
 // one. Minted per click, so call this on the join action, not ahead of time.

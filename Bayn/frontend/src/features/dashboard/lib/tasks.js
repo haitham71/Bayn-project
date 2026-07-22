@@ -22,7 +22,7 @@ export const EMPTY_TASK_FORM = {
   priority: 'medium',
   status: 'todo',
   due_date: '',
-  assigned_to: '',
+  assigned_to: [],
 };
 
 // Group a flat task list into the three board columns by status.

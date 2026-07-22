@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import CalendarPicker from '@/shared/components/Calendar';
 import Select from '@/shared/components/Select';
 import Button from '@/shared/components/Button';
+import AssigneePicker from './AssigneePicker';
 import Users from '@/assets/icons/users.svg?react';
 import LoaderCircle from '@/assets/icons/loader-circle.svg?react';
 import Flag from '@/assets/icons/flag.svg?react';
@@ -28,7 +29,7 @@ function formFromTask(task) {
     priority: (task.priority || 'medium').toLowerCase(),
     status: (task.status || 'todo').toLowerCase(),
     due_date: task.due_date ? toDateStr(new Date(task.due_date)) : '',
-    assigned_to: (task.assigned_to && task.assigned_to[0]) || '',
+    assigned_to: Array.isArray(task.assigned_to) ? [...task.assigned_to] : [],
   };
 }
 
@@ -69,9 +70,9 @@ export default function TaskSheet({ open, task, projectId, team, isOwner, curren
 
   if (!open) return null;
 
-  const isAssignee = Boolean(editingTaskId) && !!form.assigned_to && form.assigned_to === currentUserId;
+  const isAssignee = Boolean(editingTaskId) && form.assigned_to.includes(currentUserId);
   const canEditStatus = isOwner || isAssignee;
-  const sheetAssignee = team.find((m) => m.user_id === form.assigned_to) || null;
+  const sheetAssignees = team.filter((m) => form.assigned_to.includes(m.user_id));
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -84,7 +85,7 @@ export default function TaskSheet({ open, task, projectId, team, isOwner, curren
       status: form.status,
       priority: form.priority,
       due_date: form.due_date ? new Date(form.due_date).toISOString() : null,
-      assigned_to: form.assigned_to ? [form.assigned_to] : [],
+      assigned_to: form.assigned_to,
     };
     try {
       if (editingTaskId) {
@@ -141,36 +142,33 @@ export default function TaskSheet({ open, task, projectId, team, isOwner, curren
           />
 
           <div className="pd__sheet-props">
-            <div className="pd__prop">
+            <div className="pd__prop pd__prop--assignees">
               <span className="pd__prop-label"><Users width={15} height={15} aria-hidden="true" />{t('projectDashboard.taskAssigneeLabel')}</span>
               {isOwner ? (
-                <Select
-                  label=""
-                  placeholder={t('projectDashboard.taskAssigneeNone')}
+                <AssigneePicker
+                  team={team}
                   value={form.assigned_to}
                   onChange={(v) => setForm((f) => ({ ...f, assigned_to: v }))}
-                  options={[
-                    { value: '', label: t('projectDashboard.taskAssigneeNone') },
-                    ...team.map((m) => ({
-                      value: m.user_id,
-                      label: locale === 'ar' ? m.name_ar : m.name_en,
-                      avatar: m.avatar_url || null,
-                    })),
-                  ]}
-                  className="pd__prop-control"
+                  locale={locale}
+                  placeholder={t('projectDashboard.taskAssigneeNone')}
                 />
-              ) : sheetAssignee ? (
-                <span className="pd__prop-value pd__prop-person">
-                  <span className="pd__task-avatar" aria-hidden="true">
-                    {sheetAssignee.avatar_url ? (
-                      <img src={sheetAssignee.avatar_url} alt="" />
-                    ) : (
-                      <span className="pd__task-avatar-fallback">
-                        {(locale === 'ar' ? sheetAssignee.name_ar : sheetAssignee.name_en).trim().charAt(0).toUpperCase()}
+              ) : sheetAssignees.length > 0 ? (
+                <span className="pd__prop-people">
+                  {sheetAssignees.map((m) => {
+                    const name = locale === 'ar' ? m.name_ar : m.name_en;
+                    return (
+                      <span key={m.user_id} className="pd__assignees-chip">
+                        <span className="pd__assignee-avatar" aria-hidden="true">
+                          {m.avatar_url ? (
+                            <img src={m.avatar_url} alt="" />
+                          ) : (
+                            <span className="pd__assignee-avatar-fallback">{name.trim().charAt(0).toUpperCase()}</span>
+                          )}
+                        </span>
+                        <span className="pd__assignees-chip-name">{name}</span>
                       </span>
-                    )}
-                  </span>
-                  {locale === 'ar' ? sheetAssignee.name_ar : sheetAssignee.name_en}
+                    );
+                  })}
                 </span>
               ) : (
                 <span className="pd__prop-value pd__prop-value--muted">{t('projectDashboard.taskAssigneeNone')}</span>

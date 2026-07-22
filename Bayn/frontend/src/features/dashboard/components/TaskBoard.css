@@ -106,15 +106,67 @@
   min-width: 0;
 }
 
+/* Overlapping avatar stack when a task has several assignees. */
+.pd__task-avatars {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+}
+
+.pd__task-avatars .pd__task-avatar {
+  margin-inline-start: -7px;
+  border: 1.5px solid var(--bg-surface-primary, #ebe5dc);
+}
+
+.pd__task-avatars .pd__task-avatar:first-child { margin-inline-start: 0; }
+
 .pd__task-avatar {
+  position: relative;
   display: grid;
   place-items: center;
   flex-shrink: 0;
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  overflow: hidden;
   background: linear-gradient(135deg, var(--color-primary-300, #5ca18a), var(--color-primary-600, #0f3d2e));
+}
+
+.pd__task-avatar > img,
+.pd__task-avatar > .pd__task-avatar-fallback {
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.pd__task-avatars .pd__task-avatar:hover { z-index: 3; }
+
+/* Name tooltip on avatar hover — matches the meetings page. */
+.pd__task-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: var(--color-primary-600, #0f3d2e);
+  color: var(--color-neutral-100, #ebe5dc);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease;
+  z-index: 4;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.pd__task-avatar:hover .pd__task-tooltip { opacity: 1; }
+
+.pd__task-avatar--more {
+  background: var(--bg-surface-secondary, #d7cbb9);
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-supporting, #786c57);
 }
 
 .pd__task-avatar img { width: 100%; height: 100%; object-fit: cover; }

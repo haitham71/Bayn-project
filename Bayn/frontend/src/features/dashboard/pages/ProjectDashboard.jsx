@@ -11,6 +11,7 @@ import Send from '@/assets/icons/send-horizontal.svg?react';
 import Plus from '@/assets/icons/plus.svg?react';
 import CalendarPicker from '@/shared/components/Calendar';
 import Select from '@/shared/components/Select';
+import ConfirmDialog from '@/shared/components/ConfirmDialog';
 import { stageOf } from '@/features/meetings/lib/requestStatus';
 import {
   getMyProjects,
@@ -21,11 +22,13 @@ import {
   listMeetings,
   listMeetingRequests,
   createTeamMeeting,
+  cancelTeamMeeting,
 } from '@/features/meetings/services/meetingService';
 import { useProjectTasks } from '../hooks/useProjectTasks';
 import TaskBoard from '../components/TaskBoard';
 import TaskSheet from '../components/TaskSheet';
 import TeamChat from '../components/TeamChat';
+import AssigneePicker from '../components/AssigneePicker';
 import { toDateStr, parseDateStr } from '../lib/dates';
 import './ProjectDashboard.css';
 
@@ -68,6 +71,7 @@ export default function ProjectDashboardPage({ onNavigate }) {
 
   const [meetings, setMeetings] = useState([]);
   const [incomingRequests, setIncomingRequests] = useState([]);
+  const [cancelMeetingId, setCancelMeetingId] = useState(null);
 
   // "Schedule a team meeting" form: title/date/time + the members to invite.
   const [scheduleForm, setScheduleForm] = useState({
@@ -219,13 +223,6 @@ export default function ProjectDashboardPage({ onNavigate }) {
     scheduleForm.to &&
     scheduleForm.from < scheduleForm.to;
 
-  const toggleMember = (userId) =>
-    setSelectedMembers((prev) =>
-      prev.includes(userId)
-        ? prev.filter((id) => id !== userId)
-        : [...prev, userId],
-    );
-
   async function handleSchedule(e) {
     e.preventDefault();
     if (!scheduleReady || scheduling) return;
@@ -355,6 +352,18 @@ export default function ProjectDashboardPage({ onNavigate }) {
     project || myProjects.find((p) => p.id === projectId) || null;
 
   // Panels reused across the owner/member layouts (composed differently below).
+  // Owner cancels a team meeting (user_id === counterpart_id marks a team room).
+  async function confirmCancelMeeting() {
+    const id = cancelMeetingId;
+    setCancelMeetingId(null);
+    setMeetings((ms) => ms.filter((m) => m.id !== id));
+    try {
+      await cancelTeamMeeting(id);
+    } catch {
+      /* leave it removed; a reload would restore it on failure */
+    }
+  }
+
   const upcomingMeetingsPanel = (
     <section className="pd__panel">
       <div className="pd__panel-head">
@@ -385,6 +394,15 @@ export default function ProjectDashboardPage({ onNavigate }) {
                   {t('projectDashboard.confirmed')}
                 </span>
               </div>
+              {m.user_id === m.counterpart_id && m.user_id === user?.id && (
+                <button
+                  type="button"
+                  className="pd__meeting-cancel"
+                  onClick={() => setCancelMeetingId(m.id)}
+                >
+                  {t('projectDashboard.cancelMeeting')}
+                </button>
+              )}
             </li>
           ))}
         </ul>
@@ -613,29 +631,13 @@ export default function ProjectDashboardPage({ onNavigate }) {
                         {t('projectDashboard.scheduleNoMembers')}
                       </p>
                     ) : (
-                      <ul className="pd__members">
-                        {team
-                          .filter((m) => m.user_id !== user?.id)
-                          .map((m) => {
-                            const name =
-                              locale === 'ar' ? m.name_ar : m.name_en;
-                            const checked = selectedMembers.includes(m.user_id);
-                            return (
-                              <li key={m.user_id}>
-                                <label
-                                  className={`pd__member${checked ? ' is-checked' : ''}`}
-                                >
-                                  <input
-                                    type="checkbox"
-                                    checked={checked}
-                                    onChange={() => toggleMember(m.user_id)}
-                                  />
-                                  <span>{name || '—'}</span>
-                                </label>
-                              </li>
-                            );
-                          })}
-                      </ul>
+                      <AssigneePicker
+                        team={team.filter((m) => m.user_id !== user?.id)}
+                        value={selectedMembers}
+                        onChange={setSelectedMembers}
+                        locale={locale}
+                        placeholder={t('projectDashboard.scheduleSelectMembers')}
+                      />
                     )}
                   </div>
 
@@ -714,6 +716,15 @@ export default function ProjectDashboardPage({ onNavigate }) {
         }}
       />
 
+      <ConfirmDialog
+        open={cancelMeetingId != null}
+        title={t('projectDashboard.cancelMeetingTitle')}
+        message={t('projectDashboard.cancelMeetingMsg')}
+        confirmLabel={t('projectDashboard.cancelMeetingConfirm')}
+        cancelLabel={t('projectDashboard.cancelMeetingKeep')}
+        onConfirm={confirmCancelMeeting}
+        onCancel={() => setCancelMeetingId(null)}
+      />
     </div>
   );
 }

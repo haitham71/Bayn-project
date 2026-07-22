@@ -21,6 +21,7 @@ function linkFor(n) {
     case 'meeting_request_accepted':
     case 'meeting_request_rejected':
     case 'meeting_scheduled':
+    case 'meeting_cancelled':
       return '/meetings';
     default:
       return null;

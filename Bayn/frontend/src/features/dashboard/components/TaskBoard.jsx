@@ -43,7 +43,7 @@ export default function TaskBoard({ tasks, tasksError, isOwner, memberById, loca
                     status={status}
                     now={now}
                     locale={locale}
-                    assignee={memberById(task.assigned_to?.[0])}
+                    assignees={(task.assigned_to || []).map(memberById).filter(Boolean)}
                     onOpen={() => onOpenTask(task)}
                     t={t}
                   />
@@ -57,13 +57,17 @@ export default function TaskBoard({ tasks, tasksError, isOwner, memberById, loca
   );
 }
 
-function TaskCard({ task, status, now, locale, assignee, onOpen, t }) {
+function TaskCard({ task, status, now, locale, assignees, onOpen, t }) {
   const overdue = task.due_date && new Date(task.due_date).getTime() < now && status !== 'done';
   const priority = (task.priority || 'low').toLowerCase();
-  const name = assignee
-    ? (locale === 'ar' ? assignee.name_ar : assignee.name_en)
-    : t('projectDashboard.taskAssigneeNone');
-  const initial = (assignee ? name : '?').trim().charAt(0).toUpperCase();
+  const nameOf = (m) => (locale === 'ar' ? m.name_ar : m.name_en);
+  // Show up to three stacked avatars; label the row with the first member's
+  // name and a "+N" when more people are on the task.
+  const shown = assignees.slice(0, 3);
+  const extra = assignees.length - shown.length;
+  const label = assignees.length === 0
+    ? t('projectDashboard.taskAssigneeNone')
+    : nameOf(assignees[0]) + (assignees.length > 1 ? ` +${assignees.length - 1}` : '');
 
   return (
     <div className="pd__task-card">
@@ -79,14 +83,31 @@ function TaskCard({ task, status, now, locale, assignee, onOpen, t }) {
       </div>
       <div className="pd__task-foot">
         <span className="pd__task-assignee">
-          <span className="pd__task-avatar" aria-hidden="true">
-            {assignee?.avatar_url ? (
-              <img src={assignee.avatar_url} alt="" />
-            ) : (
-              <span className="pd__task-avatar-fallback">{initial}</span>
-            )}
-          </span>
-          <span className="pd__task-assignee-name">{name}</span>
+          {shown.length > 0 ? (
+            <span className="pd__task-avatars">
+              {shown.map((m) => (
+                <span key={m.user_id} className="pd__task-avatar">
+                  {m.avatar_url ? (
+                    <img src={m.avatar_url} alt="" />
+                  ) : (
+                    <span className="pd__task-avatar-fallback">{nameOf(m).trim().charAt(0).toUpperCase()}</span>
+                  )}
+                  <span className="pd__task-tooltip" role="tooltip">{nameOf(m)}</span>
+                </span>
+              ))}
+              {extra > 0 && (
+                <span className="pd__task-avatar pd__task-avatar--more">
+                  +{extra}
+                  <span className="pd__task-tooltip" role="tooltip">{assignees.slice(3).map(nameOf).join('، ')}</span>
+                </span>
+              )}
+            </span>
+          ) : (
+            <span className="pd__task-avatar" aria-hidden="true">
+              <span className="pd__task-avatar-fallback">?</span>
+            </span>
+          )}
+          <span className="pd__task-assignee-name">{label}</span>
         </span>
         <button type="button" className="pd__task-details" onClick={onOpen}>
           {t('projectDashboard.taskViewDetails')}

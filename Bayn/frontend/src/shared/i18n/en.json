@@ -472,6 +472,7 @@
     "scheduleFrom": "From",
     "scheduleTo": "To",
     "scheduleParticipants": "Invite members",
+    "scheduleSelectMembers": "Select members",
     "scheduleNoMembers": "No other members to invite yet.",
     "scheduling": "Scheduling…",
     "scheduleFailed": "Couldn't schedule the meeting. Please try again.",
@@ -500,7 +501,12 @@
     "taskDelete": "Delete",
     "taskDeleting": "Deleting…",
     "taskDeleteConfirm": "Delete this task?",
-    "taskDeleteFailed": "Couldn't delete the task. Please try again."
+    "taskDeleteFailed": "Couldn't delete the task. Please try again.",
+    "cancelMeeting": "Cancel meeting",
+    "cancelMeetingTitle": "Cancel meeting?",
+    "cancelMeetingMsg": "This meeting will be cancelled for everyone. This can’t be undone.",
+    "cancelMeetingConfirm": "Yes, cancel",
+    "cancelMeetingKeep": "Keep it"
   },
   "settings": {
     "navAccount": "Account information",
