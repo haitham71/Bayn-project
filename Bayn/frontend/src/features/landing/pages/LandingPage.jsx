@@ -1,6 +1,7 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { getAnalyticsOverview } from '../services/analyticsService';
 import BaynLogo from '@/assets/logo/Bayn-svg.svg?react';
 import ArrowRight from '@/assets/icons/arrow-right.svg?react';
 import Check from '@/assets/icons/check.svg?react';
@@ -28,8 +29,19 @@ export default function LandingPage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const rootRef = useRef(null);
+  const [stats, setStats] = useState({ users: 0, ideas: 0, teams: 0 });
 
   const toggleLang = () => i18n.changeLanguage(i18n.language === 'ar' ? 'en' : 'ar');
+  // Always Western digits — the big display font may not carry Arabic-Indic
+  // glyphs, and the stat numbers read cleaner in Latin either way.
+  const fmt = (n) => new Intl.NumberFormat('en-US').format(n || 0);
+
+  // Public platform counts for the hero + stats band.
+  useEffect(() => {
+    getAnalyticsOverview()
+      .then((d) => setStats({ users: d.users || 0, ideas: d.ideas || 0, teams: d.teams || 0 }))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const root = rootRef.current;
@@ -105,9 +117,9 @@ export default function LandingPage() {
                 </a>
               </div>
               <div className="hero-meta">
-                <div className="m"><b>0</b><span>{t('landing.hero.metaBuilders')}</span></div>
-                <div className="m"><b>0</b><span>{t('landing.hero.metaIdeas')}</span></div>
-                <div className="m"><b>0</b><span>{t('landing.hero.metaTeams')}</span></div>
+                <div className="m"><b>{fmt(stats.users)}</b><span>{t('landing.hero.metaBuilders')}</span></div>
+                <div className="m"><b>{fmt(stats.ideas)}</b><span>{t('landing.hero.metaIdeas')}</span></div>
+                <div className="m"><b>{fmt(stats.teams)}</b><span>{t('landing.hero.metaTeams')}</span></div>
               </div>
             </div>
 
@@ -275,9 +287,9 @@ export default function LandingPage() {
           <div className="band reveal">
             <div className="band-glow" />
             <div className="wrapx">
-              <div className="st"><b>0</b><span>{t('landing.stats.builders')}</span></div>
-              <div className="st"><b>0</b><span>{t('landing.stats.ideas')}</span></div>
-              <div className="st"><b>0</b><span>{t('landing.stats.teams')}</span></div>
+              <div className="band-stat"><b>{fmt(stats.users)}</b><span>{t('landing.stats.builders')}</span></div>
+              <div className="band-stat"><b>{fmt(stats.ideas)}</b><span>{t('landing.stats.ideas')}</span></div>
+              <div className="band-stat"><b>{fmt(stats.teams)}</b><span>{t('landing.stats.teams')}</span></div>
             </div>
           </div>
         </div>
@@ -357,7 +369,6 @@ export default function LandingPage() {
             <div className="foot-col">
               <h4>{t('landing.footer.resources')}</h4>
               <a href="#top">{t('landing.footer.help')}</a>
-              <a href="#top">{t('landing.footer.community')}</a>
               <a href="#top">{t('landing.footer.privacy')}</a>
               <a href="#top">{t('landing.footer.terms')}</a>
             </div>

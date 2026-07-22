@@ -49,4 +49,7 @@ export const API = {
   chat: {
     base: '/chats',
   },
+  analytics: {
+    overview: '/analytics/overview',
+  },
 };

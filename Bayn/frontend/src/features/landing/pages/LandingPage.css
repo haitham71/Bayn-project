@@ -617,11 +617,6 @@
   overflow: hidden;
 }
 
-.lp .card:hover {
-  transform: translateY(-6px);
-  box-shadow: var(--shadow);
-  border-color: rgba(41,94,77,.4);
-}
 
 .lp .card .ico {
   width: 50px;
@@ -854,7 +849,8 @@
   text-align: center;
 }
 
-.lp .band .st b {
+.lp .band .band-stat b {
+  font-family: var(--font-sans);
   font-size: clamp(34px,4.4vw,52px);
   font-weight: 700;
   color: var(--cream);
@@ -862,7 +858,7 @@
   display: block;
 }
 
-.lp .band .st span {
+.lp .band .band-stat span {
   font-size: 14px;
   color: rgba(235,229,220,.7);
 }

@@ -65,6 +65,19 @@
   gap: 14px;
 }
 
+/* Support button + its popover contact card. */
+.identity-layout__support {
+  position: relative;
+  display: inline-flex;
+}
+
+.identity-layout__support-card {
+  position: absolute;
+  top: 0;
+  inset-inline-start: calc(100% + 12px);
+  z-index: 5;
+}
+
 /* Size/shape/colour come from Button (iconOnly, primary); we only add the lift */
 
 .identity-layout__lang {
