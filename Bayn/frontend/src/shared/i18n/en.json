@@ -116,6 +116,12 @@
     "removeTime": "Remove time",
     "removeDate": "Remove {{date}}"
   },
+  "noAccess": {
+    "memberTitle": "You don't have access to this board",
+    "memberMsg": "This dashboard is only for the project's team.",
+    "ownerTitle": "You don't have access to this page",
+    "ownerMsg": "Only the project's owner can manage it."
+  },
   "myProjects": {
     "youOwn": "Projects you own",
     "youWorkOn": "Projects you work on",

@@ -1,0 +1,40 @@
+/* Centred no-access block (see NoAccess.jsx). Deliberately card-less — it
+   replaces the page body rather than sitting inside it. */
+
+.noaccess {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  /* Fills what's left under the navbar so the block lands mid-page. */
+  min-height: 65vh;
+  text-align: center;
+}
+
+.noaccess__icon {
+  width: 96px;
+  height: 96px;
+  color: var(--color-error-700, #c00000);
+  opacity: 0.85;
+}
+
+.noaccess__title {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 26px;
+  font-weight: 550;
+  color: var(--text-title, #0f3d2e);
+}
+
+[dir='rtl'] .noaccess__title {
+  font-family: var(--font-ar);
+}
+
+.noaccess__msg {
+  margin: 0;
+  max-width: 460px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-supporting, #786c57);
+}

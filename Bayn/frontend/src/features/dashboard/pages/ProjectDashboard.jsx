@@ -4,6 +4,7 @@ import { useLangNavigate } from '@/shared/hooks/useLang';
 import { useTranslation } from 'react-i18next';
 import Sidebar from '@/shared/components/Sidebar';
 import Navbar from '@/shared/components/Navbar';
+import NoAccess from '@/shared/components/NoAccess';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
 import { useAvatars } from '@/shared/hooks/useAvatars';
 import CheckSquare from '@/assets/icons/check-square.svg?react';
@@ -95,12 +96,21 @@ export default function ProjectDashboardPage({ onNavigate }) {
   // it) — decides which panels this dashboard shows.
   const isOwner = myProjects.find((p) => p.id === projectId)?.role === 'owner';
 
+  // This board is for the project's own team. The API rejects non-members on
+  // every panel anyway; this keeps a hand-typed project id from rendering an
+  // empty shell of someone else's board.
+  const [projectsLoaded, setProjectsLoaded] = useState(false);
+  const denied = projectsLoaded && !!projectId && !myProjects.some((p) => p.id === projectId);
+
   // Load my projects once, to resolve the selected project and my role in it.
   useEffect(() => {
     getMyProjects()
       .then((rows) => {
         setMyProjects(rows || []);
         if (!routeProjectId && rows?.length) setProjectId(rows[0].id);
+        // Only a successful load can tell us we're not a member — a failed one
+        // must not lock the user out of their own board.
+        setProjectsLoaded(true);
       })
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -523,11 +533,23 @@ export default function ProjectDashboardPage({ onNavigate }) {
       <div className="pd__main">
         <Navbar userName={fullName} />
 
-        <button type="button" className="pd__back" onClick={() => onNavigate?.('myprojects')}>
-          <ArrowLeft width={22} height={22} aria-hidden="true" />
-          {t('myProjects.backToProjects')}
-        </button>
+        {/* The denied state has its own way back, so the top link would be noise. */}
+        {!denied && (
+          <button type="button" className="pd__back" onClick={() => onNavigate?.('myprojects')}>
+            <ArrowLeft width={22} height={22} aria-hidden="true" />
+            {t('myProjects.backToProjects')}
+          </button>
+        )}
 
+        {denied ? (
+          <main>
+            <NoAccess
+              title={t('noAccess.memberTitle')}
+              message={t('noAccess.memberMsg')}
+              onAction={() => onNavigate?.('myprojects')}
+            />
+          </main>
+        ) : (
         <main className="pd__body">
           <div className="pd__head">
             <div>
@@ -717,6 +739,7 @@ export default function ProjectDashboardPage({ onNavigate }) {
             onOpenTask={openTaskDetails}
           />
         </main>
+        )}
       </div>
 
       <TaskSheet

@@ -9,6 +9,7 @@ import Sidebar from '@/shared/components/Sidebar';
 import Navbar from '@/shared/components/Navbar';
 import Button from '@/shared/components/Button';
 import MeetingScheduler from '@/shared/components/MeetingScheduler';
+import NoAccess from '@/shared/components/NoAccess';
 import Eye from '@/assets/icons/eye.svg?react';
 import ArrowLeft from '@/assets/icons/arrow-left.svg?react';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
@@ -50,7 +51,7 @@ const slotsKey = (meetings) =>
 // and go out on their own endpoint alongside that PATCH.
 export default function EditIdeaPage({ onNavigate }) {
   const { t } = useTranslation();
-  const { fullName } = useCurrentUser();
+  const { user, fullName } = useCurrentUser();
   const { id } = useParams();
   const {
     form,
@@ -73,6 +74,13 @@ export default function EditIdeaPage({ onNavigate }) {
   // and the picked days live in `meetings` until the owner saves.
   const [schedInitial, setSchedInitial] = useState([]);
   const [meetings, setMeetings] = useState([]);
+  // Editing an announcement is the owner's alone; the API refuses anyone else's
+  // save, so don't hand them a filled-in form to begin with.
+  const [ownerId, setOwnerId] = useState(null);
+  // Only a successful load can decide this — a failed fetch must not read as
+  // "not yours".
+  const [projectLoaded, setProjectLoaded] = useState(false);
+  const denied = projectLoaded && ownerId !== user?.id;
 
   // Load the project once and prefill every field, including the chosen skills
   // and their name->id map (so a save can resend skill_ids).
@@ -94,6 +102,8 @@ export default function EditIdeaPage({ onNavigate }) {
         seedSkillIds(p.skills);
         setSchedInitial(sched);
         setMeetings(sched);
+        setOwnerId(p.owner?.id || null);
+        setProjectLoaded(true);
         // meetings ride along in the baseline but aren't part of the idea form
         setCommitted({ ...loaded, meetings: sched });
       })
@@ -181,6 +191,22 @@ export default function EditIdeaPage({ onNavigate }) {
     } finally {
       setSaving(false);
     }
+  }
+
+  if (denied) {
+    return (
+      <div className="ci">
+        <Sidebar activeKey="projects" onNavigate={onNavigate} />
+        <div className="ci__main">
+          <Navbar userName={fullName} />
+          <NoAccess
+            title={t('noAccess.ownerTitle')}
+            message={t('noAccess.ownerMsg')}
+            onAction={() => onNavigate?.('myprojects')}
+          />
+        </div>
+      </div>
+    );
   }
 
   return (

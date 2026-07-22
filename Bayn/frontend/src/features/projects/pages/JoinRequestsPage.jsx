@@ -5,6 +5,7 @@ import Sidebar from '@/shared/components/Sidebar';
 import Navbar from '@/shared/components/Navbar';
 import Input from '@/shared/components/Input';
 import ConfirmDialog from '@/shared/components/ConfirmDialog';
+import NoAccess from '@/shared/components/NoAccess';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
 import { STAGES } from '@/features/meetings/lib/requestStatus';
 import ArrowLeft from '@/assets/icons/arrow-left.svg?react';
@@ -20,18 +21,24 @@ import './JoinRequestsPage.css';
 
 export default function JoinRequestsPage({ onNavigate }) {
   const { t } = useTranslation();
-  const { fullName } = useCurrentUser();
+  const { user, fullName } = useCurrentUser();
   const { projectId } = useParams();
 
   const jr = useJoinRequests(projectId);
   const { counts } = jr;
 
-  // Only the project's name is needed here — the chip under the page title.
+  // The project backs the chip under the title, and tells us whether this page
+  // is ours to open — deciding on join requests is the owner's call alone.
   const [project, setProject] = useState(null);
+  const [projectLoaded, setProjectLoaded] = useState(false);
   useEffect(() => {
     if (!projectId) return;
-    getProject(projectId).then(setProject).catch(() => {});
+    getProject(projectId)
+      .then((p) => { setProject(p); setProjectLoaded(true); })
+      .catch(() => {});
   }, [projectId]);
+
+  const denied = projectLoaded && project?.owner?.id !== user?.id;
 
   const stats = [
     { icon: Clock, label: t('joinRequests.statPending'), value: counts.pending, note: t('joinRequests.newRequests') },
@@ -40,6 +47,22 @@ export default function JoinRequestsPage({ onNavigate }) {
     { icon: CircleX, label: t('joinRequests.statRejected'), value: counts.rejected, note: t('joinRequests.rejectedRequests') },
   ];
   const tabs = STAGES.map((key) => ({ key, label: t(`joinRequests.tab.${key}`), count: counts[key] }));
+
+  if (denied) {
+    return (
+      <div className="jr bayn-scroll">
+        <Sidebar activeKey="projects" onNavigate={onNavigate} />
+        <div className="jr__main">
+          <Navbar userName={fullName} />
+          <NoAccess
+            title={t('noAccess.ownerTitle')}
+            message={t('noAccess.ownerMsg')}
+            onAction={() => onNavigate?.('myprojects')}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="jr bayn-scroll">
