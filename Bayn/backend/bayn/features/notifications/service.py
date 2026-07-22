@@ -8,7 +8,7 @@ that caller's transaction and commit.
 
 import uuid
 
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from bayn.common.exceptions import NotFoundError
@@ -37,6 +37,15 @@ def _render_message(notification: Notification, locale: str) -> str:
     )
 
 
+def _uuid_or_none(value) -> uuid.UUID | None:
+    """Tolerate bad id values in a notification's JSON data (e.g. the string
+    'None' written before the row's id existed) instead of failing the response."""
+    try:
+        return uuid.UUID(str(value)) if value else None
+    except (ValueError, TypeError, AttributeError):
+        return None
+
+
 def _to_response(notification: Notification, locale: str) -> NotificationResponse:
     data = notification.data
     return NotificationResponse(
@@ -45,10 +54,10 @@ def _to_response(notification: Notification, locale: str) -> NotificationRespons
         message=_render_message(notification, locale),
         is_read=notification.is_read,
         created_at=notification.created_at,
-        project_id=data.get("project_id"),
-        meeting_request_id=data.get("meeting_request_id"),
-        meeting_id=data.get("meeting_id"),
-        task_id=data.get("task_id"),
+        project_id=_uuid_or_none(data.get("project_id")),
+        meeting_request_id=_uuid_or_none(data.get("meeting_request_id")),
+        meeting_id=_uuid_or_none(data.get("meeting_id")),
+        task_id=_uuid_or_none(data.get("task_id")),
     )
 
 
@@ -87,3 +96,21 @@ async def mark_read(
     notification.is_read = True
     await db.commit()
     return _to_response(notification, locale)
+
+
+async def delete_notification(
+    db: AsyncSession, user_id: uuid.UUID, notification_id: uuid.UUID, locale: str = DEFAULT_LOCALE
+) -> None:
+    # user_id filter keeps a user from deleting someone else's notification
+    notification = await db.scalar(
+        select(Notification).where(Notification.id == notification_id, Notification.user_id == user_id)
+    )
+    if not notification:
+        raise NotFoundError(t("notifications", "errors.not_found", locale))
+    await db.delete(notification)
+    await db.commit()
+
+
+async def delete_all_notifications(db: AsyncSession, user_id: uuid.UUID) -> None:
+    await db.execute(delete(Notification).where(Notification.user_id == user_id))
+    await db.commit()
