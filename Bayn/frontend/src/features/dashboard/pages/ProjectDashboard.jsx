@@ -36,6 +36,9 @@ import FilesCard from '../components/FilesCard';
 import { toDateStr, parseDateStr } from '../lib/dates';
 import './ProjectDashboard.css';
 
+// team panel shows this many members, anything past it scrolls
+const TEAM_VISIBLE_ROWS = 4;
+
 const WEEK_MS = 7 * 86400000;
 const NOW = Date.now();
 
@@ -269,6 +272,7 @@ export default function ProjectDashboardPage({ onNavigate }) {
   };
 
   const requestAvatars = useAvatars(incomingRequests.map((r) => r.requester?.id));
+  const teamAvatars = useAvatars(team.map((m) => m.user_id));
   const requesterName = (r) =>
     r.requester
       ? locale === 'ar'
@@ -474,7 +478,7 @@ export default function ProjectDashboardPage({ onNavigate }) {
       {team.length === 0 ? (
         <p className="pd__empty">{t('projectDashboard.teamUnavailable')}</p>
       ) : (
-        <ul className="pd__team">
+        <ul className={`pd__team${team.length > TEAM_VISIBLE_ROWS ? ' pd__team--scroll' : ''}`}>
           {team.map((member) => {
             const name = locale === 'ar' ? member.name_ar : member.name_en;
             const specialization =
@@ -482,18 +486,27 @@ export default function ProjectDashboardPage({ onNavigate }) {
             const isMe = member.user_id === user?.id;
             return (
               <li key={member.user_id} className="pd__team-row">
-                <div>
-                  <p className="pd__team-name">
-                    {name || '—'}
-                    {member.username && (
-                      <span className="pd__team-username"> · <bdi>@{member.username}</bdi></span>
+                <div className="pd__team-main">
+                  <span className="pd__team-avatar" aria-hidden="true">
+                    {teamAvatars[member.user_id] ? (
+                      <img src={teamAvatars[member.user_id]} alt="" className="pd__team-avatar-img" />
+                    ) : (
+                      (name || '—').trim().charAt(0).toUpperCase()
                     )}
-                  </p>
-                  <p className="pd__team-role">
-                    {member.role === 'owner' ? t('projectDashboard.owner') : ''}
-                    {member.role === 'owner' && specialization ? ' · ' : ''}
-                    {specialization || ''}
-                  </p>
+                  </span>
+                  <div>
+                    <p className="pd__team-name">
+                      {name || '—'}
+                      {member.username && (
+                        <span className="pd__team-username"> · <bdi>@{member.username}</bdi></span>
+                      )}
+                    </p>
+                    <p className="pd__team-role">
+                      {member.role === 'owner' ? t('projectDashboard.owner') : ''}
+                      {member.role === 'owner' && specialization ? ' · ' : ''}
+                      {specialization || ''}
+                    </p>
+                  </div>
                 </div>
                 {isMe && <span className="pd__team-you">{t('projectDashboard.you')}</span>}
               </li>
