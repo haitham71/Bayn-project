@@ -663,6 +663,7 @@ export default function ProjectDashboardPage({ onNavigate }) {
                   {joinRequestsPanel}
                   {upcomingMeetingsPanel}
                   {contractPanel}
+                  {projectTeamPanel}
                 </>
               ) : (
                 <>
