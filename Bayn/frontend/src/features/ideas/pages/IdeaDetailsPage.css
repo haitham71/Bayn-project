@@ -146,6 +146,58 @@
   word-break: break-word;
 }
 
+/* Required-specializations table. */
+.id__table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--bg-surface-secondary, #d7cbb9);
+  border-radius: 12px;
+}
+
+.id__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.id__table th,
+.id__table td {
+  padding: 11px 16px;
+  text-align: start;
+  border-bottom: 1px solid var(--bg-surface-secondary, #d7cbb9);
+}
+
+.id__table thead th {
+  font-weight: 600;
+  color: var(--text-supporting, #786c57);
+  background: var(--bg-surface-secondary, #d7cbb9);
+}
+
+.id__table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.id__table td {
+  color: var(--text-title, #0f3d2e);
+  font-weight: 600;
+}
+
+.id__table-alt {
+  color: var(--text-supporting, #786c57) !important;
+  font-weight: 500 !important;
+}
+
+.id__table-num {
+  text-align: end;
+  width: 1%;
+  white-space: nowrap;
+}
+
+.id__table-total {
+  margin: 8px 2px 0;
+  font-size: 12.5px;
+  color: var(--text-supporting, #786c57);
+}
+
 /* Rich-text idea description (bold, lists, line breaks from the editor). */
 .id__richtext {
   font-size: 14px;

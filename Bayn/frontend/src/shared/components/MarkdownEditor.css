@@ -1,0 +1,138 @@
+/* WYSIWYG description editor (TipTap) — mirrors the Input surface (bg + bottom
+   border) with a formatting toolbar above the editable area. */
+.mde {
+  width: 100%;
+  border-radius: 6px 6px 0 0;
+  background: var(--input-bg-default, rgba(215, 203, 185, 0.7));
+  border-bottom: 4px solid var(--input-border-default, #463e31);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.mde:focus-within {
+  background: var(--input-focus, #e4ddd0);
+  border-bottom-color: var(--input-border-hover, #bca98a);
+}
+
+.mde__toolbar {
+  display: flex;
+  gap: 4px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--bg-surface-thirdary, #c9baa1);
+}
+
+.mde__tool {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-body-2, #463e31);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.mde__tool:hover { background: var(--input-bg-hover, #c9baa1); }
+
+.mde__tool--active {
+  background: var(--btn-primary-default, #295e4d);
+  color: #fff;
+}
+
+.mde__area {
+  min-height: 140px;
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+/* TipTap's editable node. */
+.mde__area .ProseMirror {
+  min-height: 116px;
+  padding: 12px 16px;
+  outline: none;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--text-body-2, #463e31);
+}
+
+[dir='rtl'] .mde__area .ProseMirror {
+  font-family: var(--font-ar);
+}
+
+/* Placeholder shown on the empty first line. */
+.mde__area .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: inline-start;
+  height: 0;
+  color: var(--text-supporting, #786c57);
+  pointer-events: none;
+}
+
+.mde__area .ProseMirror > :first-child { margin-top: 0; }
+.mde__area .ProseMirror > :last-child { margin-bottom: 0; }
+
+.mde__area .ProseMirror p { margin: 0 0 8px; }
+
+.mde__area .ProseMirror h1,
+.mde__area .ProseMirror h2,
+.mde__area .ProseMirror h3 {
+  margin: 14px 0 6px;
+  color: var(--text-title, #0f3d2e);
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.mde__area .ProseMirror h1 { font-size: 22px; }
+.mde__area .ProseMirror h2 { font-size: 19px; }
+.mde__area .ProseMirror h3 { font-size: 17px; }
+
+.mde__area .ProseMirror ul,
+.mde__area .ProseMirror ol {
+  margin: 6px 0;
+  padding-inline-start: 24px;
+}
+
+.mde__area .ProseMirror li { margin: 2px 0; }
+
+.mde__area .ProseMirror blockquote {
+  margin: 8px 0;
+  padding: 2px 14px;
+  border-inline-start: 3px solid var(--bg-surface-secondary, #d7cbb9);
+  color: var(--text-supporting, #786c57);
+}
+
+.mde__area .ProseMirror code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--bg-surface-secondary, #d7cbb9);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.9em;
+}
+
+.mde__area .ProseMirror pre {
+  margin: 8px 0;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: var(--bg-surface-secondary, #d7cbb9);
+  overflow-x: auto;
+}
+
+.mde__area .ProseMirror pre code {
+  padding: 0;
+  background: transparent;
+}
+
+.mde__foot {
+  display: flex;
+  justify-content: flex-end;
+  padding: 2px 16px 6px;
+}
+
+.mde__count {
+  font-size: 12px;
+  color: var(--text-supporting, #786c57);
+}
+
+.mde:focus-within .mde__count { color: var(--input-border-hover, #bca98a); }

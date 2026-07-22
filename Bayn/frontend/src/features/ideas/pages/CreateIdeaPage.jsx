@@ -5,7 +5,7 @@ import { getApiErrorMessage } from '@/shared/lib/apiError';
 import Sidebar from '@/shared/components/Sidebar';
 import Navbar from '@/shared/components/Navbar';
 import Input from '@/shared/components/Input';
-import RichTextEditor from '@/shared/components/RichTextEditor';
+import MarkdownEditor from '@/shared/components/MarkdownEditor';
 import Button from '@/shared/components/Button';
 import ConfirmDialog from '@/shared/components/ConfirmDialog';
 import MeetingScheduler from '@/shared/components/MeetingScheduler';
@@ -13,7 +13,7 @@ import Eye from '@/assets/icons/eye.svg?react';
 import UserPlus from '@/assets/icons/user-plus.svg?react';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
 import { meetingsToSlots } from '@/features/meetings/lib/slots';
-import { useIdeaForm } from '../hooks/useIdeaForm';
+import { useIdeaForm, MAX_TEAM } from '../hooks/useIdeaForm';
 import IdeaStep from '../components/IdeaStep';
 import IdeaFormFields from '../components/IdeaFormFields';
 import SummaryToggle from '../components/SummaryToggle';
@@ -25,7 +25,7 @@ const DESC_MAX = 2000;
 export default function CreateIdeaPage({ onNavigate }) {
   const { t } = useTranslation();
   const { fullName } = useCurrentUser();
-  const { form, setField, industryOptions, handleSkillQuery, skillIds } = useIdeaForm();
+  const { form, setField, industryOptions, specializationOptions, handleSkillQuery, skillIds } = useIdeaForm();
 
   const [meetings, setMeetings] = useState([]);
   const [joinOpen, setJoinOpen] = useState(true);
@@ -35,10 +35,33 @@ export default function CreateIdeaPage({ onNavigate }) {
 
   // Validate first, then open the confirm dialog — publishing itself waits for
   // the user's confirmation.
+  // Valid rows: a chosen specialization with at least one seat.
+  const validNeeds = form.teamNeeds.filter((r) => r.specialization_id && (Number(r.count) || 0) > 0);
+  // Team size is the sum of the seat counts.
+  const totalSeats = validNeeds.reduce((sum, r) => sum + Number(r.count), 0);
+
+  // Expand each need into one team_slots entry per seat (length == team size).
+  function buildTeamSlots() {
+    return validNeeds.flatMap((r) =>
+      Array.from({ length: Number(r.count) }, () => ({
+        specialization_id: r.specialization_id,
+        alternate_specialization_id: r.alternate_specialization_id || null,
+      })),
+    );
+  }
+
   function requestPublish() {
     setPublishError('');
-    if (!form.title.trim() || !form.teamSize || !form.stage) {
+    if (!form.title.trim() || !form.stage) {
       setPublishError(t('createIdea.requiredFields'));
+      return;
+    }
+    if (validNeeds.length === 0) {
+      setPublishError(t('createIdea.teamNeedsRequired'));
+      return;
+    }
+    if (totalSeats > MAX_TEAM) {
+      setPublishError(t('createIdea.teamNeedsMax', { max: MAX_TEAM }));
       return;
     }
     setConfirmOpen(true);
@@ -53,11 +76,12 @@ export default function CreateIdeaPage({ onNavigate }) {
       await Promise.all([
         createProject({
           title: form.title.trim(),
-          description: form.description || null,
+          description: form.description.trim() || null,
           more_info: form.roles || null,
           industry_id: form.category || null,
           stage: form.stage,
-          team_members_needed: Number(form.teamSize),
+          team_members_needed: totalSeats,
+          team_slots: buildTeamSlots(),
           is_hidden: form.visibility === 'private',
           slots: meetingsToSlots(meetings),
           skill_ids: skillIds(),
@@ -104,7 +128,7 @@ export default function CreateIdeaPage({ onNavigate }) {
                 </>
               }
             >
-              <RichTextEditor
+              <MarkdownEditor
                 placeholder={t('createIdea.step2Placeholder')}
                 value={form.description}
                 onChange={(v) => setField('description', v)}
@@ -117,6 +141,7 @@ export default function CreateIdeaPage({ onNavigate }) {
               form={form}
               setField={setField}
               industryOptions={industryOptions}
+              specializationOptions={specializationOptions}
               onSkillQuery={handleSkillQuery}
               numbered
             />

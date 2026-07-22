@@ -1,0 +1,97 @@
+/* Rendered Markdown — matches the app's body typography. */
+.md {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--text-body-2, #463e31);
+  overflow-wrap: break-word;
+}
+
+[dir='rtl'] .md {
+  font-family: var(--font-ar);
+}
+
+.md > :first-child { margin-top: 0; }
+.md > :last-child { margin-bottom: 0; }
+
+/* Legacy HTML descriptions, flattened to plain text (no formatting). */
+.md--plain { white-space: pre-wrap; }
+
+.md p { margin: 0 0 10px; }
+
+.md h1,
+.md h2,
+.md h3,
+.md h4 {
+  margin: 16px 0 8px;
+  color: var(--text-title, #0f3d2e);
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.md h1 { font-size: 22px; }
+.md h2 { font-size: 19px; }
+.md h3 { font-size: 17px; }
+.md h4 { font-size: 16px; }
+
+.md ul,
+.md ol {
+  margin: 8px 0;
+  padding-inline-start: 22px;
+}
+
+.md li { margin: 3px 0; }
+
+.md a {
+  color: var(--btn-primary-default, #295e4d);
+  text-decoration: underline;
+}
+
+.md strong { font-weight: 700; }
+.md em { font-style: italic; }
+
+.md blockquote {
+  margin: 10px 0;
+  padding: 4px 14px;
+  border-inline-start: 3px solid var(--bg-surface-secondary, #d7cbb9);
+  color: var(--text-supporting, #786c57);
+}
+
+.md code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--bg-surface-secondary, #d7cbb9);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.9em;
+}
+
+.md pre {
+  margin: 10px 0;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: var(--bg-surface-secondary, #d7cbb9);
+  overflow-x: auto;
+}
+
+.md pre code {
+  padding: 0;
+  background: transparent;
+}
+
+.md hr {
+  border: none;
+  border-top: 1px solid var(--bg-surface-secondary, #d7cbb9);
+  margin: 16px 0;
+}
+
+.md table {
+  border-collapse: collapse;
+  margin: 10px 0;
+}
+
+.md th,
+.md td {
+  border: 1px solid var(--bg-surface-secondary, #d7cbb9);
+  padding: 6px 10px;
+  text-align: start;
+}

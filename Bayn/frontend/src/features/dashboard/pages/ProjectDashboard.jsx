@@ -9,6 +9,7 @@ import Clock from '@/assets/icons/clock.svg?react';
 import Calendar from '@/assets/icons/calendar.svg?react';
 import Send from '@/assets/icons/send-horizontal.svg?react';
 import Plus from '@/assets/icons/plus.svg?react';
+import ArrowLeft from '@/assets/icons/arrow-left.svg?react';
 import CalendarPicker from '@/shared/components/Calendar';
 import Select from '@/shared/components/Select';
 import ConfirmDialog from '@/shared/components/ConfirmDialog';
@@ -509,6 +510,11 @@ export default function ProjectDashboardPage({ onNavigate }) {
 
       <div className="pd__main">
         <Navbar userName={fullName} />
+
+        <button type="button" className="pd__back" onClick={() => onNavigate?.('myprojects')}>
+          <ArrowLeft width={22} height={22} aria-hidden="true" />
+          {t('myProjects.backToProjects')}
+        </button>
 
         <main className="pd__body">
           <div className="pd__head">

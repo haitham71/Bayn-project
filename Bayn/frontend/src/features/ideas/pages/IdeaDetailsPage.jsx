@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import DOMPurify from 'dompurify';
+import DescriptionView from '@/shared/components/DescriptionView';
 import Sidebar from '@/shared/components/Sidebar';
 import Navbar from '@/shared/components/Navbar';
 import Button from '@/shared/components/Button';
@@ -9,7 +9,7 @@ import Input from '@/shared/components/Input';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
 import { getProject, getProjectSlots } from '@/features/projects/services/projectService';
 import { createJoinRequest } from '@/features/meetings/services/meetingService';
-import { getIndustries, getUserProfile } from '@/features/identity/services/authService';
+import { getIndustries, getUserProfile, getAllSpecializations } from '@/features/identity/services/authService';
 import { formatExperience } from '@/shared/lib/experience';
 import { getApiErrorMessage } from '@/shared/lib/apiError';
 import ArrowLeft from '@/assets/icons/arrow-left.svg?react';
@@ -18,6 +18,7 @@ import Share2 from '@/assets/icons/share-2.svg?react';
 import CalendarIcon from '@/assets/icons/calendar.svg?react';
 import UserCheck from '@/assets/icons/user-check.svg?react';
 import Flag from '@/assets/icons/flag.svg?react';
+import Briefcase from '@/assets/icons/briefcase.svg?react';
 import UserRound from '@/assets/icons/user-round.svg?react';
 import ChevronDown from '@/assets/icons/chevron-down.svg?react';
 import SendHorizontal from '@/assets/icons/send-horizontal.svg?react';
@@ -48,6 +49,7 @@ export default function IdeaDetailsPage({ onNavigate }) {
 
   const [idea, setIdea] = useState(null);
   const [industries, setIndustries] = useState([]);
+  const [specById, setSpecById] = useState({});
   const [slots, setSlots] = useState([]);
 
   // The owner card is driven entirely by the owner's public profile (loaded on
@@ -67,11 +69,13 @@ export default function IdeaDetailsPage({ onNavigate }) {
       getProject(id),
       getIndustries().catch(() => []),
       getProjectSlots(id).catch(() => []),
+      getAllSpecializations().catch(() => []),
     ])
-      .then(([p, inds, sl]) => {
+      .then(([p, inds, sl, specs]) => {
         setIdea(p);
         setIndustries(inds || []);
         setSlots(sl || []);
+        setSpecById(Object.fromEntries((specs || []).map((s) => [s.id, s.name])));
         // Owner name, avatar, specialization, bio and skills all come from the
         // owner's public profile — not duplicated onto the project payload.
         if (p?.owner?.id) {
@@ -89,6 +93,24 @@ export default function IdeaDetailsPage({ onNavigate }) {
   }, [id]);
 
   const industryName = idea ? (industries.find((i) => i.id === idea.industry_id)?.name || '') : '';
+
+  // Group the per-seat team_slots into one row per required specialization:
+  // seat count + its (shared) alternate. Names resolve from the catalog.
+  const specName = (specId) => specById[specId] || '—';
+  const teamNeeds = (() => {
+    const map = new Map();
+    (idea?.team_slots || []).forEach((s) => {
+      const row = map.get(s.specialization_id) || {
+        specialization_id: s.specialization_id,
+        alternate_specialization_id: s.alternate_specialization_id || null,
+        count: 0,
+      };
+      row.count += 1;
+      map.set(s.specialization_id, row);
+    });
+    return [...map.values()];
+  })();
+  const hasAlternate = teamNeeds.some((r) => r.alternate_specialization_id);
 
   const ownerName = ownerProfile
     ? (i18n.language === 'ar'
@@ -178,17 +200,20 @@ export default function IdeaDetailsPage({ onNavigate }) {
                     <Flag width={14} height={14} aria-hidden="true" />
                     {t(STAGE_LABEL[idea.stage] || STAGE_LABEL.planning)}
                   </span>
+                  {industryName && (
+                    <span className="id__pill">
+                      <Briefcase width={15} height={15} aria-hidden="true" />
+                      {industryName}
+                    </span>
+                  )}
                 </div>
 
                 {idea.description && (
                   <div className="id__section">
                     <h2 className="id__section-title">{t('ideaDetails.aboutTitle')}</h2>
-                    {/* Rich text authored in the create-idea editor — sanitized
-                        with DOMPurify before rendering to close the XSS hole. */}
-                    <div
-                      className="id__richtext"
-                      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(idea.description) }}
-                    />
+                    {/* Markdown authored in the create-idea editor. Legacy
+                        HTML descriptions are detected and sanitized instead. */}
+                    <DescriptionView className="id__richtext" value={idea.description} />
                   </div>
                 )}
 
@@ -196,6 +221,39 @@ export default function IdeaDetailsPage({ onNavigate }) {
                   <div className="id__section">
                     <h2 className="id__section-title">{t('createIdea.rolesNeeded')}</h2>
                     <p className="id__section-body">{idea.more_info}</p>
+                  </div>
+                )}
+
+                {teamNeeds.length > 0 && (
+                  <div className="id__section">
+                    <h2 className="id__section-title">{t('ideaDetails.teamNeedsTitle')}</h2>
+                    <div className="id__table-wrap">
+                      <table className="id__table">
+                        <thead>
+                          <tr>
+                            <th>{t('ideaDetails.specColumn')}</th>
+                            {hasAlternate && <th>{t('ideaDetails.alternateColumn')}</th>}
+                            <th className="id__table-num">{t('ideaDetails.seatsColumn')}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {teamNeeds.map((r) => (
+                            <tr key={r.specialization_id}>
+                              <td>{specName(r.specialization_id)}</td>
+                              {hasAlternate && (
+                                <td className="id__table-alt">
+                                  {r.alternate_specialization_id ? specName(r.alternate_specialization_id) : '—'}
+                                </td>
+                              )}
+                              <td className="id__table-num">{r.count}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <p className="id__table-total">
+                      {t('ideaDetails.teamNeedsTotal', { total: idea.team_members_needed })}
+                    </p>
                   </div>
                 )}
 
@@ -210,14 +268,6 @@ export default function IdeaDetailsPage({ onNavigate }) {
                   </div>
                 )}
 
-                {industryName && (
-                  <>
-                    <hr className="id__divider" />
-                    <div className="id__tags">
-                      <span className="id__tag">{industryName}</span>
-                    </div>
-                  </>
-                )}
               </section>
 
               {/* Side */}

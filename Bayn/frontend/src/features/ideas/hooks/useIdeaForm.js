@@ -1,12 +1,20 @@
 import { useState, useEffect } from 'react';
-import { getIndustries, searchSkills } from '@/features/identity/services/authService';
+import { getIndustries, searchSkills, getAllSpecializations } from '@/features/identity/services/authService';
+
+// Backend caps a project at 12 team members.
+export const MAX_TEAM = 12;
 
 export const EMPTY_IDEA = {
   title: '',
   description: '',
   skills: [],
+  // Used by the edit page's plain team-size select (the create page derives the
+  // size from teamNeeds instead).
   teamSize: '',
   roles: '',
+  // Required specializations as { specialization_id, alternate_specialization_id, count };
+  // the total team size is the sum of the counts.
+  teamNeeds: [],
   category: '',
   stage: '',
   visibility: 'public',
@@ -21,12 +29,20 @@ export function useIdeaForm() {
   const setForm = (patch) => setFormState((f) => ({ ...f, ...patch }));
 
   const [industryOptions, setIndustryOptions] = useState([]);
+  const [specializationOptions, setSpecializationOptions] = useState([]);
   const [skillIdByName, setSkillIdByName] = useState({});
 
   // Categories come from the industries catalog (value = industry id).
   useEffect(() => {
     getIndustries()
       .then((rows) => setIndustryOptions(rows.map((r) => ({ value: r.id, label: r.name }))))
+      .catch(() => {});
+  }, []);
+
+  // Specializations catalog (localized names) — one is required per team seat.
+  useEffect(() => {
+    getAllSpecializations()
+      .then((rows) => setSpecializationOptions(rows.map((r) => ({ value: r.id, label: r.name }))))
       .catch(() => {});
   }, []);
 
@@ -53,5 +69,14 @@ export function useIdeaForm() {
   // Resolve the chosen skill names back to ids for the API payload.
   const skillIds = () => form.skills.map((name) => skillIdByName[name]).filter(Boolean);
 
-  return { form, setField, setForm, industryOptions, handleSkillQuery, seedSkillIds, skillIds };
+  return {
+    form,
+    setField,
+    setForm,
+    industryOptions,
+    specializationOptions,
+    handleSkillQuery,
+    seedSkillIds,
+    skillIds,
+  };
 }

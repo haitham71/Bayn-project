@@ -1,19 +1,40 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import DOMPurify from 'dompurify';
+import DescriptionView from '@/shared/components/DescriptionView';
 import { getProject, updateProject } from '@/features/projects/services/projectService';
 import { getApiErrorMessage } from '@/shared/lib/apiError';
 import Sidebar from '@/shared/components/Sidebar';
 import Navbar from '@/shared/components/Navbar';
 import Button from '@/shared/components/Button';
 import Eye from '@/assets/icons/eye.svg?react';
+import ArrowLeft from '@/assets/icons/arrow-left.svg?react';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
-import { useIdeaForm } from '../hooks/useIdeaForm';
+import { useIdeaForm, MAX_TEAM } from '../hooks/useIdeaForm';
 import IdeaStep from '../components/IdeaStep';
 import IdeaFormFields from '../components/IdeaFormFields';
 import SummaryToggle from '../components/SummaryToggle';
 import './IdeaEditor.css';
+
+// Collapse the project's per-seat team_slots into the builder's shape:
+// one { specialization_id, alternate_specialization_id, count } per specialization.
+function slotsToNeeds(slots) {
+  const map = new Map();
+  (slots || []).forEach((s) => {
+    const row = map.get(s.specialization_id) || {
+      specialization_id: s.specialization_id,
+      alternate_specialization_id: s.alternate_specialization_id || '',
+      count: 0,
+    };
+    row.count += 1;
+    map.set(s.specialization_id, row);
+  });
+  return [...map.values()];
+}
+
+// Canonical key of a team_needs list, for change detection.
+const needsKey = (needs) =>
+  JSON.stringify((needs || []).map((r) => [r.specialization_id, r.alternate_specialization_id || '', Number(r.count) || 0]));
 
 // Owner-facing editor for an existing idea/project. Title and description are
 // shown read-only (as on the idea view page); the rest of the announcement —
@@ -23,7 +44,16 @@ export default function EditIdeaPage({ onNavigate }) {
   const { t } = useTranslation();
   const { fullName } = useCurrentUser();
   const { id } = useParams();
-  const { form, setField, setForm, industryOptions, handleSkillQuery, seedSkillIds, skillIds } = useIdeaForm();
+  const {
+    form,
+    setField,
+    setForm,
+    industryOptions,
+    specializationOptions,
+    handleSkillQuery,
+    seedSkillIds,
+    skillIds,
+  } = useIdeaForm();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -43,7 +73,7 @@ export default function EditIdeaPage({ onNavigate }) {
           roles: p.more_info || '',
           category: p.industry_id || '',
           stage: p.stage || '',
-          teamSize: p.team_members_needed ? String(p.team_members_needed) : '',
+          teamNeeds: slotsToNeeds(p.team_slots),
           visibility: p.is_hidden ? 'private' : 'public',
           skills: skillNames,
         };
@@ -56,23 +86,41 @@ export default function EditIdeaPage({ onNavigate }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
+  // Valid team-needs rows and the derived total seats.
+  const validNeeds = form.teamNeeds.filter((r) => r.specialization_id && (Number(r.count) || 0) > 0);
+  const totalSeats = validNeeds.reduce((sum, r) => sum + Number(r.count), 0);
+  const buildTeamSlots = () =>
+    validNeeds.flatMap((r) =>
+      Array.from({ length: Number(r.count) }, () => ({
+        specialization_id: r.specialization_id,
+        alternate_specialization_id: r.alternate_specialization_id || null,
+      })),
+    );
+
   // True when every editable field still matches what was loaded.
   const sameSkills = (a, b) =>
     a.length === b.length && [...a].sort().join('|') === [...b].sort().join('|');
   const unchanged =
     committed
-    && form.roles === committed.roles
     && form.category === committed.category
     && form.stage === committed.stage
-    && form.teamSize === committed.teamSize
+    && needsKey(form.teamNeeds) === needsKey(committed.teamNeeds)
     && form.visibility === committed.visibility
     && sameSkills(form.skills, committed.skills);
 
   async function handleSave() {
     setSaveError('');
     setSaveMsg('');
-    if (!form.teamSize || !form.stage) {
+    if (!form.stage) {
       setSaveError(t('createIdea.requiredFields'));
+      return;
+    }
+    if (validNeeds.length === 0) {
+      setSaveError(t('createIdea.teamNeedsRequired'));
+      return;
+    }
+    if (totalSeats > MAX_TEAM) {
+      setSaveError(t('createIdea.teamNeedsMax', { max: MAX_TEAM }));
       return;
     }
     if (unchanged) {
@@ -89,7 +137,8 @@ export default function EditIdeaPage({ onNavigate }) {
           more_info: form.roles || null,
           industry_id: form.category || null,
           stage: form.stage,
-          team_members_needed: Number(form.teamSize),
+          team_members_needed: totalSeats,
+          team_slots: buildTeamSlots(),
           is_hidden: form.visibility === 'private',
           skill_ids: skillIds(),
         }),
@@ -100,7 +149,7 @@ export default function EditIdeaPage({ onNavigate }) {
         roles: form.roles,
         category: form.category,
         stage: form.stage,
-        teamSize: form.teamSize,
+        teamNeeds: form.teamNeeds,
         visibility: form.visibility,
         skills: form.skills,
       });
@@ -119,6 +168,11 @@ export default function EditIdeaPage({ onNavigate }) {
       <div className="ci__main">
         <Navbar userName={fullName} />
 
+        <button type="button" className="ci__back" onClick={() => onNavigate?.('myprojects')}>
+          <ArrowLeft width={22} height={22} aria-hidden="true" />
+          {t('myProjects.backToProjects')}
+        </button>
+
         <main className="ci__body">
           {/* Numbered form */}
           <section className="ci__card ci__form">
@@ -127,16 +181,14 @@ export default function EditIdeaPage({ onNavigate }) {
             </IdeaStep>
 
             <IdeaStep title={t('createIdea.step2Title')}>
-              <div
-                className="ci__readonly ci__richtext-view"
-                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(form.description) }}
-              />
+              <DescriptionView className="ci__readonly ci__richtext-view" value={form.description} />
             </IdeaStep>
 
             <IdeaFormFields
               form={form}
               setField={setField}
               industryOptions={industryOptions}
+              specializationOptions={specializationOptions}
               onSkillQuery={handleSkillQuery}
               numbered={false}
             />

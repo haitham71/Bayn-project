@@ -112,24 +112,63 @@
 }
 
 /* ---- Menu ---- */
-.bayn-select__menu {
+/* The floating panel holds an optional search box (pinned) above the scrolling
+   option list. */
+.bayn-select__panel {
   position: absolute;
   top: calc(100% + 4px);
   inset-inline: 0;
   z-index: 20;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--input-border-hover, #bca98a);
+  border-radius: 8px;
+  background: var(--bg-surface-primary, #ebe5dc);
+  box-shadow: 0 8px 20px -8px rgba(4, 18, 14, 0.35);
+  overflow: hidden;
+}
+
+.bayn-select__search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--bg-surface-secondary, #d7cbb9);
+  color: var(--text-supporting, #786c57);
+}
+
+.bayn-select__search svg { flex-shrink: 0; }
+
+.bayn-select__search-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 15px;
+  color: var(--text-title, #0f3d2e);
+}
+
+.bayn-select__search-input:focus { outline: none; }
+
+.bayn-select__search-input::placeholder { color: var(--text-supporting, #786c57); }
+
+.bayn-select__menu {
   list-style: none;
   margin: 0;
   padding: 4px;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  border: 1px solid var(--input-border-hover, #bca98a);
-  border-radius: 8px;
-  background: var(--bg-surface-primary, #ebe5dc);
-  box-shadow: 0 8px 20px -8px rgba(4, 18, 14, 0.35);
-  max-height: 280px;
+  max-height: 264px;
   overflow-y: auto;
   /* Themed scrollbar comes from the shared .bayn-scroll utility. */
+}
+
+.bayn-select__empty {
+  padding: 14px 12px;
+  text-align: center;
+  color: var(--text-supporting, #786c57);
 }
 
 .bayn-select__option {
