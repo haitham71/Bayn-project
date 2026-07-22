@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import Sidebar from '@/shared/components/Sidebar';
 import Navbar from '@/shared/components/Navbar';
 import Select from '@/shared/components/Select';
+import SkillsInput from '@/shared/components/SkillsInput';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
 import { listProjects } from '@/features/projects/services/projectService';
 import { getIndustries } from '@/features/identity/services/authService';
@@ -43,6 +44,7 @@ export default function IdeasMarketplacePage({ onNavigate }) {
   const [industry, setIndustry] = useState('');   // '' = all
   const [sort, setSort] = useState('recent');      // recent | oldest
   const [stage, setStage] = useState('all');
+  const [skills, setSkills] = useState([]);        // selected skill names ([] = any)
 
   useEffect(() => {
     Promise.all([listProjects(), getIndustries().catch(() => [])])
@@ -62,25 +64,43 @@ export default function IdeasMarketplacePage({ onNavigate }) {
     { value: 'oldest', label: t('ideas.oldest') },
   ];
 
+  // Skill options offered by the filter — the distinct skills actually present
+  // on the loaded ideas, so a pick never yields zero results by itself.
+  const skillOptions = useMemo(() => {
+    const names = new Set();
+    ideas.forEach((p) => (p.skills || []).forEach((s) => names.add(s.name)));
+    return [...names].sort((a, b) => a.localeCompare(b));
+  }, [ideas]);
+
   const visible = useMemo(() => {
-    let rows = ideas.filter((p) => (!industry || p.industry_id === industry)
-      && (stage === 'all' || p.stage === stage));
+    let rows = ideas.filter((p) => {
+      if (industry && p.industry_id !== industry) return false;
+      if (stage !== 'all' && p.stage !== stage) return false;
+      // An idea matches when it needs any of the selected skills.
+      if (skills.length) {
+        const ideaSkills = (p.skills || []).map((s) => s.name);
+        if (!skills.some((sk) => ideaSkills.includes(sk))) return false;
+      }
+      return true;
+    });
     rows = rows.sort((a, b) => {
       const diff = new Date(b.created_at) - new Date(a.created_at);
       return sort === 'recent' ? diff : -diff;
     });
     return rows;
-  }, [ideas, industry, stage, sort]);
+  }, [ideas, industry, stage, sort, skills]);
 
-  const hasFilters = industry || stage !== 'all' || sort !== 'recent';
+  const hasFilters = industry || stage !== 'all' || sort !== 'recent' || skills.length > 0;
   function clearFilters() {
     setIndustry('');
     setStage('all');
     setSort('recent');
+    setSkills([]);
   }
 
   return (
     <div className="im">
+	
       <Sidebar activeKey="ideas" onNavigate={onNavigate} />
 
       <div className="im__main">
@@ -91,37 +111,50 @@ export default function IdeasMarketplacePage({ onNavigate }) {
 
           {/* Filter bar */}
           <section className="im__filters">
+            <h2 className="im__filters-title">{t('ideas.filtersTitle')}</h2>
+
             <div className="im__filter">
-              <span className="im__filter-label">{t('ideas.industry')}</span>
-              <Select value={industry} onChange={setIndustry} options={industryOptions} className="im__filter-select" />
+              <Select label={t('ideas.industry')} value={industry} onChange={setIndustry} options={industryOptions} className="im__filter-select" />
             </div>
 
             <div className="im__filter">
-              <span className="im__filter-label">{t('ideas.sortByDate')}</span>
-              <Select value={sort} onChange={setSort} options={sortOptions} className="im__filter-select" />
+              <Select label={t('ideas.sortByDate')} value={sort} onChange={setSort} options={sortOptions} className="im__filter-select" />
             </div>
 
-            <div className="im__filter im__filter--stage">
-              <span className="im__filter-label">{t('ideas.ideaStage')}</span>
-              <div className="im__stages" role="group" aria-label={t('ideas.ideaStage')}>
-                {STAGE_FILTERS.map((s) => (
-                  <button
-                    key={s}
-                    type="button"
-                    className={`im__stage${stage === s ? ' im__stage--active' : ''}`}
-                    onClick={() => setStage(s)}
-                  >
-                    {s === 'all' ? t('ideas.stageAll') : t(STAGE_LABEL[s])}
-                  </button>
-                ))}
+            <div className="im__filter im__filter--skills">
+              <SkillsInput
+                label={t('ideas.skillsFilterPlaceholder')}
+                supportingText={t('ideas.skillsFilterHint')}
+                value={skills}
+                onChange={setSkills}
+                options={skillOptions}
+                className="im__skills-input"
+              />
+            </div>
+
+            <div className="im__stage-row">
+              <div className="im__filter im__filter--stage">
+                <span className="im__filter-label">{t('ideas.ideaStage')}</span>
+                <div className="im__stages" role="group" aria-label={t('ideas.ideaStage')}>
+                  {STAGE_FILTERS.map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      className={`im__stage${stage === s ? ' im__stage--active' : ''}`}
+                      onClick={() => setStage(s)}
+                    >
+                      {s === 'all' ? t('ideas.stageAll') : t(STAGE_LABEL[s])}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            {hasFilters && (
-              <button type="button" className="im__clear" onClick={clearFilters}>
-                {t('ideas.clearFilters')}
-              </button>
-            )}
+              {hasFilters && (
+                <button type="button" className="im__clear" onClick={clearFilters}>
+                  {t('ideas.clearFilters')}
+                </button>
+              )}
+            </div>
           </section>
 
           <p className="im__count">

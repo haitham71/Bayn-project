@@ -65,26 +65,33 @@ optgroup {
   font-family: inherit;
 }
 
-/* Reusable themed scrollbar (secondary-700 thumb). Apply to any scroll area. */
+/* Themed scrollbar applied globally — every scroll area across the app uses it
+   instead of the browser default. The .bayn-scroll class is kept as an alias for
+   explicit use, but is no longer required. */
+*,
 .bayn-scroll {
   scrollbar-width: thin;
   scrollbar-color: var(--color-secondary-700, #bca98a) transparent;
 }
 
+*::-webkit-scrollbar,
 .bayn-scroll::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
+*::-webkit-scrollbar-track,
 .bayn-scroll::-webkit-scrollbar-track {
   background: transparent;
 }
 
+*::-webkit-scrollbar-thumb,
 .bayn-scroll::-webkit-scrollbar-thumb {
   background: var(--color-secondary-700, #bca98a);
   border-radius: 8px;
 }
 
+*::-webkit-scrollbar-thumb:hover,
 .bayn-scroll::-webkit-scrollbar-thumb:hover {
   background: var(--color-secondary-800, #9a8a71);
 }
