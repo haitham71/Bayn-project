@@ -47,6 +47,23 @@ async def create_or_get_direct_chat(
     )
 
 
+@router.get(
+    "/project/{project_id}",
+    response_model=ConversationResponse,
+    summary="Get or create a project's team group chat",
+)
+async def get_project_chat(
+    project_id: uuid.UUID,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+    locale: str = Depends(get_locale),
+):
+    """The single team group chat for a project — all its members share one room."""
+    return await service.get_or_create_project_conversation(
+        db, project_id=project_id, current_user_id=current_user.id, locale=locale
+    )
+
+
 @router.get("", response_model=list[ConversationResponse])
 async def list_conversations(
     current_user: User = Depends(get_current_active_user),
