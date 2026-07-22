@@ -32,7 +32,7 @@ from bayn.features.projects.schemas import (
 from bayn.integrations.storage.cloudflare import InvalidFileError, StorageError, r2_client
 
 # a user can hold membership (owner or member) in at most this many projects at once
-MAX_MEMBERSHIPS_PER_USER = 2
+MAX_MEMBERSHIPS_PER_USER = 3
 
 
 async def _count_memberships(db: AsyncSession, user_id: uuid.UUID) -> int:
