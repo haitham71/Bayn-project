@@ -31,6 +31,7 @@ import TaskBoard from '../components/TaskBoard';
 import TaskSheet from '../components/TaskSheet';
 import TeamChat from '../components/TeamChat';
 import AssigneePicker from '../components/AssigneePicker';
+import FilesCard from '../components/FilesCard';
 import { toDateStr, parseDateStr } from '../lib/dates';
 import './ProjectDashboard.css';
 
@@ -412,16 +413,8 @@ export default function ProjectDashboardPage({ onNavigate }) {
     </section>
   );
 
-  const contractPanel = (
-    <section className="pd__panel">
-      <div className="pd__panel-head">
-        <h3>{t(isOwner ? 'projectDashboard.contracts' : 'projectDashboard.myContract')}</h3>
-        <button type="button" className="pd__panel-link">
-          {t('projectDashboard.viewAll')}
-        </button>
-      </div>
-      <p className="pd__empty">{t('projectDashboard.contractUnavailable')}</p>
-    </section>
+  const filesPanel = (
+    <FilesCard projectId={projectId} isOwner={isOwner} currentUserId={user?.id} />
   );
 
   const joinRequestsPanel = (
@@ -671,14 +664,14 @@ export default function ProjectDashboardPage({ onNavigate }) {
                 <>
                   {joinRequestsPanel}
                   {upcomingMeetingsPanel}
-                  {contractPanel}
+                  {filesPanel}
                   {projectTeamPanel}
                 </>
               ) : (
                 <>
                   {upcomingMeetingsPanel}
                   <div className="pd__mid-row">
-                    {contractPanel}
+                    {filesPanel}
                     {projectTeamPanel}
                   </div>
                 </>

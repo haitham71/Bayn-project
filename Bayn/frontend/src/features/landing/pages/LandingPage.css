@@ -223,14 +223,16 @@
 }
 
 .lp .navlinks a {
+  display: inline-block;
   font-size: 15px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--brown);
-  transition: color .15s;
+  transition: color .15s ease, transform .15s ease;
 }
 
 .lp .navlinks a:hover {
   color: var(--green);
+  transform: scale(1.08);
 }
 
 .lp .navcta {
@@ -691,8 +693,11 @@
   content: "";
   position: absolute;
   top: 22px;
-  left: 9%;
-  right: 9%;
+  /* The circles sit at the inline-start of each column (offset by their 22px
+     radius), so anchor the line to the first and last circle centres: start at
+     one radius in, end one column minus a radius from the far side. */
+  inset-inline-start: 22px;
+  inset-inline-end: calc(25% - 37px);
   height: 2px;
   background: linear-gradient(90deg,var(--line),var(--green),var(--line));
   z-index: 1;
