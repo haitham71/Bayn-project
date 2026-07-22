@@ -588,5 +588,144 @@
     "loading": "Loading…",
     "clearAll": "Clear all",
     "dismiss": "Dismiss"
+  },
+  "landing": {
+    "nav": {
+      "features": "Features",
+      "how": "How to start",
+      "marketplace": "Marketplace",
+      "pricing": "Pricing",
+      "login": "Log in",
+      "getStarted": "Get started"
+    },
+    "hero": {
+      "eyebrow": "Between two sides, a space where ideas are born",
+      "titlePre": "We document every step,",
+      "titleAccent": "so you can build the future.",
+      "lead": "Bayn turns a spark of an idea into a shipped project. Post what you're building, find the right collaborators, run everything from one dashboard, and keep a record of every decision along the way.",
+      "ctaPrimary": "Create your account",
+      "ctaSecondary": "How to start",
+      "metaBuilders": "Builders on Bayn",
+      "metaIdeas": "Ideas launched",
+      "metaTeams": "Teams formed"
+    },
+    "mock": {
+      "dashTitle": "Project Dashboard",
+      "dashSub": "AI-Powered Personal Finance Assistant",
+      "onTrack": "On track",
+      "progress": "Progress",
+      "milestones": "Milestones",
+      "members": "Members",
+      "owner": "Owner",
+      "design": "Design",
+      "ai": "AI",
+      "roleBackend": "Backend engineer",
+      "roleDesign": "Product design",
+      "roleMl": "ML / data",
+      "milestoneShipped": "Join request accepted",
+      "milestoneMeta": "A new member joined the team"
+    },
+    "trust": {
+      "label": "Trusted by builders at"
+    },
+    "features": {
+      "eyebrow": "Everything in one place",
+      "title": "From first idea to shipped project",
+      "lead": "Bayn brings the marketplace, the team, and the workflow together, so nothing gets lost between the idea and the build.",
+      "marketplaceTitle": "Ideas Marketplace",
+      "marketplaceDesc": "Publish your idea or browse a live feed of projects looking for builders. Filter by skills, stage, and category to find your next thing.",
+      "teamTitle": "Team Building",
+      "teamDesc": "Send and review join requests, match by required skills, and assemble the exact team your project needs, no cold DMs required.",
+      "dashboardTitle": "Project Dashboard",
+      "dashboardDesc": "Track progress, milestones, and members at a glance. Every task and update lives in one clean, shared view of the build.",
+      "meetingsTitle": "Meetings & Sync",
+      "meetingsDesc": "Schedule meetings, keep shared notes, and turn conversations into action items, all attached to the project they belong to.",
+      "aiTitle": "AI Matching",
+      "aiDesc": "Smart recommendations connect your idea with the collaborators most likely to make it real, based on skills and interests.",
+      "profilesTitle": "Profiles & Skills",
+      "profilesDesc": "A profile that shows what you can do, skills, past projects, and roles, so the right teams can find you and trust your work."
+    },
+    "how": {
+      "eyebrow": "How to start",
+      "title": "Four steps to your next build",
+      "lead": "The same simple flow whether you're bringing an idea or joining one.",
+      "step1Title": "Set up your profile",
+      "step1Desc": "Add your skills, interests, and what you're looking to build. This is how teams discover you.",
+      "step2Title": "Post or discover",
+      "step2Desc": "Share your idea to the marketplace, or browse projects that need exactly what you bring.",
+      "step3Title": "Build your team",
+      "step3Desc": "Approve join requests, form your team, and kick off the project dashboard together.",
+      "step4Title": "Ship & document",
+      "step4Desc": "Run milestones and meetings while Bayn records every step of how you got there."
+    },
+    "market": {
+      "eyebrow": "Ideas Marketplace",
+      "title": "Discover ideas worth building",
+      "lead": "A living feed of real projects and the people behind them. Every card tells you the stage, the skills needed, and who's already on board.",
+      "point1": "Filter by skills, category, and project stage",
+      "point2": "See required roles before you request to join",
+      "point3": "One click to send a join request",
+      "recruiting": "Recruiting",
+      "early": "Early",
+      "join": "Join request",
+      "idea1Title": "AI Personal Finance Assistant",
+      "idea1Desc": "A smart assistant that helps users budget, save, and plan, built around real spending data.",
+      "idea2Title": "Community Logistics Platform",
+      "idea2Desc": "Connecting local drivers and small shops with a shared delivery network.",
+      "idea3Title": "Arabic Learning Companion",
+      "idea3Desc": "An app that makes learning Arabic feel like a conversation, not a textbook."
+    },
+    "stats": {
+      "builders": "Active builders",
+      "ideas": "Ideas posted",
+      "teams": "Teams formed",
+      "again": "Would build again"
+    },
+    "dash": {
+      "eyebrow": "Project Dashboard & Meetings",
+      "title": "Run the whole project from one screen",
+      "lead": "Milestones, tasks, members, and meetings, organized and shared. Bayn keeps a documented trail so anyone can catch up on how the project got here.",
+      "point1": "Progress tracking with milestones and tasks",
+      "point2": "Meetings with shared notes and action items",
+      "point3": "A documented history of every decision",
+      "thisWeek": "This week",
+      "thisWeekMeta": "3 meetings · 8 tasks",
+      "done": "Done",
+      "soon": "Soon",
+      "review": "Design review",
+      "reviewMeta": "Mon · 2:00 PM",
+      "planning": "Sprint planning",
+      "planningMeta": "Wed · 11:00 AM",
+      "investor": "Investor sync",
+      "investorMeta": "Fri · 4:30 PM",
+      "milestone": "Milestone: MVP launch"
+    },
+    "quote": {
+      "text": "I came to Bayn with just an idea and no team. Three weeks later I had four collaborators, a working prototype, and a record of every step we took to get there.",
+      "name": "Assaf Al-saeed",
+      "role": "Founder, Finara"
+    },
+    "cta": {
+      "title": "Your idea is waiting to be built.",
+      "lead": "Join thousands of builders documenting every step on Bayn. Create your account and post your first idea in minutes.",
+      "primary": "Create your account",
+      "secondary": "Explore features"
+    },
+    "footer": {
+      "about": "Where ideas become teams. Post, collaborate, and document every step so you can build the future.",
+      "product": "Product",
+      "features": "Features",
+      "marketplace": "Ideas Marketplace",
+      "dashboard": "Dashboard",
+      "pricing": "Pricing",
+      "company": "Company",
+      "aboutLink": "About",
+      "contact": "Contact",
+      "resources": "Resources",
+      "help": "Help center",
+      "privacy": "Privacy Policy",
+      "terms": "User Agreement",
+      "rights": "© 2026 Bayn. All rights reserved."
+    }
   }
 }
