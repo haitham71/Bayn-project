@@ -24,6 +24,31 @@
   gap: 20px;
 }
 
+/* Back-to-projects link. */
+.pd__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 12px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--btn-primary-default, #295e4d);
+  font-family: var(--font-sans);
+  font-size: 20px;
+  font-weight: 550;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+[dir='rtl'] .pd__back {
+  font-family: var(--font-ar);
+}
+
+.pd__back:hover { opacity: 0.8; }
+
+[dir='rtl'] .pd__back svg { transform: scaleX(-1); }
+
 /* ---- Head: title + project switcher ---- */
 
 .pd__head {
