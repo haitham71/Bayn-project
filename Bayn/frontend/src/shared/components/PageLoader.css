@@ -1,0 +1,15 @@
+.page-loader {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  background: var(--bg-surface-primary, #ebe5dc);
+  color: var(--btn-primary-default, #295e4d);
+}
+
+.page-loader__spin {
+  animation: page-loader-spin 0.8s linear infinite;
+}
+
+@keyframes page-loader-spin {
+  to { transform: rotate(360deg); }
+}

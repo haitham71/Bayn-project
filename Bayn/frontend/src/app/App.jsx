@@ -1,28 +1,34 @@
 import { useState, lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import LoginPage        from '@/features/identity/pages/LoginPage';
-import SignUpPage       from '@/features/identity/pages/SignUpPage';
-import VerificationPage from '@/features/identity/pages/VerificationPage';
-import ProfileSetupPage from '@/features/identity/pages/ProfileSetupPage';
-import ConfirmPasswordChangePage from '@/features/identity/pages/ConfirmPasswordChangePage';
-import ForgotPasswordPage from '@/features/identity/pages/ForgotPasswordPage';
-import ResetPasswordPage from '@/features/identity/pages/ResetPasswordPage';
-import LandingPage      from '@/features/landing/pages/LandingPage';
-import HomePage         from '@/features/home/pages/Homepage';
-import MyProfilePage    from '@/features/profile/pages/MyProfilePage';
-import MyProjectsPage   from '@/features/projects/pages/MyProjectsPage';
-import JoinRequestsPage from '@/features/projects/pages/JoinRequestsPage';
-import ProjectDashboardPage from '@/features/dashboard/pages/ProjectDashboard';
-import SettingsPage from '@/features/settings/pages/SettingsPage';
-import CreateIdeaPage   from '@/features/ideas/pages/CreateIdeaPage';
-import EditIdeaPage    from '@/features/ideas/pages/EditIdeaPage';
-import IdeasMarketplacePage from '@/features/ideas/pages/IdeasMarketplacePage';
-import IdeaDetailsPage from '@/features/ideas/pages/IdeaDetailsPage';
-import MeetingsPage from '@/features/meetings/pages/MeetingsPage';
-// Lazy: pulls in the heavy Daily SDK only when a user actually opens a meeting.
-const MeetingRoomPage = lazy(() => import('@/features/meetings/pages/MeetingRoomPage'));
 import ProtectedRoute from './ProtectedRoute';
 import { isAuthenticated } from '@/shared/lib/authToken';
+import PageLoader from '@/shared/components/PageLoader';
+
+// The public landing page is the first paint, so keep it eager (no chunk flash).
+import LandingPage from '@/features/landing/pages/LandingPage';
+
+// Every other page is code-split — its chunk is only fetched when its route is
+// first visited, keeping the initial bundle small.
+const LoginPage = lazy(() => import('@/features/identity/pages/LoginPage'));
+const SignUpPage = lazy(() => import('@/features/identity/pages/SignUpPage'));
+const VerificationPage = lazy(() => import('@/features/identity/pages/VerificationPage'));
+const ProfileSetupPage = lazy(() => import('@/features/identity/pages/ProfileSetupPage'));
+const ConfirmPasswordChangePage = lazy(() => import('@/features/identity/pages/ConfirmPasswordChangePage'));
+const ForgotPasswordPage = lazy(() => import('@/features/identity/pages/ForgotPasswordPage'));
+const ResetPasswordPage = lazy(() => import('@/features/identity/pages/ResetPasswordPage'));
+const HomePage = lazy(() => import('@/features/home/pages/Homepage'));
+const MyProfilePage = lazy(() => import('@/features/profile/pages/MyProfilePage'));
+const MyProjectsPage = lazy(() => import('@/features/projects/pages/MyProjectsPage'));
+const JoinRequestsPage = lazy(() => import('@/features/projects/pages/JoinRequestsPage'));
+const ProjectDashboardPage = lazy(() => import('@/features/dashboard/pages/ProjectDashboard'));
+const SettingsPage = lazy(() => import('@/features/settings/pages/SettingsPage'));
+const CreateIdeaPage = lazy(() => import('@/features/ideas/pages/CreateIdeaPage'));
+const EditIdeaPage = lazy(() => import('@/features/ideas/pages/EditIdeaPage'));
+const IdeasMarketplacePage = lazy(() => import('@/features/ideas/pages/IdeasMarketplacePage'));
+const IdeaDetailsPage = lazy(() => import('@/features/ideas/pages/IdeaDetailsPage'));
+const MeetingsPage = lazy(() => import('@/features/meetings/pages/MeetingsPage'));
+// Pulls in the heavy Daily SDK only when a user actually opens a meeting.
+const MeetingRoomPage = lazy(() => import('@/features/meetings/pages/MeetingRoomPage'));
 
 // Pages navigate with short keys (onNavigate('home')); this maps each key to its
 // URL so the page components don't need to know about routing.
@@ -55,7 +61,8 @@ export default function App() {
   const patchData = (patch) => setSignupData((prev) => ({ ...prev, ...patch }));
 
   return (
-    <Routes>
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
       {/* Public landing page; signed-in visitors go straight to their home. */}
       <Route path="/" element={isAuthenticated() ? <Navigate to="/home" replace /> : <LandingPage />} />
       <Route path="/login" element={<LoginPage onNavigate={goTo} />} />
@@ -88,7 +95,7 @@ export default function App() {
       <Route path="/my-profile" element={<ProtectedRoute><MyProfilePage onNavigate={goTo} /></ProtectedRoute>} />
       <Route path="/my-projects" element={<ProtectedRoute><MyProjectsPage onNavigate={goTo} /></ProtectedRoute>} />
       <Route path="/meetings" element={<ProtectedRoute><MeetingsPage onNavigate={goTo} /></ProtectedRoute>} />
-      <Route path="/meeting/:id" element={<ProtectedRoute><Suspense fallback={null}><MeetingRoomPage onNavigate={goTo} /></Suspense></ProtectedRoute>} />
+      <Route path="/meeting/:id" element={<ProtectedRoute><MeetingRoomPage onNavigate={goTo} /></ProtectedRoute>} />
       <Route path="/join-requests" element={<ProtectedRoute><JoinRequestsPage onNavigate={goTo} /></ProtectedRoute>} />
       <Route path="/join-requests/:projectId" element={<ProtectedRoute><JoinRequestsPage onNavigate={goTo} /></ProtectedRoute>} />
       <Route path="/create-idea" element={<ProtectedRoute><CreateIdeaPage onNavigate={goTo} /></ProtectedRoute>} />
@@ -97,6 +104,7 @@ export default function App() {
       <Route path="/projects/:projectId/dashboard" element={<ProtectedRoute><ProjectDashboardPage onNavigate={goTo} /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><SettingsPage onNavigate={goTo} /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/login" replace />} />
-    </Routes>
+      </Routes>
+    </Suspense>
   );
 }
