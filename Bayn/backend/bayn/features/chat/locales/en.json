@@ -3,6 +3,7 @@
     "cannot_chat_self": "You can't start a conversation with yourself",
     "failed_to_create_chat": "Failed to create the conversation. Please try again.",
     "conversation_not_found": "Conversation not found",
-    "message_send_failed": "Failed to send the message. Please try again."
+    "message_send_failed": "Failed to send the message. Please try again.",
+    "not_project_member": "You are not a member of this project."
   }
 }

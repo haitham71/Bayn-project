@@ -6,11 +6,12 @@ from sqlalchemy import func, or_, select, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from bayn.common.exceptions import ConflictError, NotFoundError, ValidationError
+from bayn.common.exceptions import ConflictError, ForbiddenError, NotFoundError, ValidationError
 from bayn.common.formatting import format_badge_count
 from bayn.core.i18n import DEFAULT_LOCALE, t
 from bayn.features.identity.models import User
-from bayn.features.chat.models import Conversation, ConversationMember, Message
+from bayn.features.projects.models import Project, ProjectMembership
+from bayn.features.chat.models import Conversation, ConversationMember, Message, message_mentions
 from bayn.features.chat.schemas import (
     ChatUserSummary,
     ConversationMemberResponse,
@@ -81,12 +82,18 @@ async def get_or_create_direct_conversation(
         ConversationMember.conversation_id.in_(query_b)
     )
 
-    # Filter shared conversations to find one with exactly 2 total members (1-on-1)
+    # Filter shared conversations to find a real 1-on-1: exactly 2 members AND
+    # not a project group room (project_id is null), so a 2-person project chat
+    # is never mistaken for a direct message.
     matching_conv_query = (
         select(ConversationMember.conversation_id)
-        .where(ConversationMember.conversation_id.in_(shared_convs))
+        .join(Conversation, Conversation.id == ConversationMember.conversation_id)
+        .where(
+            ConversationMember.conversation_id.in_(shared_convs),
+            Conversation.project_id.is_(None),
+        )
         .group_by(ConversationMember.conversation_id)
-        .having(func.count(ConversationMember.user_id) == 2) # and if it's a group chat?? + What do u thinl=k about having only group chats after the group is formed.. i'm just creating hell here arn't I
+        .having(func.count(ConversationMember.user_id) == 2)
     )
     
     matching_conv_id = await db.scalar(matching_conv_query)
@@ -112,6 +119,61 @@ async def get_or_create_direct_conversation(
         raise ConflictError(t("chat", "error.failed_to_create_chat", locale))
 
     return await get_conversation_by_id(db, new_conv.id, user_a_id, locale)
+
+
+async def get_or_create_project_conversation(
+    db: AsyncSession, project_id: uuid.UUID, current_user_id: uuid.UUID, locale: str = DEFAULT_LOCALE
+) -> ConversationResponse:
+    """The single team group chat for a project. The caller must be a project
+    member; any members missing from the room are added so it always mirrors the
+    current team."""
+    # 1. The caller must belong to the project.
+    caller = await db.scalar(
+        select(ProjectMembership).where(
+            ProjectMembership.project_id == project_id,
+            ProjectMembership.user_id == current_user_id,
+        )
+    )
+    if not caller:
+        raise ForbiddenError(t("chat", "error.not_project_member", locale))
+
+    # 2. All current project member ids.
+    member_ids = list(
+        (
+            await db.execute(
+                select(ProjectMembership.user_id).where(ProjectMembership.project_id == project_id)
+            )
+        ).scalars().all()
+    )
+
+    # 3. Find the project's room, or create it with the whole team.
+    conv = await db.scalar(select(Conversation).where(Conversation.project_id == project_id))
+    if conv is None:
+        project = await db.get(Project, project_id)
+        conv = Conversation(project_id=project_id, title=project.title if project else None)
+        db.add(conv)
+        await db.flush()  # assigns conv.id
+        for uid in member_ids:
+            db.add(ConversationMember(conversation_id=conv.id, user_id=uid))
+        await db.commit()
+    else:
+        # Keep the room in sync with the team (add newly-joined members).
+        existing = set(
+            (
+                await db.execute(
+                    select(ConversationMember.user_id).where(
+                        ConversationMember.conversation_id == conv.id
+                    )
+                )
+            ).scalars().all()
+        )
+        missing = [uid for uid in member_ids if uid not in existing]
+        if missing:
+            for uid in missing:
+                db.add(ConversationMember(conversation_id=conv.id, user_id=uid))
+            await db.commit()
+
+    return await get_conversation_by_id(db, conv.id, current_user_id, locale)
 
 
 async def get_conversation_by_id(
@@ -244,7 +306,12 @@ async def get_user_conversations(db: AsyncSession, user_id: uuid.UUID) -> list[C
 # ── Message Core Operations ───────────────────────────────────────────────────
 
 async def save_message(
-    db: AsyncSession, conversation_id: uuid.UUID, sender_id: uuid.UUID, content: str, locale: str = DEFAULT_LOCALE
+    db: AsyncSession,
+    conversation_id: uuid.UUID,
+    sender_id: uuid.UUID,
+    content: str,
+    mentioned_user_ids: list[uuid.UUID] | None = None,
+    locale: str = DEFAULT_LOCALE,
 ) -> MessageResponse:
     """Saves a new chat message to PostgreSQL and bumps the parent conversation's updated_at timestamp."""
     # 1. Verify user membership in conversation before writing message (Security)
@@ -264,6 +331,26 @@ async def save_message(
         content=content,
     )
     db.add(new_message)
+    await db.flush()  # assigns new_message.id so mentions can reference it
+
+    # 2b. Record @mentions — only for real members of this conversation (and not
+    # the sender themselves), so a bad id can't break the write.
+    if mentioned_user_ids:
+        member_ids = set(
+            (
+                await db.execute(
+                    select(ConversationMember.user_id).where(
+                        ConversationMember.conversation_id == conversation_id
+                    )
+                )
+            ).scalars().all()
+        )
+        valid = [uid for uid in set(mentioned_user_ids) if uid in member_ids and uid != sender_id]
+        if valid:
+            await db.execute(
+                message_mentions.insert(),
+                [{"message_id": new_message.id, "mentioned_user_id": uid} for uid in valid],
+            )
 
     # 3. Bump the updated_at timestamp on parent conversation to buble it up in inboxes
     conversation = await db.get(Conversation, conversation_id)
@@ -340,41 +427,9 @@ async def get_conversation_messages(
     response_messages.reverse()
     return response_messages
 
-async def send_message(
-    db: AsyncSession, 
-    sender_id: UUID, 
-    payload: SendMessageRequest,
-    locale: str
-) -> ChatMessage:
-    # 1. Fetch mentioned users to verify they belong to the channel
-    mentioned_users = []
-    if payload.mentioned_user_ids:
-        stmt = select(User).where(User.id.in_(payload.mentioned_user_ids))
-        result = await db.execute(stmt)
-        mentioned_users = result.scalars().all()
-
-    # 2. Save message with linked mentions
-    new_message = ChatMessage(
-        sender_id=sender_id,
-        channel_id=payload.channel_id,
-        encrypted_content=payload.encrypted_content,
-        mentions=mentioned_users
-    )
-    db.add(new_message)
-    await db.commit()
-    await db.refresh(new_message)
-
-    # 3. Dispatch specific Mention events over WebSockets/Push
-    for user in mentioned_users:
-        if user.id != sender_id: # Don't notify yourself if you tag yourself
-            await notify_user_of_mention(
-                target_user_id=user.id,
-                channel_id=payload.channel_id,
-                sender_id=sender_id,
-                message_id=new_message.id
-            )
-
-    return new_message
+# NOTE: an earlier draft `send_message` (channel_id / encrypted_content /
+# ChatMessage / notify_user_of_mention) was broken and unused — @mention handling
+# now lives in save_message above, which the WebSocket endpoint calls.
 
 # ── Unread tracking ────────────────────────────────────────────────────────────
 

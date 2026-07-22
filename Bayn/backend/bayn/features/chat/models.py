@@ -23,7 +23,13 @@ class Conversation(Base):
     )
     # Optional title (useful if this grows into project group chats, otherwise null for direct messages)
     title: Mapped[str | None] = mapped_column(String(150), nullable=True)
-    
+
+    # When set, this conversation is a project's team group chat (all members
+    # of the project share one room). Null for 1-on-1 direct messages.
+    project_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=True
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False #what is nullable if it's 'created_at' + timezone should be linked to the location
     )

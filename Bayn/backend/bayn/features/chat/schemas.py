@@ -82,6 +82,7 @@ class WSIncomingMessage(BaseModel):
     """Validates messages sent by clients over active WebSocket connections."""
     conversation_id: uuid.UUID
     content: str = Field(..., min_length=1, max_length=2000) # i think i got it but needs a little more clarity
+    mentioned_user_ids: list[uuid.UUID] = Field(default_factory=list)
 
 
 class WSOutgoingMessage(BaseModel):
