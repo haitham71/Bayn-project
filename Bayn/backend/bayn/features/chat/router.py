@@ -89,10 +89,11 @@ async def get_chat_history(
 
 @router.get("/unread-count", response_model=UnreadCountResponse, summary="My unread chat message count")
 async def get_unread_count(
+    direct_only: bool = False,
     current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ) -> UnreadCountResponse:
-    return await service.get_unread_message_count(db, current_user.id)
+    return await service.get_unread_message_count(db, current_user.id, direct_only=direct_only)
 
 
 @router.post("/{conversation_id}/read", status_code=204, summary="Mark a conversation as read")
