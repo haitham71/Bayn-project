@@ -320,6 +320,7 @@ async def list_members(db: AsyncSession, project_id: uuid.UUID) -> list[ProjectM
         spec = spec_map.get(user.id)
         members.append(ProjectMemberResponse(
             user_id=user.id,
+            username=user.username,
             name_en=f"{user.first_name_en} {user.last_name_en}".strip(),
             name_ar=f"{user.first_name_ar} {user.last_name_ar}".strip(),
             specialization_id=user.specialization_id,
