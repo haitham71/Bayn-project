@@ -297,9 +297,6 @@ export default function IdeaDetailsPage({ onNavigate }) {
                       ) : ownerProfile ? (
                         <div className="id__profile">
                           <hr className="id__divider" />
-                          {ownerProfile.username && (
-                            <p className="id__profile-username">@{ownerProfile.username}</p>
-                          )}
                           {ownerProfile.years_of_experience && (
                             <div className="id__profile-field">
                               <span className="id__profile-label">{t('ideaDetails.experience')}</span>

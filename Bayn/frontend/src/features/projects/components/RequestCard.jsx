@@ -145,7 +145,6 @@ export default function RequestCard({ request: r, now, actioningId, onAccept, on
             <p className="jr__profile-state">{t('joinRequests.loadingProfile')}</p>
           ) : profile ? (
             <div className="jr__profile">
-              {profile.username && <span className="jr__profile-username">@{profile.username}</span>}
               {profile.years_of_experience && (
                 <div className="jr__profile-field">
                   <span className="jr__profile-label">{t('joinRequests.experience')}</span>
