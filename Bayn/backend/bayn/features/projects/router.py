@@ -100,9 +100,12 @@ async def update_project(
 )
 async def list_members(
     project_id: uuid.UUID,
+    current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
+    locale: str = Depends(get_locale),
 ) -> list[ProjectMemberResponse]:
-    return await service.list_members(db, project_id)
+    # The roster is team-internal: only the project's own members can read it.
+    return await service.list_members(db, project_id, current_user.id, locale)
 
 
 @projects_router.delete("/{project_id}/leave", status_code=204, summary="Leave a project")

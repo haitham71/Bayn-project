@@ -287,7 +287,15 @@ async def update_project(
     return await get_project(db, project_id, locale)
 
 
-async def list_members(db: AsyncSession, project_id: uuid.UUID) -> list[ProjectMemberResponse]:
+async def list_members(
+    db: AsyncSession,
+    project_id: uuid.UUID,
+    viewer_id: uuid.UUID,
+    locale: str = DEFAULT_LOCALE,
+) -> list[ProjectMemberResponse]:
+    # Team-internal, so the caller has to belong to the project themselves.
+    await _require_member(db, project_id, viewer_id, locale)
+
     # Members with the public info a team list needs (name, avatar, role).
     result = await db.execute(
         select(User, ProjectMembership.role)
