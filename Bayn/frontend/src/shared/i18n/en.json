@@ -542,5 +542,11 @@
     "placeholder": "Write a message…",
     "empty": "No messages yet — start the conversation with your team.",
     "loading": "Loading messages…"
+  },
+  "directChat": {
+    "title": "Messages",
+    "loading": "Loading…",
+    "noContacts": "No teammates yet.",
+    "empty": "No messages yet — say hi!"
   }
 }

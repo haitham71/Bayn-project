@@ -29,6 +29,11 @@ export default function TeamChat({ project, currentUserId, locale }) {
       : `${s?.first_name_en || ''} ${s?.last_name_en || ''}`
     ).trim();
   const initialOf = (s) => (personName(s) || s?.username || '?').charAt(0).toUpperCase();
+  const fmtTime = (iso) =>
+    new Intl.DateTimeFormat(locale === 'ar' ? 'ar' : 'en', {
+      hour: 'numeric',
+      minute: '2-digit',
+    }).format(new Date(iso));
 
   // Mentionable teammates (everyone in the room but me).
   const candidates = members
@@ -185,18 +190,33 @@ export default function TeamChat({ project, currentUserId, locale }) {
         ) : messages.length === 0 ? (
           <p className="tc__empty">{t('teamChat.empty')}</p>
         ) : (
-          messages.map((m) => {
+          messages.map((m, i) => {
             const mine = m.sender_id === currentUserId;
+            // Consecutive messages from the same sender connect above/below.
+            const cont = i > 0 && messages[i - 1].sender_id === m.sender_id;
+            const next = messages[i + 1];
+            const contBelow = next && next.sender_id === m.sender_id;
+            // Show the time on the last message of a same-sender, same-minute run.
+            const showTime =
+              !next ||
+              next.sender_id !== m.sender_id ||
+              fmtTime(next.created_at) !== fmtTime(m.created_at);
             return (
-              <div key={m.id} className={`tc__msg${mine ? ' tc__msg--mine' : ''}`}>
-                {!mine && (
+              <div
+                key={m.id}
+                className={`tc__msg${mine ? ' tc__msg--mine' : ''}${cont ? ' tc__msg--cont' : ''}${
+                  contBelow ? ' tc__msg--cont-below' : ''
+                }`}
+              >
+                {!mine && !cont && (
                   <span className="tc__msg-avatar" aria-hidden="true">
                     {m.sender?.avatar_url ? <img src={m.sender.avatar_url} alt="" /> : initialOf(m.sender)}
                   </span>
                 )}
                 <div className="tc__bubble">
-                  {!mine && <span className="tc__msg-name">{personName(m.sender)}</span>}
+                  {!mine && !cont && <span className="tc__msg-name">{personName(m.sender)}</span>}
                   <span className="tc__msg-text" dir="auto">{renderContent(m.content)}</span>
+                  {showTime && <span className="tc__msg-time">{fmtTime(m.created_at)}</span>}
                 </div>
               </div>
             );

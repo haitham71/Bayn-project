@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useProfile } from '@/shared/hooks/useProfile';
 import Search from '@/assets/icons/search.svg?react';
 import Bell from '@/assets/icons/bell.svg?react';
-import MessageSquare from '@/assets/icons/message-square-text.svg?react';
+import MessagesMenu from '@/features/chat/components/MessagesMenu';
 import './Navbar.css';
 
 // Shared dashboard top bar: search field on the leading edge, notification and
@@ -38,9 +38,7 @@ export default function Navbar({ userName, onSearch }) {
           <Bell width={24} height={24} aria-hidden="true" />
         </button>
 
-        <button type="button" className="bayn-topbar__icon-btn" aria-label={t('home.messages')}>
-          <MessageSquare width={24} height={24} aria-hidden="true" />
-        </button>
+        <MessagesMenu />
 
         <button
           type="button"

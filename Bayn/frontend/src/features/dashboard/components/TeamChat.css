@@ -55,7 +55,7 @@
   padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 0;
 }
 
 .tc__empty {
@@ -70,6 +70,39 @@
   align-items: flex-end;
   gap: 8px;
   max-width: 85%;
+  margin-top: 10px;
+}
+
+.tc__msg:first-child {
+  margin-top: 0;
+}
+
+/* Consecutive message from the same sender — pulled close and its top corner
+   (on the sender's side) flattened so the bubbles read as one connected run. */
+.tc__msg--cont {
+  margin-top: 2px;
+}
+
+/* No avatar on continued messages — indent so the bubble still lines up. */
+.tc__msg--cont:not(.tc__msg--mine) {
+  margin-inline-start: 36px;
+}
+
+.tc__msg--cont:not(.tc__msg--mine) .tc__bubble {
+  border-start-start-radius: 5px;
+}
+
+.tc__msg--cont.tc__msg--mine .tc__bubble {
+  border-start-end-radius: 5px;
+}
+
+/* Bottom corner flattened when continued below (same effect as the top). */
+.tc__msg--cont-below:not(.tc__msg--mine) .tc__bubble {
+  border-end-start-radius: 5px;
+}
+
+.tc__msg--cont-below.tc__msg--mine .tc__bubble {
+  border-end-end-radius: 5px;
 }
 
 .tc__msg--mine {
@@ -124,6 +157,14 @@
   overflow-wrap: anywhere;
   /* Preserve newlines typed with Shift+Enter. */
   white-space: pre-wrap;
+}
+
+.tc__msg-time {
+  align-self: flex-end;
+  margin-top: 1px;
+  font-size: 9.5px;
+  color: inherit;
+  opacity: 0.6;
 }
 
 /* @mention inside a message — set apart by colour, not an underline. */

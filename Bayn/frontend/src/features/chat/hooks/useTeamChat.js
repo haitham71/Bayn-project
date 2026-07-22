@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { getProjectConversation, getMessages, openChatSocket } from '../services/chatService';
+import {
+  getProjectConversation,
+  getMessages,
+  openChatSocket,
+  markConversationRead,
+} from '../services/chatService';
 
 // Loads a project's team conversation + history and keeps it live over the chat
 // WebSocket. Returns { messages, loading, error, send }.
@@ -26,6 +31,7 @@ export function useTeamChat(projectId) {
         if (!alive) return;
         convIdRef.current = conv.id;
         setMembers(conv.members || []);
+        markConversationRead(conv.id).catch(() => {});
         const history = await getMessages(conv.id).catch(() => []);
         if (!alive) return;
         setMessages(history || []);
