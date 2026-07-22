@@ -8,28 +8,39 @@ import i18n, { SUPPORTED_LANGS, detectLang } from '@/shared/i18n/i18n';
 // The public landing page is the first paint, so keep it eager (no chunk flash).
 import LandingPage from '@/features/landing/pages/LandingPage';
 
+// A chunk often lands in a few hundred milliseconds, which is long enough to
+// see the loader and too short to read it — so hold it for at least this long
+// and let the animation play once. Only the first visit to a route waits;
+// React caches the module after that.
+const MIN_LOADER_MS =  1000;
+const lazyPage = (load) =>
+  lazy(() =>
+    Promise.all([load(), new Promise((resolve) => { setTimeout(resolve, MIN_LOADER_MS); })])
+      .then(([module]) => module),
+  );
+
 // Every other page is code-split — its chunk is only fetched when its route is
 // first visited, keeping the initial bundle small.
-const LoginPage = lazy(() => import('@/features/identity/pages/LoginPage'));
-const SignUpPage = lazy(() => import('@/features/identity/pages/SignUpPage'));
-const VerificationPage = lazy(() => import('@/features/identity/pages/VerificationPage'));
-const ProfileSetupPage = lazy(() => import('@/features/identity/pages/ProfileSetupPage'));
-const ConfirmPasswordChangePage = lazy(() => import('@/features/identity/pages/ConfirmPasswordChangePage'));
-const ForgotPasswordPage = lazy(() => import('@/features/identity/pages/ForgotPasswordPage'));
-const ResetPasswordPage = lazy(() => import('@/features/identity/pages/ResetPasswordPage'));
-const HomePage = lazy(() => import('@/features/home/pages/Homepage'));
-const MyProfilePage = lazy(() => import('@/features/profile/pages/MyProfilePage'));
-const MyProjectsPage = lazy(() => import('@/features/projects/pages/MyProjectsPage'));
-const JoinRequestsPage = lazy(() => import('@/features/projects/pages/JoinRequestsPage'));
-const ProjectDashboardPage = lazy(() => import('@/features/dashboard/pages/ProjectDashboard'));
-const SettingsPage = lazy(() => import('@/features/settings/pages/SettingsPage'));
-const CreateIdeaPage = lazy(() => import('@/features/ideas/pages/CreateIdeaPage'));
-const EditIdeaPage = lazy(() => import('@/features/ideas/pages/EditIdeaPage'));
-const IdeasMarketplacePage = lazy(() => import('@/features/ideas/pages/IdeasMarketplacePage'));
-const IdeaDetailsPage = lazy(() => import('@/features/ideas/pages/IdeaDetailsPage'));
-const MeetingsPage = lazy(() => import('@/features/meetings/pages/MeetingsPage'));
+const LoginPage = lazyPage(() => import('@/features/identity/pages/LoginPage'));
+const SignUpPage = lazyPage(() => import('@/features/identity/pages/SignUpPage'));
+const VerificationPage = lazyPage(() => import('@/features/identity/pages/VerificationPage'));
+const ProfileSetupPage = lazyPage(() => import('@/features/identity/pages/ProfileSetupPage'));
+const ConfirmPasswordChangePage = lazyPage(() => import('@/features/identity/pages/ConfirmPasswordChangePage'));
+const ForgotPasswordPage = lazyPage(() => import('@/features/identity/pages/ForgotPasswordPage'));
+const ResetPasswordPage = lazyPage(() => import('@/features/identity/pages/ResetPasswordPage'));
+const HomePage = lazyPage(() => import('@/features/home/pages/Homepage'));
+const MyProfilePage = lazyPage(() => import('@/features/profile/pages/MyProfilePage'));
+const MyProjectsPage = lazyPage(() => import('@/features/projects/pages/MyProjectsPage'));
+const JoinRequestsPage = lazyPage(() => import('@/features/projects/pages/JoinRequestsPage'));
+const ProjectDashboardPage = lazyPage(() => import('@/features/dashboard/pages/ProjectDashboard'));
+const SettingsPage = lazyPage(() => import('@/features/settings/pages/SettingsPage'));
+const CreateIdeaPage = lazyPage(() => import('@/features/ideas/pages/CreateIdeaPage'));
+const EditIdeaPage = lazyPage(() => import('@/features/ideas/pages/EditIdeaPage'));
+const IdeasMarketplacePage = lazyPage(() => import('@/features/ideas/pages/IdeasMarketplacePage'));
+const IdeaDetailsPage = lazyPage(() => import('@/features/ideas/pages/IdeaDetailsPage'));
+const MeetingsPage = lazyPage(() => import('@/features/meetings/pages/MeetingsPage'));
 // Pulls in the heavy Daily SDK only when a user actually opens a meeting.
-const MeetingRoomPage = lazy(() => import('@/features/meetings/pages/MeetingRoomPage'));
+const MeetingRoomPage = lazyPage(() => import('@/features/meetings/pages/MeetingRoomPage'));
 
 // Pages navigate with short keys (onNavigate('home')); this maps each key to its
 // (language-less) URL. goTo() prepends the active /:lang prefix.

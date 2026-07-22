@@ -3,13 +3,15 @@
   place-items: center;
   min-height: 100vh;
   background: var(--bg-surface-primary, #ebe5dc);
-  color: var(--btn-primary-default, #295e4d);
 }
 
-.page-loader__spin {
-  animation: page-loader-spin 0.8s linear infinite;
+/* The mark draws on a 480x320 canvas and scales with this width. */
+.page-loader__mark {
+  width: 250px;
+  max-width: 60vw;
+  line-height: 0;
 }
 
-@keyframes page-loader-spin {
-  to { transform: rotate(360deg); }
+.page-loader__mark svg {
+  display: block;
 }
