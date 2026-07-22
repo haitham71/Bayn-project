@@ -32,18 +32,18 @@ export default function MyProjectsPage({ onNavigate }) {
                   <OwnedProjectCard key={p.id} project={p} />
                 ))}
 
-                <button
-                  type="button"
-                  className="mp__add"
-                  onClick={() => onNavigate?.('createidea')}
-                  disabled={atLimit}
-                  title={atLimit ? t('myProjects.limitReached') : undefined}
-                >
-                  <Plus width={56} height={56} aria-hidden="true" />
-                  <span className="mp__add-label">
-                    {atLimit ? t('myProjects.limitReached') : t('myProjects.postNew')}
-                  </span>
-                </button>
+                {/* Once every project slot is taken there's nothing to add, so
+                    the tile goes away rather than sitting there disabled. */}
+                {!atLimit && (
+                  <button
+                    type="button"
+                    className="mp__add"
+                    onClick={() => onNavigate?.('createidea')}
+                  >
+                    <Plus width={56} height={56} aria-hidden="true" />
+                    <span className="mp__add-label">{t('myProjects.postNew')}</span>
+                  </button>
+                )}
               </div>
             </section>
 

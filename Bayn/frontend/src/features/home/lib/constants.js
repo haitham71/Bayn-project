@@ -28,7 +28,7 @@ export const MAX_AVATARS = 3;
 
 // A user can belong to at most this many projects (owner + member) — mirrors
 // MyProjectsPage / the backend's MAX_MEMBERSHIPS_PER_USER.
-export const MAX_PROJECTS = 2;
+export const MAX_PROJECTS = 3;
 
 export function greetingKey() {
   const hour = new Date().getHours();
