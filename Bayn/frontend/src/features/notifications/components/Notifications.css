@@ -1,0 +1,195 @@
+/* Navbar notifications bell + dropdown card. */
+
+.ntf {
+  position: relative;
+  display: inline-flex;
+}
+
+.ntf__badge {
+  position: absolute;
+  top: -1px;
+  inset-inline-end: -1px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--color-primary-250);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: none;
+  box-shadow: 0 0 0 2px var(--bg-surface-primary, #ebe5dc);
+}
+
+.ntf__popover {
+  position: absolute;
+  top: calc(100% + 10px);
+  inset-inline-end: 0;
+  z-index: 70;
+  width: 340px;
+  max-width: calc(100vw - 32px);
+  padding: 6px;
+  border-radius: 14px;
+  background: var(--bg-surface-primary, #ebe5dc);
+  border: 1px solid var(--bg-surface-secondary, #d7cbb9);
+  box-shadow: 0 16px 38px -12px rgba(4, 18, 14, 0.45);
+  animation: ntf-pop 0.15s ease;
+}
+
+@keyframes ntf-pop {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: none; }
+}
+
+.ntf__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px 10px;
+}
+
+.ntf__title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-title, #646464);
+}
+
+.ntf__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ntf__link {
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--btn-primary-default, #295e4d);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.ntf__link:hover {
+  opacity: 0.75;
+}
+
+.ntf__empty {
+  margin: 16px 10px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-supporting, #786c57);
+}
+
+.ntf__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  /* Show ~4 rows; the rest scroll. */
+  max-height: 296px;
+  overflow-y: auto;
+}
+
+.ntf__row {
+  display: flex;
+  align-items: stretch;
+  border-radius: 10px;
+  transition: background-color 0.15s ease;
+}
+
+.ntf__row:hover {
+  background: var(--bg-surface-secondary, #d7cbb9);
+}
+
+.ntf__row--unread {
+  background: rgba(119, 181, 160, 0.14);
+}
+
+.ntf__item {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: start;
+}
+
+.ntf__close {
+  flex: 0 0 auto;
+  align-self: center;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  margin-inline-end: 6px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-supporting, #786c57);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.ntf__close:hover {
+  background: rgba(0, 0, 0, 0.08);
+  color: var(--text-title, #0f3d2e);
+}
+
+.ntf__icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+
+.ntf__icon--meeting {
+  background: rgba(59, 130, 247, 0.15);
+  color: #3b82f7;
+}
+
+.ntf__icon--task {
+  background: rgba(33, 176, 125, 0.16);
+  color: #1f9e6f;
+}
+
+.ntf__body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.ntf__text {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-title, #0f3d2e);
+  overflow-wrap: anywhere;
+}
+
+.ntf__time {
+  font-size: 11px;
+  color: var(--text-supporting, #786c57);
+}
+
+.ntf__dot {
+  flex: 0 0 auto;
+  align-self: center;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--btn-primary-default, #295e4d);
+}

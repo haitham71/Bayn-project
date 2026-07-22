@@ -28,7 +28,7 @@ function formFromTask(task) {
     priority: (task.priority || 'medium').toLowerCase(),
     status: (task.status || 'todo').toLowerCase(),
     due_date: task.due_date ? toDateStr(new Date(task.due_date)) : '',
-    assigned_to: task.assigned_to || '',
+    assigned_to: (task.assigned_to && task.assigned_to[0]) || '',
   };
 }
 
@@ -84,7 +84,7 @@ export default function TaskSheet({ open, task, projectId, team, isOwner, curren
       status: form.status,
       priority: form.priority,
       due_date: form.due_date ? new Date(form.due_date).toISOString() : null,
-      assigned_to: form.assigned_to || null,
+      assigned_to: form.assigned_to ? [form.assigned_to] : [],
     };
     try {
       if (editingTaskId) {

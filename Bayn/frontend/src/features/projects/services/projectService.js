@@ -74,7 +74,7 @@ export const listAssignedTasks = (projects, userId, { includeDone = true } = {})
       .flat()
       .filter(
         (task) =>
-          task.assigned_to === userId &&
+          (task.assigned_to || []).includes(userId) &&
           (includeDone || (task.status || 'todo').toLowerCase() !== 'done'),
       ),
   );

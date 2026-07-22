@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useProfile } from '@/shared/hooks/useProfile';
 import Search from '@/assets/icons/search.svg?react';
-import Bell from '@/assets/icons/bell.svg?react';
+import NotificationsMenu from '@/features/notifications/components/NotificationsMenu';
 import MessagesMenu from '@/features/chat/components/MessagesMenu';
 import './Navbar.css';
 
@@ -34,9 +34,7 @@ export default function Navbar({ userName, onSearch }) {
       </form>
 
       <div className="bayn-topbar__actions">
-        <button type="button" className="bayn-topbar__icon-btn" aria-label={t('home.notifications')}>
-          <Bell width={24} height={24} aria-hidden="true" />
-        </button>
+        <NotificationsMenu />
 
         <MessagesMenu />
 

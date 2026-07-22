@@ -43,7 +43,7 @@ export default function TaskBoard({ tasks, tasksError, isOwner, memberById, loca
                     status={status}
                     now={now}
                     locale={locale}
-                    assignee={memberById(task.assigned_to)}
+                    assignee={memberById(task.assigned_to?.[0])}
                     onOpen={() => onOpenTask(task)}
                     t={t}
                   />

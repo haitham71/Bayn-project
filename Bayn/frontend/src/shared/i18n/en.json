@@ -548,5 +548,13 @@
     "loading": "Loading…",
     "noContacts": "No teammates yet.",
     "empty": "No messages yet — say hi!"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "markAllRead": "Mark all read",
+    "empty": "No notifications",
+    "loading": "Loading…",
+    "clearAll": "Clear all",
+    "dismiss": "Dismiss"
   }
 }
