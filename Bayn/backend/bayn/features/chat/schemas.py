@@ -30,13 +30,19 @@ class MessageResponse(BaseModel):
     created_at: datetime
     sender: ChatUserSummary
 
-    class SendMessageRequest(BaseModel):
-    encrypted_content: str = Field(..., description="Encrypted message payload")
-    channel_id: UUID
-    mentioned_user_ids: list[UUID] = Field(
+class MessageMentionRequest(BaseModel):
+    """Payload schema purely for routing @mention notification events."""
+    conversation_id: uuid.UUID
+    mentioned_user_ids: list[uuid.UUID] = Field(
         default_factory=list, 
-        description="List of User UUIDs explicitly @mentioned in this message for notification routing"
+        description="List of User UUIDs explicitly @mentioned"
     )
+
+class SendMessageRequest(BaseModel):
+    """Payload schema for sending a message via HTTP REST endpoint (if applicable)."""
+    conversation_id: uuid.UUID
+    content: str = Field(..., min_length=1, max_length=4000)
+    mentioned_user_ids: list[uuid.UUID] = Field(default_factory=list)
 
 class ConversationMemberResponse(BaseModel):
     """Schema representing a member inside a specific conversation."""
