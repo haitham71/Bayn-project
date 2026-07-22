@@ -541,8 +541,6 @@
     "send": "Send",
     "placeholder": "Write a message…",
     "empty": "No messages yet — start the conversation with your team.",
-    "sample1": "Hey team, I pushed the latest changes.",
-    "sample2": "Nice! I'll review them now.",
-    "sample3": "Let's sync on the rest in the next meeting."
+    "loading": "Loading messages…"
   }
 }

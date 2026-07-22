@@ -464,7 +464,12 @@ export default function ProjectDashboardPage({ onNavigate }) {
             return (
               <li key={member.user_id} className="pd__team-row">
                 <div>
-                  <p className="pd__team-name">{name || '—'}</p>
+                  <p className="pd__team-name">
+                    {name || '—'}
+                    {member.username && (
+                      <span className="pd__team-username"> · <bdi>@{member.username}</bdi></span>
+                    )}
+                  </p>
                   <p className="pd__team-role">
                     {member.role === 'owner' ? t('projectDashboard.owner') : ''}
                     {member.role === 'owner' && specialization ? ' · ' : ''}

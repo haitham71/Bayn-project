@@ -46,4 +46,7 @@ export const API = {
     joinRequests: '/meetings/join-requests',
     team: '/meetings/team',
   },
+  chat: {
+    base: '/chats',
+  },
 };
