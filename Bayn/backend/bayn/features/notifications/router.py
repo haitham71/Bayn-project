@@ -42,3 +42,21 @@ async def mark_read(
     locale: str = Depends(get_locale),
 ) -> NotificationResponse:
     return await service.mark_read(db, current_user.id, notification_id, locale)
+
+
+@router.delete("/{notification_id}", status_code=204, summary="Delete one notification")
+async def delete_notification(
+    notification_id: uuid.UUID,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+    locale: str = Depends(get_locale),
+) -> None:
+    await service.delete_notification(db, current_user.id, notification_id, locale)
+
+
+@router.delete("", status_code=204, summary="Clear all my notifications")
+async def clear_notifications(
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    await service.delete_all_notifications(db, current_user.id)
