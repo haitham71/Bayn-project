@@ -13,7 +13,7 @@ import './MyProjectsPage.css';
 export default function MyProjectsPage({ onNavigate }) {
   const { t } = useTranslation();
   const { user, fullName } = useCurrentUser();
-  const { meetings, owned, working, myTasks, atLimit } = useMyProjectsData(user?.id);
+  const { meetings, owned, working, myTasks, projectStats, atLimit } = useMyProjectsData(user?.id);
 
   return (
     <div className="mp">
@@ -52,7 +52,7 @@ export default function MyProjectsPage({ onNavigate }) {
               <h1 className="mp__title">{t('myProjects.youWorkOn')}</h1>
               <div className="mp__cards">
                 {working.map((p) => (
-                  <WorkingProjectCard key={p.id} project={p} />
+                  <WorkingProjectCard key={p.id} project={p} stats={projectStats[p.id]} />
                 ))}
               </div>
             </section>

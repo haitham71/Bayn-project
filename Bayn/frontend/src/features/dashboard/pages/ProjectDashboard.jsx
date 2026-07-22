@@ -272,7 +272,6 @@ export default function ProjectDashboardPage({ onNavigate }) {
   };
 
   const requestAvatars = useAvatars(incomingRequests.map((r) => r.requester?.id));
-  const teamAvatars = useAvatars(team.map((m) => m.user_id));
   const requesterName = (r) =>
     r.requester
       ? locale === 'ar'
@@ -488,8 +487,8 @@ export default function ProjectDashboardPage({ onNavigate }) {
               <li key={member.user_id} className="pd__team-row">
                 <div className="pd__team-main">
                   <span className="pd__team-avatar" aria-hidden="true">
-                    {teamAvatars[member.user_id] ? (
-                      <img src={teamAvatars[member.user_id]} alt="" className="pd__team-avatar-img" />
+                    {member.avatar_url ? (
+                      <img src={member.avatar_url} alt="" className="pd__team-avatar-img" />
                     ) : (
                       (name || '—').trim().charAt(0).toUpperCase()
                     )}

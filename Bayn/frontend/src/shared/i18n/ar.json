@@ -128,6 +128,7 @@
     "backToProjects": "العودة إلى مشاريعك",
     "opening": "{{count}} شاغر",
     "postedDaysAgo": "نُشر قبل {{count}} أيام",
+    "openTasks": "{{count}} مهمة مفتوحة",
     "tasksTitle": "المهام",
     "tasksEmpty": "لا مهام مسندة إليك حتى الآن.",
     "upcomingMeetings": "الاجتماعات القادمة"

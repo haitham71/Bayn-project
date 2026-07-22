@@ -128,6 +128,7 @@
     "backToProjects": "Back to your projects",
     "opening": "{{count}} Opening",
     "postedDaysAgo": "Posted {{count}} days ago",
+    "openTasks": "{{count}} open tasks",
     "tasksTitle": "Tasks",
     "tasksEmpty": "No tasks assigned to you yet.",
     "upcomingMeetings": "Upcoming meetings"
