@@ -25,6 +25,7 @@ import {
 import { useProjectTasks } from '../hooks/useProjectTasks';
 import TaskBoard from '../components/TaskBoard';
 import TaskSheet from '../components/TaskSheet';
+import TeamChat from '../components/TeamChat';
 import { toDateStr, parseDateStr } from '../lib/dates';
 import './ProjectDashboard.css';
 
@@ -353,6 +354,132 @@ export default function ProjectDashboardPage({ onNavigate }) {
   const selectedProject =
     project || myProjects.find((p) => p.id === projectId) || null;
 
+  // Panels reused across the owner/member layouts (composed differently below).
+  const upcomingMeetingsPanel = (
+    <section className="pd__panel">
+      <div className="pd__panel-head">
+        <h3>{t('projectDashboard.upcomingMeetingsTitle')}</h3>
+        <button
+          type="button"
+          className="pd__panel-link"
+          onClick={() => onNavigate?.('meetings')}
+        >
+          {t('projectDashboard.viewAll')}
+        </button>
+      </div>
+      {upcomingMeetings.length === 0 ? (
+        <p className="pd__empty">{t('projectDashboard.meetingsEmpty')}</p>
+      ) : (
+        <ul className="pd__meetings pd__meetings--scroll bayn-scroll">
+          {upcomingMeetings.map((m) => (
+            <li key={m.id} className="pd__meeting-row">
+              <span className="pd__meeting-date">
+                <span className="pd__meeting-day">{dayNum(m.start_time)}</span>
+                <span className="pd__meeting-month">{monthShort(m.start_time)}</span>
+              </span>
+              <div>
+                <p className="pd__meeting-title">
+                  {m.title || t('projectDashboard.meeting')}
+                </p>
+                <span className="pd__meeting-badge">
+                  {t('projectDashboard.confirmed')}
+                </span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+
+  const contractPanel = (
+    <section className="pd__panel">
+      <div className="pd__panel-head">
+        <h3>{t(isOwner ? 'projectDashboard.contracts' : 'projectDashboard.myContract')}</h3>
+        <button type="button" className="pd__panel-link">
+          {t('projectDashboard.viewAll')}
+        </button>
+      </div>
+      <p className="pd__empty">{t('projectDashboard.contractUnavailable')}</p>
+    </section>
+  );
+
+  const joinRequestsPanel = (
+    <section className="pd__panel">
+      <div className="pd__panel-head">
+        <h3>{t('projectDashboard.joinRequests')}</h3>
+        <button
+          type="button"
+          className="pd__panel-link"
+          onClick={() => navigate(`/join-requests/${projectId}`)}
+        >
+          {t('projectDashboard.viewAll')}
+        </button>
+      </div>
+      {incomingRequests.length === 0 ? (
+        <p className="pd__empty">{t('joinRequests.empty')}</p>
+      ) : (
+        <ul className="pd__requests">
+          {incomingRequests.slice(0, 4).map((r) => {
+            const stage = stageOf(r);
+            return (
+              <li key={r.id} className="pd__request-row">
+                <div className="pd__request-top">
+                  <span className="pd__request-avatar" aria-hidden="true">
+                    {requesterName(r).trim().charAt(0).toUpperCase()}
+                  </span>
+                  <div>
+                    <p className="pd__request-name">{requesterName(r)}</p>
+                    {r.requester?.job_title && (
+                      <p className="pd__request-role">{r.requester.job_title}</p>
+                    )}
+                  </div>
+                  <span className={`pd__req-stage pd__req-stage--${stage}`}>
+                    {t(`joinRequests.tab.${stage}`)}
+                  </span>
+                </div>
+                {r.message && <p className="pd__request-msg">{r.message}</p>}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
+  );
+
+  const projectTeamPanel = (
+    <aside className="pd__panel">
+      <div className="pd__panel-head">
+        <h3>{t('projectDashboard.projectTeam')}</h3>
+      </div>
+      {team.length === 0 ? (
+        <p className="pd__empty">{t('projectDashboard.teamUnavailable')}</p>
+      ) : (
+        <ul className="pd__team">
+          {team.map((member) => {
+            const name = locale === 'ar' ? member.name_ar : member.name_en;
+            const specialization =
+              locale === 'ar' ? member.specialization_ar : member.specialization_en;
+            const isMe = member.user_id === user?.id;
+            return (
+              <li key={member.user_id} className="pd__team-row">
+                <div>
+                  <p className="pd__team-name">{name || '—'}</p>
+                  <p className="pd__team-role">
+                    {member.role === 'owner' ? t('projectDashboard.owner') : ''}
+                    {member.role === 'owner' && specialization ? ' · ' : ''}
+                    {specialization || ''}
+                  </p>
+                </div>
+                {isMe && <span className="pd__team-you">{t('projectDashboard.you')}</span>}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </aside>
+  );
+
   return (
     <div className="pd bayn-scroll">
       <Sidebar activeKey="projects" onNavigate={onNavigate} />
@@ -525,180 +652,32 @@ export default function ProjectDashboardPage({ onNavigate }) {
               </section>
             )}
 
-            {/* Team on top; the smaller cards stack under it on the right. */}
-            <div className="pd__lower-cards">
-              {/* The project's team roster (real members). Per-meeting
-                  attendance isn't wired yet — the backend only records
-                  self-reported attendance, with no team-wide read endpoint. */}
-              <aside className="pd__panel">
-                <div className="pd__panel-head">
-                  <h3>{t('projectDashboard.projectTeam')}</h3>
-                </div>
-                {team.length === 0 ? (
-                  <p className="pd__empty">
-                    {t('projectDashboard.teamUnavailable')}
-                  </p>
-                ) : (
-                  <ul className="pd__team">
-                    {team.map((member) => {
-                      const name =
-                        locale === 'ar' ? member.name_ar : member.name_en;
-                      const specialization =
-                        locale === 'ar'
-                          ? member.specialization_ar
-                          : member.specialization_en;
-                      const isMe = member.user_id === user?.id;
-                      return (
-                        <li key={member.user_id} className="pd__team-row">
-                          <div>
-                            <p className="pd__team-name">{name || '—'}</p>
-                            <p className="pd__team-role">
-                              {member.role === 'owner'
-                                ? t('projectDashboard.owner')
-                                : ''}
-                              {member.role === 'owner' && specialization
-                                ? ' · '
-                                : ''}
-                              {specialization || ''}
-                            </p>
-                          </div>
-                          {isMe && (
-                            <span className="pd__team-you">
-                              {t('projectDashboard.you')}
-                            </span>
-                          )}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </aside>
-
-              <div className="pd__cards-row">
-                {/* Owner-only: incoming join requests. Members don't manage
-                    requests, so this panel doesn't show for them at all. */}
-                {isOwner && (
-                  <section className="pd__panel">
-                    <div className="pd__panel-head">
-                      <h3>{t('projectDashboard.joinRequests')}</h3>
-                      <button
-                        type="button"
-                        className="pd__panel-link"
-                        onClick={() => navigate(`/join-requests/${projectId}`)}
-                      >
-                        {t('projectDashboard.viewAll')}
-                      </button>
-                    </div>
-                    {incomingRequests.length === 0 ? (
-                      <p className="pd__empty">{t('joinRequests.empty')}</p>
-                    ) : (
-                      <ul className="pd__requests">
-                        {incomingRequests.slice(0, 4).map((r) => {
-                          const stage = stageOf(r);
-                          return (
-                            <li key={r.id} className="pd__request-row">
-                              <div className="pd__request-top">
-                                <span
-                                  className="pd__request-avatar"
-                                  aria-hidden="true"
-                                >
-                                  {requesterName(r)
-                                    .trim()
-                                    .charAt(0)
-                                    .toUpperCase()}
-                                </span>
-                                <div>
-                                  <p className="pd__request-name">
-                                    {requesterName(r)}
-                                  </p>
-                                  {r.requester?.job_title && (
-                                    <p className="pd__request-role">
-                                      {r.requester.job_title}
-                                    </p>
-                                  )}
-                                </div>
-                                <span
-                                  className={`pd__req-stage pd__req-stage--${stage}`}
-                                >
-                                  {t(`joinRequests.tab.${stage}`)}
-                                </span>
-                              </div>
-                              {r.message && (
-                                <p className="pd__request-msg">{r.message}</p>
-                              )}
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    )}
-                  </section>
-                )}
-
-                {/* Upcoming meetings */}
-                <section className="pd__panel">
-                  <div className="pd__panel-head">
-                    <h3>{t('projectDashboard.upcomingMeetingsTitle')}</h3>
-                    <button
-                      type="button"
-                      className="pd__panel-link"
-                      onClick={() => onNavigate?.('meetings')}
-                    >
-                      {t('projectDashboard.viewAll')}
-                    </button>
+            <div className={`pd__mid pd__mid--${isOwner ? 'owner' : 'member'}`}>
+              {isOwner ? (
+                <>
+                  {joinRequestsPanel}
+                  {upcomingMeetingsPanel}
+                  {contractPanel}
+                </>
+              ) : (
+                <>
+                  {upcomingMeetingsPanel}
+                  <div className="pd__mid-row">
+                    {contractPanel}
+                    {projectTeamPanel}
                   </div>
-                  {upcomingMeetings.length === 0 ? (
-                    <p className="pd__empty">
-                      {t('projectDashboard.meetingsEmpty')}
-                    </p>
-                  ) : (
-                    <ul className="pd__meetings pd__meetings--scroll bayn-scroll">
-                      {upcomingMeetings.map((m) => (
-                        <li key={m.id} className="pd__meeting-row">
-                          <span className="pd__meeting-date">
-                            <span className="pd__meeting-day">
-                              {dayNum(m.start_time)}
-                            </span>
-                            <span className="pd__meeting-month">
-                              {monthShort(m.start_time)}
-                            </span>
-                          </span>
-                          <div>
-                            <p className="pd__meeting-title">
-                              {m.title || t('projectDashboard.meeting')}
-                            </p>
-                            <span className="pd__meeting-badge">
-                              {t('projectDashboard.confirmed')}
-                            </span>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </section>
-
-                {/* Contracts (owner: every contract on this project) vs a single
-                "my contract" summary (member). Backend has no "contracts by
-                project" lookup yet, so this stays visually complete but empty
-                until that endpoint exists. */}
-                <section className="pd__panel">
-                  <div className="pd__panel-head">
-                    <h3>
-                      {t(
-                        isOwner
-                          ? 'projectDashboard.contracts'
-                          : 'projectDashboard.myContract',
-                      )}
-                    </h3>
-                    <button type="button" className="pd__panel-link">
-                      {t('projectDashboard.viewAll')}
-                    </button>
-                  </div>
-                  <p className="pd__empty">
-                    {t('projectDashboard.contractUnavailable')}
-                  </p>
-                </section>
-              </div>
+                </>
+              )}
             </div>
+
+            {selectedProject && (
+              <TeamChat
+                project={selectedProject}
+                team={team}
+                currentUserId={user?.id}
+                locale={locale}
+              />
+            )}
           </div>
 
           {/* The task board spans the full width at the bottom. */}
@@ -728,6 +707,7 @@ export default function ProjectDashboardPage({ onNavigate }) {
           setSheetOpen(false);
         }}
       />
+
     </div>
   );
 }

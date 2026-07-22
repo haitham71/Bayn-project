@@ -608,14 +608,16 @@ color: #9a3b2e; }
 .pd__lower {
   display: flex;
   gap: 20px;
-  align-items: flex-start;
+  align-items: stretch;
 }
 
 .pd__lower .pd__schedule {
-  flex: 0 0 360px;
+  flex: 0 0 340px;
+  align-self: flex-start;
 }
 
-.pd__lower-cards {
+/* The middle info column: panels stack (owner) or meetings-then-a-row (member). */
+.pd__mid {
   flex: 1 1 0;
   min-width: 0;
   display: flex;
@@ -623,9 +625,9 @@ color: #9a3b2e; }
   gap: 20px;
 }
 
-.pd__cards-row {
+.pd__mid-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: 1fr 1fr;
   gap: 20px;
   align-items: start;
 }
