@@ -41,6 +41,13 @@
   overflow-y: auto;
 }
 
+/* Near the bottom of the page the suggestions open above the field instead,
+   keeping a gap from the viewport edge (see useDropPlacement). */
+.skills__field--up .skills__menu {
+  top: auto;
+  bottom: calc(100% + 4px);
+}
+
 .skills__option {
   padding: 10px 12px;
   border-radius: 4px;
