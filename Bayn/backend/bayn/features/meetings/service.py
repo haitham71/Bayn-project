@@ -937,6 +937,21 @@ async def cancel_team_meeting(
     if meeting.user_id != owner_id:
         raise ForbiddenError(t("meetings", "team.owner_only", locale))
 
+    # Notify the attendees before the meeting (and its participant rows) are gone.
+    participant_ids = (
+        await db.execute(
+            select(MeetingParticipant.user_id).where(MeetingParticipant.meeting_id == meeting_id)
+        )
+    ).scalars().all()
+    owner = await db.get(User, owner_id)
+    project = await db.get(Project, meeting.project_id)
+    data = _notification_data(owner, project, project_id=str(meeting.project_id))
+    for uid in participant_ids:
+        if uid != owner_id:
+            notifications_service.create_notification(
+                db, uid, NotificationType.meeting_cancelled, data
+            )
+
     await db.delete(meeting)  # cascades to meeting_participants and attendance rows
     await db.commit()
 
