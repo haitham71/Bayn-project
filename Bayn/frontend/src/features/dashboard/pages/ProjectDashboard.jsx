@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import Sidebar from '@/shared/components/Sidebar';
 import Navbar from '@/shared/components/Navbar';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
+import { useAvatars } from '@/shared/hooks/useAvatars';
 import CheckSquare from '@/assets/icons/check-square.svg?react';
 import Clock from '@/assets/icons/clock.svg?react';
 import Calendar from '@/assets/icons/calendar.svg?react';
@@ -267,6 +268,7 @@ export default function ProjectDashboardPage({ onNavigate }) {
     setSheetOpen(true);
   };
 
+  const requestAvatars = useAvatars(incomingRequests.map((r) => r.requester?.id));
   const requesterName = (r) =>
     r.requester
       ? locale === 'ar'
@@ -439,7 +441,11 @@ export default function ProjectDashboardPage({ onNavigate }) {
               <li key={r.id} className="pd__request-row">
                 <div className="pd__request-top">
                   <span className="pd__request-avatar" aria-hidden="true">
-                    {requesterName(r).trim().charAt(0).toUpperCase()}
+                    {requestAvatars[r.requester?.id] ? (
+                      <img src={requestAvatars[r.requester?.id]} alt="" className="pd__request-avatar-img" />
+                    ) : (
+                      requesterName(r).trim().charAt(0).toUpperCase()
+                    )}
                   </span>
                   <div>
                     <p className="pd__request-name">{requesterName(r)}</p>

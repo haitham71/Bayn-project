@@ -330,6 +330,7 @@
     "skills": "Skills",
     "applied": "Applied {{when}}",
     "accept": "Send NDA",
+    "sending": "Sending…",
     "acceptTitle": "Send the NDA?",
     "acceptMsg": "Both parties will receive the NDA to sign, then a meeting is scheduled.",
     "meetingTitle": "Meeting title",
