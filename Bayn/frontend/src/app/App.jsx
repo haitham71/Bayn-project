@@ -12,7 +12,7 @@ import LandingPage from '@/features/landing/pages/LandingPage';
 // see the loader and too short to read it — so hold it for at least this long
 // and let the animation play once. Only the first visit to a route waits;
 // React caches the module after that.
-const MIN_LOADER_MS =  2900;
+const MIN_LOADER_MS =  900;
 const lazyPage = (load) =>
   lazy(() =>
     Promise.all([load(), new Promise((resolve) => { setTimeout(resolve, MIN_LOADER_MS); })])
@@ -90,7 +90,7 @@ function LangApp() {
   return (
     <Routes>
       {/* Public landing page; signed-in visitors go straight to their home. */}
-      <Route path="" element={isAuthenticated() ? <Navigate to="home" replace /> : <LandingPage />} />
+      <Route path="" element={isAuthenticated() ? <Navigate to={`/${lang}/home`} replace /> : <LandingPage />} />
       <Route path="login" element={<LoginPage onNavigate={goTo} />} />
       <Route
         path="signup"
@@ -129,7 +129,12 @@ function LangApp() {
       <Route path="projects/dashboard" element={<ProtectedRoute><ProjectDashboardPage onNavigate={goTo} /></ProtectedRoute>} />
       <Route path="projects/:projectId/dashboard" element={<ProtectedRoute><ProjectDashboardPage onNavigate={goTo} /></ProtectedRoute>} />
       <Route path="settings" element={<ProtectedRoute><SettingsPage onNavigate={goTo} /></ProtectedRoute>} />
-      <Route path="*" element={<Navigate to="login" replace />} />
+      {/* Unknown path: absolute target, otherwise the redirect keeps appending
+          itself to the current URL and re-matches this same route forever. */}
+      <Route
+        path="*"
+        element={<Navigate to={isAuthenticated() ? `/${lang}/home` : `/${lang}`} replace />}
+      />
     </Routes>
   );
 }
