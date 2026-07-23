@@ -12,7 +12,7 @@ import LandingPage from '@/features/landing/pages/LandingPage';
 // see the loader and too short to read it — so hold it for at least this long
 // and let the animation play once. Only the first visit to a route waits;
 // React caches the module after that.
-const MIN_LOADER_MS =  2900;
+const MIN_LOADER_MS =  1000;
 const lazyPage = (load) =>
   lazy(() =>
     Promise.all([load(), new Promise((resolve) => { setTimeout(resolve, MIN_LOADER_MS); })])
@@ -88,49 +88,57 @@ function LangApp() {
   const patchData = (patch) => setSignupData((prev) => ({ ...prev, ...patch }));
 
   return (
-    <Routes>
-      {/* Public landing page; signed-in visitors go straight to their home. */}
-      <Route path="" element={isAuthenticated() ? <Navigate to="home" replace /> : <LandingPage />} />
-      <Route path="login" element={<LoginPage onNavigate={goTo} />} />
-      <Route
-        path="signup"
-        element={<SignUpPage onNavigate={goTo} initialData={signupData} onDataChange={patchData} />}
-      />
-      <Route
-        path="verification"
-        element={(
-          <VerificationPage
-            email={signupData.email}
-            phone={signupData.phone}
-            pendingToken={signupData.pendingToken}
-            onEditInfo={() => goTo('signup')}
-            onNext={() => goTo('profile')}
-          />
-        )}
-      />
-      <Route
-        path="profile-setup"
-        element={<ProfileSetupPage onNavigate={goTo} initialData={signupData} onDataChange={patchData} />}
-      />
-      <Route path="confirm-password-change" element={<ConfirmPasswordChangePage />} />
-      <Route path="forgot-password" element={<ForgotPasswordPage onNavigate={goTo} />} />
-      <Route path="reset-password" element={<ResetPasswordPage onNavigate={goTo} />} />
-      <Route path="home" element={<ProtectedRoute><HomePage onNavigate={goTo} /></ProtectedRoute>} />
-      <Route path="ideas" element={<ProtectedRoute><IdeasMarketplacePage onNavigate={goTo} /></ProtectedRoute>} />
-      <Route path="ideas/:id" element={<ProtectedRoute><IdeaDetailsPage onNavigate={goTo} /></ProtectedRoute>} />
-      <Route path="my-profile" element={<ProtectedRoute><MyProfilePage onNavigate={goTo} /></ProtectedRoute>} />
-      <Route path="my-projects" element={<ProtectedRoute><MyProjectsPage onNavigate={goTo} /></ProtectedRoute>} />
-      <Route path="meetings" element={<ProtectedRoute><MeetingsPage onNavigate={goTo} /></ProtectedRoute>} />
-      <Route path="meeting/:id" element={<ProtectedRoute><MeetingRoomPage onNavigate={goTo} /></ProtectedRoute>} />
-      <Route path="join-requests" element={<ProtectedRoute><JoinRequestsPage onNavigate={goTo} /></ProtectedRoute>} />
-      <Route path="join-requests/:projectId" element={<ProtectedRoute><JoinRequestsPage onNavigate={goTo} /></ProtectedRoute>} />
-      <Route path="create-idea" element={<ProtectedRoute><CreateIdeaPage onNavigate={goTo} /></ProtectedRoute>} />
-      <Route path="edit-idea/:id" element={<ProtectedRoute><EditIdeaPage onNavigate={goTo} /></ProtectedRoute>} />
-      <Route path="projects/dashboard" element={<ProtectedRoute><ProjectDashboardPage onNavigate={goTo} /></ProtectedRoute>} />
-      <Route path="projects/:projectId/dashboard" element={<ProtectedRoute><ProjectDashboardPage onNavigate={goTo} /></ProtectedRoute>} />
-      <Route path="settings" element={<ProtectedRoute><SettingsPage onNavigate={goTo} /></ProtectedRoute>} />
-      <Route path="*" element={<Navigate to="login" replace />} />
-    </Routes>
+    // React Router v7 navigates inside startTransition, and React deliberately
+    // keeps the current screen up instead of showing a fallback when suspended
+    // content replaces content that's already there — so the loader never got a
+    // chance to render and a navigation just looked frozen. Keying the boundary
+    // to the path makes each navigation a *new* boundary, which has nothing to
+    // hold on to and shows its fallback right away.
+    <Suspense key={location.pathname} fallback={<PageLoader />}>
+      <Routes>
+        {/* Public landing page; signed-in visitors go straight to their home. */}
+        <Route path="" element={isAuthenticated() ? <Navigate to="home" replace /> : <LandingPage />} />
+        <Route path="login" element={<LoginPage onNavigate={goTo} />} />
+        <Route
+          path="signup"
+          element={<SignUpPage onNavigate={goTo} initialData={signupData} onDataChange={patchData} />}
+        />
+        <Route
+          path="verification"
+          element={(
+            <VerificationPage
+              email={signupData.email}
+              phone={signupData.phone}
+              pendingToken={signupData.pendingToken}
+              onEditInfo={() => goTo('signup')}
+              onNext={() => goTo('profile')}
+            />
+          )}
+        />
+        <Route
+          path="profile-setup"
+          element={<ProfileSetupPage onNavigate={goTo} initialData={signupData} onDataChange={patchData} />}
+        />
+        <Route path="confirm-password-change" element={<ConfirmPasswordChangePage />} />
+        <Route path="forgot-password" element={<ForgotPasswordPage onNavigate={goTo} />} />
+        <Route path="reset-password" element={<ResetPasswordPage onNavigate={goTo} />} />
+        <Route path="home" element={<ProtectedRoute><HomePage onNavigate={goTo} /></ProtectedRoute>} />
+        <Route path="ideas" element={<ProtectedRoute><IdeasMarketplacePage onNavigate={goTo} /></ProtectedRoute>} />
+        <Route path="ideas/:id" element={<ProtectedRoute><IdeaDetailsPage onNavigate={goTo} /></ProtectedRoute>} />
+        <Route path="my-profile" element={<ProtectedRoute><MyProfilePage onNavigate={goTo} /></ProtectedRoute>} />
+        <Route path="my-projects" element={<ProtectedRoute><MyProjectsPage onNavigate={goTo} /></ProtectedRoute>} />
+        <Route path="meetings" element={<ProtectedRoute><MeetingsPage onNavigate={goTo} /></ProtectedRoute>} />
+        <Route path="meeting/:id" element={<ProtectedRoute><MeetingRoomPage onNavigate={goTo} /></ProtectedRoute>} />
+        <Route path="join-requests" element={<ProtectedRoute><JoinRequestsPage onNavigate={goTo} /></ProtectedRoute>} />
+        <Route path="join-requests/:projectId" element={<ProtectedRoute><JoinRequestsPage onNavigate={goTo} /></ProtectedRoute>} />
+        <Route path="create-idea" element={<ProtectedRoute><CreateIdeaPage onNavigate={goTo} /></ProtectedRoute>} />
+        <Route path="edit-idea/:id" element={<ProtectedRoute><EditIdeaPage onNavigate={goTo} /></ProtectedRoute>} />
+        <Route path="projects/dashboard" element={<ProtectedRoute><ProjectDashboardPage onNavigate={goTo} /></ProtectedRoute>} />
+        <Route path="projects/:projectId/dashboard" element={<ProtectedRoute><ProjectDashboardPage onNavigate={goTo} /></ProtectedRoute>} />
+        <Route path="settings" element={<ProtectedRoute><SettingsPage onNavigate={goTo} /></ProtectedRoute>} />
+        <Route path="*" element={<Navigate to="login" replace />} />
+      </Routes>
+    </Suspense>
   );
 }
 
