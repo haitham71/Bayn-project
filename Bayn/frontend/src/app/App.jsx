@@ -12,7 +12,7 @@ import LandingPage from '@/features/landing/pages/LandingPage';
 // see the loader and too short to read it — so hold it for at least this long
 // and let the animation play once. Only the first visit to a route waits;
 // React caches the module after that.
-const MIN_LOADER_MS =  1000;
+const MIN_LOADER_MS =  2900;
 const lazyPage = (load) =>
   lazy(() =>
     Promise.all([load(), new Promise((resolve) => { setTimeout(resolve, MIN_LOADER_MS); })])

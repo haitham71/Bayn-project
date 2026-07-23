@@ -624,7 +624,7 @@
       "lead": "Bayn turns a spark of an idea into a shipped project. Post what you're building, find the right collaborators, run everything from one dashboard, and keep a record of every decision along the way.",
       "ctaPrimary": "Create your account",
       "ctaSecondary": "How to start",
-      "metaBuilders": "Builders on Bayn",
+      "metaBuilders": "Users on Bayn",
       "metaIdeas": "Ideas launched",
       "metaTeams": "Teams formed"
     },
@@ -644,9 +644,7 @@
       "milestoneShipped": "Join request accepted",
       "milestoneMeta": "A new member joined the team"
     },
-    "trust": {
-      "label": "Trusted by builders at"
-    },
+
     "features": {
       "eyebrow": "Everything in one place",
       "title": "From first idea to shipped project",
@@ -695,7 +693,7 @@
       "idea3Desc": "An app that makes learning Arabic feel like a conversation, not a textbook."
     },
     "stats": {
-      "builders": "Active builders",
+      "builders": "Active Users",
       "ideas": "Ideas posted",
       "teams": "Teams formed",
       "again": "Would build again"

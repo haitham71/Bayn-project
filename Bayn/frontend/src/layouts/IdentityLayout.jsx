@@ -38,15 +38,22 @@ export default function IdentityLayout({ children, contentClassName = '' }) {
 
   return (
     <div className="identity-layout">
+      {/* Entrance: the hero slides in from its edge while the form settles
+          upward just behind it — see styles/enter.css. */}
       <section className="identity-layout__form">
-        <div className="identity-layout__brand">
+        <div className="identity-layout__brand bayn-enter">
           <Logo width={64} height={48} aria-label="Bayn" />
         </div>
-        <div className={`identity-layout__content ${contentClassName}`.trim()}>{children}</div>
+        <div
+          className={`identity-layout__content bayn-enter ${contentClassName}`.trim()}
+          style={{ '--enter-delay': '0.1s' }}
+        >
+          {children}
+        </div>
       </section>
 
       <aside
-        className="identity-layout__hero"
+        className="identity-layout__hero bayn-enter--side"
         style={{ backgroundImage: `url(${heroImage})` }}
       >
         <div className="identity-layout__hero-overlay" />

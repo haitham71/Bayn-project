@@ -1,0 +1,60 @@
+/* Entrance animations for content arriving after the page loader.
+   Add .bayn-enter (fades up) or .bayn-enter--side (slides in from the outer
+   edge) to an element, and stagger siblings with --enter-delay:
+
+     <div class="bayn-enter" style={{ '--enter-delay': '.08s' }}>
+
+   `both` fill keeps the element hidden until its delay elapses, so a staggered
+   group doesn't flash into place all at once before animating. */
+
+@keyframes bayn-enter-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes bayn-enter-side {
+  from {
+    opacity: 0;
+    transform: translateX(var(--enter-from, 48px));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.bayn-enter,
+.bayn-enter--side {
+  animation-duration: 0.55s;
+  /* Decelerating: quick off the mark, soft landing. */
+  animation-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1);
+  animation-fill-mode: both;
+  animation-delay: var(--enter-delay, 0s);
+}
+
+.bayn-enter {
+  animation-name: bayn-enter-up;
+}
+
+.bayn-enter--side {
+  animation-name: bayn-enter-side;
+}
+
+/* The side panel sits on the opposite edge in Arabic, so it has to arrive from
+   the other direction. */
+[dir='rtl'] .bayn-enter--side {
+  --enter-from: -48px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bayn-enter,
+  .bayn-enter--side {
+    animation: none;
+  }
+}
