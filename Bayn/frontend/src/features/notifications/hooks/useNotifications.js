@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useVisiblePoll } from '@/shared/hooks/useVisiblePoll';
 import {
   listNotifications,
   getUnreadCount,
@@ -21,11 +22,7 @@ export function useNotifications() {
       .catch(() => {});
 
   // Poll the unread count so the bell badge stays roughly current.
-  useEffect(() => {
-    refreshUnread();
-    const id = setInterval(refreshUnread, 20000);
-    return () => clearInterval(id);
-  }, []);
+  useVisiblePoll(refreshUnread, 20000);
 
   // Load the full list (called when the dropdown opens).
   function load() {

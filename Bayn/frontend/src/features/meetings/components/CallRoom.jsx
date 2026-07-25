@@ -19,6 +19,7 @@ import Minimize from '@/assets/icons/minimize.svg?react';
 import logoUrl from '@/assets/logo/Bayn-svg.svg?url';
 import BaynLogo from '@/assets/logo/Bayn-svg.svg?react';
 import ConfirmDialog from '@/shared/components/ConfirmDialog';
+import PageLoader from '@/shared/components/PageLoader';
 import { formatRemaining } from '../lib/callFormat';
 import CallTile from './CallTile';
 import CallControls from './CallControls';
@@ -187,10 +188,13 @@ export default function CallRoom({ onLeave, endsAt }) {
 
       <div className="cr__body">
         <div className={`cr__stage${sharing ? ' cr__stage--sharing' : ''}`}>
-          {status !== 'joined' && (
-            <p className={`cr__state${status === 'error' ? ' cr__state--error' : ''}`}>
-              {status === 'error' ? t('meetingRoom.error') : t('meetingRoom.connecting')}
-            </p>
+          {status === 'error' && (
+            <p className="cr__state cr__state--error">{t('meetingRoom.error')}</p>
+          )}
+          {status === 'connecting' && (
+            <div className="cr__state">
+              <PageLoader onDark inline label={t('meetingRoom.connecting')} />
+            </div>
           )}
 
           {sharing && (

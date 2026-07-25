@@ -8,16 +8,11 @@ import i18n, { SUPPORTED_LANGS, detectLang } from '@/shared/i18n/i18n';
 // The public landing page is the first paint, so keep it eager (no chunk flash).
 import LandingPage from '@/features/landing/pages/LandingPage';
 
-// A chunk often lands in a few hundred milliseconds, which is long enough to
-// see the loader and too short to read it — so hold it for at least this long
-// and let the animation play once. Only the first visit to a route waits;
-// React caches the module after that.
-const MIN_LOADER_MS =  900;
-const lazyPage = (load) =>
-  lazy(() =>
-    Promise.all([load(), new Promise((resolve) => { setTimeout(resolve, MIN_LOADER_MS); })])
-      .then(([module]) => module),
-  );
+// Each page shows the loader for exactly as long as its chunk takes to arrive —
+// no artificial hold, so on a fast connection it barely flashes and on a slow one
+// it stays until the code is actually here. Only the first visit to a route
+// waits; React caches the module after that, so later visits render instantly.
+const lazyPage = (load) => lazy(load);
 
 // Every other page is code-split — its chunk is only fetched when its route is
 // first visited, keeping the initial bundle small.
@@ -61,6 +56,20 @@ const PATHS = {
   settings: '/settings',
 };
 
+// Holds the branded loader for at least `ms` every time it mounts, then reveals
+// the page. Unlike React.lazy's one-time chunk wait, this fires on every entry —
+// so the login and sign-up screens always open on a full loader cycle, even on a
+// repeat visit where the chunk is already cached. The child (a lazy page) isn't
+// rendered until the hold is over, so its own entrance animation plays fresh.
+function EntryHold({ ms = 3000, children }) {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    const id = setTimeout(() => setReady(true), ms);
+    return () => clearTimeout(id);
+  }, [ms]);
+  return ready ? children : <PageLoader />;
+}
+
 // All the app's routes, mounted under /:lang. The active language is driven by
 // the URL prefix — visiting /ar/... or /en/... sets i18next accordingly.
 function LangApp() {
@@ -91,10 +100,14 @@ function LangApp() {
     <Routes>
       {/* Public landing page; signed-in visitors go straight to their home. */}
       <Route path="" element={isAuthenticated() ? <Navigate to={`/${lang}/home`} replace /> : <LandingPage />} />
-      <Route path="login" element={<LoginPage onNavigate={goTo} />} />
+      <Route path="login" element={<EntryHold><LoginPage onNavigate={goTo} /></EntryHold>} />
       <Route
         path="signup"
-        element={<SignUpPage onNavigate={goTo} initialData={signupData} onDataChange={patchData} />}
+        element={(
+          <EntryHold>
+            <SignUpPage onNavigate={goTo} initialData={signupData} onDataChange={patchData} />
+          </EntryHold>
+        )}
       />
       <Route
         path="verification"

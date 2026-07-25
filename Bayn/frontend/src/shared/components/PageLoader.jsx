@@ -4,7 +4,11 @@ import './PageLoader.css';
 
 // Full-height loader shown while a lazily-loaded page chunk downloads: seven
 // arcs spin as a ring, settle, then morph into the Bayn wordmark and back.
-export default function PageLoader({ onDark = false }) {
+// `onDark` recolours it (mark + caption) for dark surfaces like the call screen;
+// `label` puts a line of text under the mark (e.g. "Connecting to the meeting…").
+// `inline` drops the full-viewport height + background so it can center inside an
+// existing container (e.g. the call stage) instead of owning the whole screen.
+export default function PageLoader({ onDark = false, label = '', inline = false }) {
   const groupRef = useRef(null);
 
   useEffect(() => {
@@ -77,12 +81,17 @@ export default function PageLoader({ onDark = false }) {
   }, [onDark]);
 
   return (
-    <div className="page-loader" role="status" aria-live="polite">
+    <div
+      className={`page-loader${onDark ? ' page-loader--dark' : ''}${inline ? ' page-loader--inline' : ''}`}
+      role="status"
+      aria-live="polite"
+    >
       <div className="page-loader__mark">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 320" width="100%" aria-hidden="true">
           <g ref={groupRef} />
         </svg>
       </div>
+      {label && <p className="page-loader__label">{label}</p>}
     </div>
   );
 }
