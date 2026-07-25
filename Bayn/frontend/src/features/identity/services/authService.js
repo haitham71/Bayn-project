@@ -66,6 +66,8 @@ export function toSignupPayload(form, phoneCountryId) {
     birth_date: toBirthDate(form.dob),
     phone_country_id: phoneCountryId,
     phone_number: toPhoneNumber(form.phone),
+    // Required by the backend; the form won't submit unless the box is ticked.
+    terms_accepted: Boolean(form.agreed),
   };
 }
 

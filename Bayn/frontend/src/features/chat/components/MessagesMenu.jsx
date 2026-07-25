@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import MessageSquare from '@/assets/icons/message-square-text.svg?react';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
+import { useVisiblePoll } from '@/shared/hooks/useVisiblePoll';
 import { getMyProjects, listProjectMembers } from '@/features/projects/services/projectService';
 import { createDirectConversation, getUnreadCount, listConversations } from '../services/chatService';
 import DirectChatWindow from './DirectChatWindow';
@@ -29,11 +30,7 @@ export default function MessagesMenu() {
       .catch(() => {});
 
   // Poll my unread count so the button badge stays roughly current.
-  useEffect(() => {
-    refreshUnread();
-    const id = setInterval(refreshUnread, 15000);
-    return () => clearInterval(id);
-  }, []);
+  useVisiblePoll(refreshUnread, 15000);
 
   // Load my teammates (unique members across all my projects, minus me) once.
   useEffect(() => {

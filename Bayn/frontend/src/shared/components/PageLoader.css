@@ -1,8 +1,22 @@
 .page-loader {
   display: grid;
   place-items: center;
+  gap: 22px;
   min-height: 100vh;
   background: var(--bg-surface-primary, #ebe5dc);
+}
+
+/* Dark variant for the call screen: matches the meeting's deep-green backdrop. */
+.page-loader--dark {
+  background: var(--text-title, #0f3d2e);
+}
+
+/* Inline: fill the parent instead of the viewport, and let its background show. */
+.page-loader--inline {
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent;
 }
 
 /* The mark draws on a 480x320 canvas and scales with this width. */
@@ -14,4 +28,21 @@
 
 .page-loader__mark svg {
   display: block;
+}
+
+/* Caption under the mark (e.g. "Connecting to the meeting…"). */
+.page-loader__label {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  color: var(--text-supporting, #786c57);
+  text-align: center;
+}
+
+[dir='rtl'] .page-loader__label {
+  font-family: var(--font-ar);
+}
+
+.page-loader--dark .page-loader__label {
+  color: rgba(255, 255, 255, 0.85);
 }

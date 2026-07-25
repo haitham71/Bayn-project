@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { DailyProvider } from '@daily-co/daily-react';
 import { getMeetingJoinLink } from '@/features/meetings/services/meetingService';
 import ArrowLeft from '@/assets/icons/arrow-left.svg?react';
+import PageLoader from '@/shared/components/PageLoader';
 import { CAMERA_CONSTRAINTS } from '../lib/callFormat';
 import CallRoom from '../components/CallRoom';
 import './MeetingRoomPage.css';
@@ -38,11 +39,7 @@ export default function MeetingRoomPage({ onNavigate }) {
   }
 
   if (!join) {
-    return (
-      <div className="cr cr--center">
-        <p className="cr__state">{t('meetingRoom.connecting')}</p>
-      </div>
-    );
+    return <PageLoader onDark label={t('meetingRoom.connecting')} />;
   }
 
   // The backend returns "<room>?t=<token>". In call-object mode the token in the

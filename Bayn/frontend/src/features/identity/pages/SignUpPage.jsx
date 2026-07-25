@@ -111,7 +111,7 @@ export default function SignUpPage({ onNavigate, initialData = {}, onDataChange 
         email, username,
         firstNameEn, lastNameEn,
         firstNameAr, lastNameAr,
-        password, dob, phone,
+        password, dob, phone, agreed,
       });
       onDataChange?.({ pendingToken: res.pending_token });
       onNavigate('verification');
