@@ -52,6 +52,26 @@ Building a complete technical blueprint for the MVP — covering architecture, d
 - A shared technical direction that aligns the entire team before development
 - A reference document that reduces risk and guides every implementation decision in the coding phase
 
+## 4th Stage: MVP Development and Execution
+
+### What is this stage about
+Translating plans, designs, and technical documentation into a functional Minimum Viable Product (MVP) through intensive development, utilizing Agile sprints and cross-functional roles (PM 'Project Manager', SCM 'Source Control Manager', QA 'Quality Assurance') to ensure organization, code integrity, and high-quality results.
+
+### Objectives
+
+- Implement the MVP based on the technical documentation developed in the previous stage
+- Adopt Agile principles to divide work into manageable sprints for iterative development and continuous improvement
+- Assign roles and responsibilities, emphasizing the Project Manager, SCM, and QA for quality assurance
+- Promote collaboration among team members with clear task assignments, deadlines, and dependencies
+- Monitor progress through metrics, address deviations from the plan, and prioritize deliverables effectively
+
+### Outcomes
+
+- A fully functional MVP that successfully integrates all implemented features, APIs, and UI components
+- A stable, version-controlled codebase maintained through regular code reviews and SCM best practices  
+- A thoroughly validated product that has passed unit, integration, and user acceptance testing  
+- Documented sprint cycles, including daily stand-ups, stakeholder demos, and team retrospectives
+
 ## Team Members
 Fai Al-Sharekh  
 Afnan Al-Faidi  
