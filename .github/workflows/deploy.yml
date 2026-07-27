@@ -95,14 +95,15 @@ jobs:
             cd ~/Bayn-project
             git pull origin staging
             cd Bayn/backend
-            docker compose run --rm api alembic upgrade head
+            # -p bayn matches the project name the running containers already use;
+            # --no-deps means this never touches the long-running postgres container.
+            docker compose -p bayn run --rm --no-deps api alembic upgrade head
 
   # Fourth: rebuild and restart the running containers with the new code.
   deploy:
     name: Deploy to Production
     runs-on: ubuntu-latest
     needs: migrate
-    environment: production
     steps:
       - name: Rebuild & restart containers
         uses: appleboy/ssh-action@v1
@@ -113,4 +114,6 @@ jobs:
           script: |
             set -e
             cd ~/Bayn-project/Bayn/backend
-            docker compose up -d --build
+            # Same project name as the running stack, scoped to api only so
+            # the existing postgres container is never recreated or touched.
+            docker compose -p bayn up -d --build --no-deps api
