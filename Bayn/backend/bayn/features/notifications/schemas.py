@@ -19,6 +19,7 @@ class NotificationResponse(BaseModel):
     meeting_request_id: uuid.UUID | None = None
     meeting_id: uuid.UUID | None = None
     task_id: uuid.UUID | None = None
+    read_at: datetime | None = None
 
 
 class UnreadCountResponse(BaseModel):

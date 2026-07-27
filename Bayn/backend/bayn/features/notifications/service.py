@@ -8,7 +8,7 @@ that caller's transaction and commit.
 
 import uuid
 
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from bayn.common.exceptions import NotFoundError
@@ -53,6 +53,7 @@ def _to_response(notification: Notification, locale: str) -> NotificationRespons
         type=notification.type,
         message=_render_message(notification, locale),
         is_read=notification.is_read,
+        read_at=notification.read_at,
         created_at=notification.created_at,
         project_id=_uuid_or_none(data.get("project_id")),
         meeting_request_id=_uuid_or_none(data.get("meeting_request_id")),
@@ -86,16 +87,28 @@ async def get_unread_count(db: AsyncSession, user_id: uuid.UUID) -> UnreadCountR
 async def mark_read(
     db: AsyncSession, user_id: uuid.UUID, notification_id: uuid.UUID, locale: str = DEFAULT_LOCALE
 ) -> NotificationResponse:
-    # user_id filter prevents marking another user's notification read by guessing its id
     notification = await db.scalar(
         select(Notification).where(Notification.id == notification_id, Notification.user_id == user_id)
     )
     if not notification:
         raise NotFoundError(t("notifications", "errors.not_found", locale))
 
-    notification.is_read = True
-    await db.commit()
+    if not notification.is_read:
+        notification.is_read = True
+        notification.read_at = func.now()
+        await db.commit()
+        await db.refresh(notification)
+
     return _to_response(notification, locale)
+
+
+async def mark_all_read(db: AsyncSession, user_id: uuid.UUID) -> None:
+    await db.execute(
+        update(Notification)
+        .where(Notification.user_id == user_id, Notification.is_read.is_(False))
+        .values(is_read=True, read_at=func.now())
+    )
+    await db.commit()
 
 
 async def delete_notification(
