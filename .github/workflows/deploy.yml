@@ -1,0 +1,116 @@
+name: Deploy
+
+on:
+  push:
+    branches: [staging]
+  workflow_dispatch:
+
+# Prevent overlapping deploys — a second push while one is still running
+# queues instead of racing it.
+concurrency:
+  group: deployment
+  cancel-in-progress: false
+
+jobs:
+  # First: run the backend test suite (same as tests.yml).
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker images
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+        working-directory: Bayn/backend
+        run: docker compose build
+
+      - name: Run tests
+        env:
+          ACCESS_TOKEN_EXPIRE_MINUTES: ${{ secrets.ACCESS_TOKEN_EXPIRE_MINUTES }}
+          API_URL: ${{ secrets.API_URL }}
+          APP_NAME: ${{ secrets.APP_NAME }}
+          APP_URL: ${{ secrets.APP_URL }}
+          AUTHENTICA_API_KEY: ${{ secrets.AUTHENTICA_API_KEY }}
+          AUTHENTICA_BASE_URL: ${{ secrets.AUTHENTICA_BASE_URL }}
+          DAILY_API_KEY: ${{ secrets.DAILY_API_KEY }}
+          DAILY_API_URL: ${{ secrets.DAILY_API_URL }}
+          DAILY_DOMAIN: ${{ secrets.DAILY_DOMAIN }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          EMAIL_FROM_NAME: ${{ secrets.EMAIL_FROM_NAME }}
+          JWT_ALGORITHM: ${{ secrets.JWT_ALGORITHM }}
+          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
+          R2_PUBLIC_URL: ${{ secrets.R2_PUBLIC_URL }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          REFRESH_TOKEN_EXPIRE_DAYS: ${{ secrets.REFRESH_TOKEN_EXPIRE_DAYS }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+        working-directory: Bayn/backend
+        run: |
+          docker compose up -d postgres
+          docker compose run --rm api pytest -v
+
+  # Second: build the production image on its own, isolated from compose's
+  # cache — catches Dockerfile/dependency issues before we ever touch the
+  # server.
+  build:
+    name: Build Production Image
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build backend image
+        working-directory: Bayn/backend
+        run: docker build -t bayn-backend:${{ github.sha }} .
+
+  # Third: pull the new code on the server and run any pending Alembic
+  # migrations, before the app that depends on them restarts.
+  migrate:
+    name: Run Database Migrations
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Pull latest code & migrate
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            cd ~/Bayn-project
+            git pull origin staging
+            cd Bayn/backend
+            docker compose run --rm api alembic upgrade head
+
+  # Fourth: rebuild and restart the running containers with the new code.
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: migrate
+    environment: production
+    steps:
+      - name: Rebuild & restart containers
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            cd ~/Bayn-project/Bayn/backend
+            docker compose up -d --build
