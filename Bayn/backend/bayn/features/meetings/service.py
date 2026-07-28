@@ -702,8 +702,9 @@ async def finalize_meeting_request(
     if request.status not in SCHEDULED_STATUSES:
         raise ValidationError(t("meetings", "request.not_scheduled", locale))
 
-    # There is nothing to judge until the meeting has actually happened.
-    if _ensure_aware(request.proposed_end_time) > datetime.now(timezone.utc):
+    # Gated on the host explicitly closing the meeting (Meeting.ended_at)
+    meeting = await db.get(Meeting, request.resulting_meeting_id) if request.resulting_meeting_id else None
+    if meeting is None or meeting.ended_at is None:
         raise ValidationError(t("meetings", "request.meeting_not_over", locale))
 
     if not approve:
@@ -972,6 +973,42 @@ async def get_meeting(
         )
         if not is_participant:
             raise ForbiddenError(t("meetings", "meeting.not_a_participant", locale))
+    return meeting
+
+
+async def end_meeting(
+    db: AsyncSession, meeting_id: uuid.UUID, user_id: uuid.UUID, locale: str = DEFAULT_LOCALE
+) -> Meeting:
+    """Whoever hosts this specific meeting closes it — the project owner for
+    most meetings today, but not assumed to always be them (a member can host
+    one they scheduled). """
+    meeting = await db.get(Meeting, meeting_id)
+    if not meeting:
+        raise NotFoundError(t("meetings", "meeting.not_found", locale))
+
+    is_host = await db.scalar(
+        select(MeetingParticipant.id).where(
+            MeetingParticipant.meeting_id == meeting_id,
+            MeetingParticipant.user_id == user_id,
+            MeetingParticipant.is_host.is_(True),
+        )
+    )
+    if not is_host:
+        raise ForbiddenError(t("meetings", "meeting.owner_only", locale))
+    if meeting.ended_at is not None:
+        raise ValidationError(t("meetings", "meeting.already_ended", locale))
+
+    if meeting.room_name:
+        try:
+            await daily_client.delete_room(meeting.room_name)
+        except DailyError:
+            # Best-effort — the room may already be gone (expired via `exp`),
+            # and we still want ended_at set so the accept/reject gate unlocks.
+            logger.warning("Failed to delete Daily room for meeting %s", meeting.id, exc_info=True)
+
+    meeting.ended_at = datetime.now(timezone.utc)
+    await db.commit()
+    await db.refresh(meeting)
     return meeting
 
 

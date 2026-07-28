@@ -127,9 +127,10 @@ class TestMarkRead:
         notification = service.create_notification(db, test_user.id, NotificationType.task_assigned, {})
         await db.commit()
 
-        response = await client.post(f"/notifications/{notification.id}/read", headers=auth_headers)
+        response = await client.put(f"/notifications/{notification.id}/read", headers=auth_headers)
         assert response.status_code == 200
         assert response.json()["is_read"] is True
+        assert response.json()["read_at"] is not None
 
         count = await client.get("/notifications/unread-count", headers=auth_headers)
         assert count.json()["count"] == 0
@@ -141,5 +142,38 @@ class TestMarkRead:
         notification = service.create_notification(db, other_user.id, NotificationType.task_assigned, {})
         await db.commit()
 
-        response = await client.post(f"/notifications/{notification.id}/read", headers=auth_headers)
+        response = await client.put(f"/notifications/{notification.id}/read", headers=auth_headers)
         assert response.status_code == 404
+
+
+class TestMarkAllRead:
+
+    @pytest.mark.asyncio
+    async def test_marks_all_own_unread_notifications_read(
+        self, client: AsyncClient, db, test_user: User, auth_headers: dict,
+    ):
+        service.create_notification(db, test_user.id, NotificationType.task_assigned, {})
+        service.create_notification(db, test_user.id, NotificationType.task_assigned, {})
+        await db.commit()
+
+        response = await client.put("/notifications/read-all", headers=auth_headers)
+        assert response.status_code == 204
+
+        rows = (await client.get("/notifications", headers=auth_headers)).json()
+        assert all(n["is_read"] is True and n["read_at"] is not None for n in rows)
+
+        count = await client.get("/notifications/unread-count", headers=auth_headers)
+        assert count.json()["count"] == 0
+
+    @pytest.mark.asyncio
+    async def test_does_not_affect_another_users_notifications(
+        self, client: AsyncClient, db, auth_headers: dict, other_user: User,
+    ):
+        other_notification = service.create_notification(db, other_user.id, NotificationType.task_assigned, {})
+        await db.commit()
+
+        response = await client.put("/notifications/read-all", headers=auth_headers)
+        assert response.status_code == 204
+
+        await db.refresh(other_notification)
+        assert other_notification.is_read is False

@@ -453,11 +453,12 @@ class TestJoinFlow:
         return list(rows.scalars().all())
 
     async def _end_the_meeting(self, db, request_id: str) -> None:
-        """Drag the meeting into the past so it can be decided on."""
+        """Close the resulting meeting so the owner's decision unlocks."""
+        from bayn.features.meetings.models import Meeting
+
         request = await db.get(MeetingRequest, uuid.UUID(request_id))
-        past = datetime.now(timezone.utc) - timedelta(hours=1)
-        request.proposed_start_time = past - timedelta(hours=1)
-        request.proposed_end_time = past
+        meeting = await db.get(Meeting, request.resulting_meeting_id)
+        meeting.ended_at = datetime.now(timezone.utc)
         await db.flush()
 
     @pytest.mark.asyncio

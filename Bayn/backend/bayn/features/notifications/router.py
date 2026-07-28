@@ -34,7 +34,15 @@ async def get_unread_count(
     return await service.get_unread_count(db, current_user.id)
 
 
-@router.post("/{notification_id}/read", response_model=NotificationResponse, summary="Mark one notification read")
+@router.put("/read-all", status_code=204, summary="Mark all my notifications read")
+async def mark_all_read(
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+) -> None:
+    await service.mark_all_read(db, current_user.id)
+
+
+@router.put("/{notification_id}/read", response_model=NotificationResponse, summary="Mark one notification read")
 async def mark_read(
     notification_id: uuid.UUID,
     current_user: User = Depends(get_current_active_user),

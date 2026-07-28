@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [ "**" ]
 
+# Cancel a still-running run for the same branch/PR when a newer push
+# arrives, instead of letting a now-outdated run finish for no reason.
+concurrency:
+  group: tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test-backend:
     runs-on: ubuntu-latest
