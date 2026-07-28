@@ -48,3 +48,9 @@ export const getMeetingJoinLink = (meetingId) =>
 // owner's post-meeting accept/reject decision on the originating request.
 export const endMeeting = (meetingId) =>
   api.post(`${API.meetings.base}/${meetingId}/end`).then((r) => r.data);
+
+// A short-lived URL to the meeting's recording (participants only). Only call
+// this for meetings whose `recording_available` is true; otherwise it 404s.
+// Returns { url }.
+export const getMeetingRecording = (meetingId) =>
+  api.get(`${API.meetings.base}/${meetingId}/recording`).then((r) => r.data);

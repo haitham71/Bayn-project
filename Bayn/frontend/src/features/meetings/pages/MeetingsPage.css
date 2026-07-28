@@ -34,6 +34,25 @@
   color: var(--text-supporting, #786c57);
 }
 
+/* Reminder that every meeting is recorded automatically. */
+.mt__rec-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 10px 0 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: #b23b2e;
+}
+
+.mt__rec-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #b23b2e;
+  flex: 0 0 auto;
+}
+
 /* Tabs */
 .mt__tabs {
   display: flex;

@@ -240,10 +240,13 @@
     "opensSoon": "يفتح قبل الموعد بـ 5 د",
     "ended": "انتهى",
     "meeting": "اجتماع",
-    "empty": "لا توجد اجتماعات بعد."
+    "empty": "لا توجد اجتماعات بعد.",
+    "recordedNote": "تُسجّل جميع الاجتماعات تلقائياً."
   },
   "meetingRoom": {
     "leave": "مغادرة الاجتماع",
+    "recording": "يُسجّل",
+    "recordedNote": "هذا الاجتماع قيد التسجيل.",
     "connecting": "جارٍ الاتصال بالاجتماع...",
     "error": "تعذّر الاتصال بالاجتماع. قد لا يكون مفتوحاً بعد.",
     "guest": "ضيف",
@@ -495,6 +498,11 @@
     "you": "أنت",
     "upcomingMeetingsTitle": "الاجتماعات القادمة",
     "meetingsEmpty": "لا توجد اجتماعات قادمة.",
+    "recordedMeetingsTitle": "الاجتماعات المسجّلة",
+    "recordedEmpty": "لا توجد اجتماعات مسجّلة بعد.",
+    "watchRecording": "مشاهدة التسجيل",
+    "recordingOpening": "جارٍ الفتح…",
+    "recordingError": "تعذّر فتح التسجيل. حاول مرة أخرى.",
     "meeting": "اجتماع",
     "confirmed": "مؤكّد",
     "myContract": "عقدي",

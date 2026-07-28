@@ -240,10 +240,13 @@
     "opensSoon": "Opens 5 min before",
     "ended": "Ended",
     "meeting": "Meeting",
-    "empty": "No meetings yet."
+    "empty": "No meetings yet.",
+    "recordedNote": "All meetings are recorded automatically."
   },
   "meetingRoom": {
     "leave": "Leave meeting",
+    "recording": "Recording",
+    "recordedNote": "This meeting is being recorded.",
     "connecting": "Connecting to the meeting…",
     "error": "Couldn't connect to the meeting. It may not be open yet.",
     "guest": "Guest",
@@ -495,6 +498,11 @@
     "you": "You",
     "upcomingMeetingsTitle": "Upcoming meetings",
     "meetingsEmpty": "No upcoming meetings.",
+    "recordedMeetingsTitle": "Recorded meetings",
+    "recordedEmpty": "No recorded meetings yet.",
+    "watchRecording": "Watch recording",
+    "recordingOpening": "Opening…",
+    "recordingError": "Couldn't open the recording. Try again.",
     "meeting": "Meeting",
     "confirmed": "Confirmed",
     "myContract": "My contract",

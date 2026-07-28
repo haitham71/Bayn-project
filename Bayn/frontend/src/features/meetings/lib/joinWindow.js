@@ -8,8 +8,15 @@ export function joinOpensAt(meeting) {
   return new Date(meeting.start_time).getTime() - JOIN_WINDOW_MS;
 }
 
+// A meeting is over once the host has explicitly ended it (ended_at set) or its
+// scheduled end time has passed — whichever comes first.
+export function isEnded(meeting, now = Date.now()) {
+  if (meeting.ended_at) return true;
+  return now >= new Date(meeting.end_time).getTime();
+}
+
 export function canJoin(meeting, now = Date.now()) {
-  return now >= joinOpensAt(meeting) && now < new Date(meeting.end_time).getTime();
+  return now >= joinOpensAt(meeting) && !isEnded(meeting, now);
 }
 
 // Whole minutes left until the room opens, rounded up so a partial minute reads

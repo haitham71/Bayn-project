@@ -764,6 +764,47 @@ color: #9a3b2e; }
   border-color: rgba(144, 0, 0, 0.35);
 }
 
+/* Recorded-meetings card: title + optional error, then a "watch" button. */
+.pd__rec-info {
+  min-width: 0;
+}
+
+.pd__rec-error {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--input-error, #900000);
+}
+
+.pd__rec-btn {
+  margin-inline-start: auto;
+  align-self: center;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--btn-primary-default, #295e4d);
+  border-radius: 8px;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--btn-primary-default, #295e4d);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.pd__rec-btn:hover:not(:disabled) {
+  background: var(--btn-primary-default, #295e4d);
+  color: var(--btn-text, #ebe5dc);
+}
+
+.pd__rec-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 .pd__meeting-date {
   flex-shrink: 0;
   display: flex;

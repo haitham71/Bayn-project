@@ -207,6 +207,11 @@ export default function CallRoom({ onLeave, endsAt, meetingId }) {
               {t('meetingRoom.endSession')}
             </button>
           )}
+          {/* Meetings are recorded automatically (server-side cloud recording). */}
+          <span className="cr__rec" title={t('meetingRoom.recordedNote')}>
+            <span className="cr__rec-dot" aria-hidden="true" />
+            {t('meetingRoom.recording')}
+          </span>
         </div>
         {remaining != null && (
           <span

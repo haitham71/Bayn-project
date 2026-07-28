@@ -47,6 +47,42 @@
   cursor: pointer;
 }
 
+/* Recording indicator: meetings are recorded automatically, so a steady red
+   "Recording" badge sits in the top bar for the whole call. */
+.cr__rec {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(178, 59, 46, 0.12);
+  color: #b23b2e;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+[dir='rtl'] .cr__rec {
+  font-family: var(--font-ar);
+}
+
+.cr__rec-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #b23b2e;
+  animation: cr-rec-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes cr-rec-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cr__rec-dot { animation: none; }
+}
+
 /* Host-only: ends the session for every participant. Tinted red to read as the
    more consequential action, distinct from the plain "leave" link beside it. */
 .cr__end {
