@@ -55,7 +55,7 @@ export default function MeetingRoomPage({ onNavigate }) {
       token={token}
       dailyConfig={{ userMediaVideoConstraints: CAMERA_CONSTRAINTS }}
     >
-      <CallRoom onLeave={() => onNavigate?.('meetings')} endsAt={join.ends_at} />
+      <CallRoom onLeave={() => onNavigate?.('meetings')} endsAt={join.ends_at} meetingId={id} />
     </DailyProvider>
   );
 }

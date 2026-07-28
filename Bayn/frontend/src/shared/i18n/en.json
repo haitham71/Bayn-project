@@ -267,6 +267,10 @@
     "confirmLeaveTitle": "Leave the meeting?",
     "confirmLeaveMsg": "You can rejoin while the meeting is still on.",
     "stay": "Stay",
+    "endSession": "End session",
+    "confirmEndTitle": "End the session for everyone?",
+    "confirmEndMsg": "This closes the meeting for all participants and can't be undone.",
+    "endError": "Couldn't end the session. Please try again.",
     "fullscreen": "Fullscreen",
     "exitFullscreen": "Exit fullscreen"
   },

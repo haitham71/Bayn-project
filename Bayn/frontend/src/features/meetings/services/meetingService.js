@@ -42,3 +42,9 @@ export const cancelTeamMeeting = (meetingId) =>
 // scheduled end, so the room can close itself when the time is up.
 export const getMeetingJoinLink = (meetingId) =>
   api.get(`${API.meetings.base}/${meetingId}/join`).then((r) => r.data);
+
+// The host closes the live meeting for everyone: the backend deletes the Daily
+// room (which drops every participant) and stamps ended_at, unlocking the
+// owner's post-meeting accept/reject decision on the originating request.
+export const endMeeting = (meetingId) =>
+  api.post(`${API.meetings.base}/${meetingId}/end`).then((r) => r.data);
