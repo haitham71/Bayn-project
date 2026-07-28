@@ -27,14 +27,15 @@ export function useLangNavigate() {
 }
 
 // Toggle between Arabic and English, swapping the prefix on the current URL so
-// the user stays on the same page (and the query string is preserved).
+// the user stays on the same page (and the query string is preserved). Uses a
+// full page load rather than SPA navigation, so the whole app re-renders fresh
+// in the new language and direction.
 export function useLangSwitch() {
-  const navigate = useNavigate();
   const location = useLocation();
   const lang = useCurrentLang();
   return useCallback(() => {
     const next = lang === 'ar' ? 'en' : 'ar';
     const rest = location.pathname.replace(/^\/(ar|en)(?=\/|$)/, '');
-    navigate(`/${next}${rest}${location.search}`);
-  }, [navigate, location, lang]);
+    window.location.assign(`/${next}${rest}${location.search}${location.hash}`);
+  }, [location, lang]);
 }
