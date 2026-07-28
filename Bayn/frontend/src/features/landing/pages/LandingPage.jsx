@@ -368,8 +368,18 @@ export default function LandingPage() {
             <div className="foot-col">
               <h4>{t('landing.footer.resources')}</h4>
               <a href="#top">{t('landing.footer.help')}</a>
-              <a href="#top">{t('landing.footer.privacy')}</a>
-              <a href="#top">{t('landing.footer.terms')}</a>
+              <a
+                href={`/${i18n.language}/privacy`}
+                onClick={(e) => { e.preventDefault(); navigate('/privacy', { state: { crumb: { label: 'الرئيسية', to: '/' } } }); }}
+              >
+                {t('landing.footer.privacy')}
+              </a>
+              <a
+                href={`/${i18n.language}/terms`}
+                onClick={(e) => { e.preventDefault(); navigate('/terms', { state: { crumb: { label: 'الرئيسية', to: '/' } } }); }}
+              >
+                {t('landing.footer.terms')}
+              </a>
             </div>
           </div>
           <div className="foot-bottom">

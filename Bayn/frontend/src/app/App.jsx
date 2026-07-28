@@ -36,6 +36,9 @@ const IdeaDetailsPage = lazyPage(() => import('@/features/ideas/pages/IdeaDetail
 const MeetingsPage = lazyPage(() => import('@/features/meetings/pages/MeetingsPage'));
 // Pulls in the heavy Daily SDK only when a user actually opens a meeting.
 const MeetingRoomPage = lazyPage(() => import('@/features/meetings/pages/MeetingRoomPage'));
+// Public legal pages — Arabic-only by design, shown without signing in.
+const PrivacyPolicyPage = lazyPage(() => import('@/features/legal/pages/PrivacyPolicyPage'));
+const TermsPage = lazyPage(() => import('@/features/legal/pages/TermsPage'));
 
 // Pages navigate with short keys (onNavigate('home')); this maps each key to its
 // (language-less) URL. goTo() prepends the active /:lang prefix.
@@ -54,6 +57,8 @@ const PATHS = {
   createidea: '/create-idea',
   dashboard: '/projects/dashboard',
   settings: '/settings',
+  privacy: '/privacy',
+  terms: '/terms',
 };
 
 // Holds the branded loader for at least `ms` every time it mounts, then reveals
@@ -142,6 +147,9 @@ function LangApp() {
       <Route path="projects/dashboard" element={<ProtectedRoute><ProjectDashboardPage onNavigate={goTo} /></ProtectedRoute>} />
       <Route path="projects/:projectId/dashboard" element={<ProtectedRoute><ProjectDashboardPage onNavigate={goTo} /></ProtectedRoute>} />
       <Route path="settings" element={<ProtectedRoute><SettingsPage onNavigate={goTo} /></ProtectedRoute>} />
+      {/* Public legal pages — no auth, always Arabic. */}
+      <Route path="privacy" element={<PrivacyPolicyPage />} />
+      <Route path="terms" element={<TermsPage />} />
       {/* Unknown path: absolute target, otherwise the redirect keeps appending
           itself to the current URL and re-matches this same route forever. */}
       <Route
