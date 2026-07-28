@@ -21,7 +21,7 @@
     "no_room": "This meeting doesn't have a video room yet",
     "join_link_failed": "Couldn't prepare the join link. Please try again.",
     "recording_not_ready": "This meeting's recording isn't ready yet",
-    "owner_only": "Only the project owner can end this meeting",
+    "owner_only": "Only the meeting host can end this meeting",
     "already_ended": "This meeting has already ended"
   },
   "webhook": {
