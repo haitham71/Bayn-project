@@ -106,7 +106,7 @@ jobs:
             --document-name "AWS-RunShellScript" \
             --parameters commands='[
               "set -e",
-              "cd ~/Bayn-project",
+              "cd /home/ubuntu/Bayn-project",
               "git pull origin staging",
               "cd Bayn/backend",
               "docker compose -p bayn run --rm --no-deps api alembic upgrade head"
@@ -152,7 +152,7 @@ jobs:
             --document-name "AWS-RunShellScript" \
             --parameters commands='[
               "set -e",
-              "cd ~/Bayn-project/Bayn/backend",
+              "cd /home/ubuntu/Bayn-project/Bayn/backend",
               "docker compose -p bayn up -d --build --no-deps api"
             ]' \
             --query "Command.CommandId" --output text)
