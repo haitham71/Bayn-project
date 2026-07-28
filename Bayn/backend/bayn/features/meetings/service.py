@@ -977,16 +977,23 @@ async def get_meeting(
 
 
 async def end_meeting(
-    db: AsyncSession, meeting_id: uuid.UUID, owner_id: uuid.UUID, locale: str = DEFAULT_LOCALE
+    db: AsyncSession, meeting_id: uuid.UUID, user_id: uuid.UUID, locale: str = DEFAULT_LOCALE
 ) -> Meeting:
-    """The host explicitly closes a live meeting. Unlike the scheduled end_time
-    (just an estimate), this is what unlocks the owner's post-meeting
-    accept/reject call on the originating request — a call that wraps up early
-    doesn't force them to wait out the full booked slot."""
+    """Whoever hosts this specific meeting closes it — the project owner for
+    most meetings today, but not assumed to always be them (a member can host
+    one they scheduled). """
     meeting = await db.get(Meeting, meeting_id)
     if not meeting:
         raise NotFoundError(t("meetings", "meeting.not_found", locale))
-    if meeting.counterpart_id != owner_id:
+
+    is_host = await db.scalar(
+        select(MeetingParticipant.id).where(
+            MeetingParticipant.meeting_id == meeting_id,
+            MeetingParticipant.user_id == user_id,
+            MeetingParticipant.is_host.is_(True),
+        )
+    )
+    if not is_host:
         raise ForbiddenError(t("meetings", "meeting.owner_only", locale))
     if meeting.ended_at is not None:
         raise ValidationError(t("meetings", "meeting.already_ended", locale))
