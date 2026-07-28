@@ -1089,6 +1089,9 @@ async def create_meeting_join_link(
             exp_epoch_seconds=exp,
             # the project owner (counterpart) hosts, so they get moderator rights
             is_owner=(user_id == meeting.counterpart_id),
+            # ...and their join auto-starts the cloud recording, so exactly one
+            # recording runs regardless of who else joins.
+            start_cloud_recording=(user_id == meeting.counterpart_id),
         )
     except DailyError:
         raise ValidationError(t("meetings", "meeting.join_link_failed", locale))

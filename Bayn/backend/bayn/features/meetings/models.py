@@ -153,6 +153,12 @@ class Meeting(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
     )
 
+    @property
+    def recording_available(self) -> bool:
+        """True once the recording has been pulled from Daily.co into our storage
+        and is downloadable via the recording endpoint."""
+        return self.recording_key is not None
+
     attendances: Mapped[list["MeetingAttendance"]] = relationship(
         "MeetingAttendance", back_populates="meeting", cascade="all, delete-orphan"
     )

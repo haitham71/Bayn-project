@@ -108,6 +108,7 @@ class MeetingResponse(BaseModel):
     video_link: str | None
     created_at: datetime
     ended_at: datetime | None
+    recording_available: bool = False
     participants: list[ParticipantInfo] = []
 
 

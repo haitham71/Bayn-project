@@ -136,6 +136,7 @@ class DailyClient:
         user_name: str,
         exp_epoch_seconds: int | None = None,
         is_owner: bool = False,
+        start_cloud_recording: bool = False,
     ) -> str:
         """
         Mint a single-use meeting token that joins `room_name` as `user_name`.
@@ -151,6 +152,10 @@ class DailyClient:
             exp_epoch_seconds: the token stops working after this time; align it
                 with the room's own exp so a leaked token can't outlive the room.
             is_owner: grant Daily owner privileges (kick, mute) to this token.
+            start_cloud_recording: start cloud recording automatically when this
+                participant joins. The room must already allow recording
+                (enable_recording="cloud"); give this only to the host token so a
+                single recording starts rather than one per participant.
 
         Returns:
             The token string, to append as the `?t=` query parameter.
@@ -161,6 +166,8 @@ class DailyClient:
         properties = {"room_name": room_name, "user_name": user_name, "is_owner": is_owner}
         if exp_epoch_seconds is not None:
             properties["exp"] = exp_epoch_seconds
+        if start_cloud_recording:
+            properties["start_cloud_recording"] = True
 
         async with httpx.AsyncClient() as client:
             try:
