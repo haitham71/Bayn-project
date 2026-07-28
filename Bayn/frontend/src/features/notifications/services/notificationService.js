@@ -11,7 +11,11 @@ export const getUnreadCount = () => api.get(`${BASE}/unread-count`).then((r) => 
 
 // Marks a single notification read.
 export const markNotificationRead = (id) =>
-  api.post(`${BASE}/${id}/read`).then((r) => r.data);
+  api.put(`${BASE}/${id}/read`).then((r) => r.data);
+
+// Marks all of my notifications read in one request.
+export const markAllNotificationsRead = () =>
+  api.put(`${BASE}/read-all`).then((r) => r.data);
 
 // Deletes a single notification.
 export const deleteNotification = (id) => api.delete(`${BASE}/${id}`).then((r) => r.data);
