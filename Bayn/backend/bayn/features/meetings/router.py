@@ -234,6 +234,23 @@ async def join_meeting(
     return MeetingJoinResponse(url=url)
 
 
+@router.post(
+    "/{meeting_id}/end",
+    response_model=MeetingResponse,
+    summary="Host closes a live meeting, unlocking the accept/reject decision on its request",
+)
+async def end_meeting(
+    meeting_id: uuid.UUID,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+    locale: str = Depends(get_locale),
+) -> MeetingResponse:
+    meeting = await service.end_meeting(db, meeting_id, current_user.id, locale)
+    resp = MeetingResponse.model_validate(meeting)
+    resp.participants = (await service.participants_map(db, [meeting])).get(meeting.id, [])
+    return resp
+
+
 @router.patch(
     "/{meeting_id}/attendance", response_model=MeetingAttendanceResponse, summary="Record my own attendance"
 )

@@ -107,6 +107,7 @@ class MeetingResponse(BaseModel):
     calcom_booking_id: str | None
     video_link: str | None
     created_at: datetime
+    ended_at: datetime | None
     participants: list[ParticipantInfo] = []
 
 

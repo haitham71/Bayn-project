@@ -702,8 +702,9 @@ async def finalize_meeting_request(
     if request.status not in SCHEDULED_STATUSES:
         raise ValidationError(t("meetings", "request.not_scheduled", locale))
 
-    # There is nothing to judge until the meeting has actually happened.
-    if _ensure_aware(request.proposed_end_time) > datetime.now(timezone.utc):
+    # Gated on the host explicitly closing the meeting (Meeting.ended_at)
+    meeting = await db.get(Meeting, request.resulting_meeting_id) if request.resulting_meeting_id else None
+    if meeting is None or meeting.ended_at is None:
         raise ValidationError(t("meetings", "request.meeting_not_over", locale))
 
     if not approve:
@@ -972,6 +973,35 @@ async def get_meeting(
         )
         if not is_participant:
             raise ForbiddenError(t("meetings", "meeting.not_a_participant", locale))
+    return meeting
+
+
+async def end_meeting(
+    db: AsyncSession, meeting_id: uuid.UUID, owner_id: uuid.UUID, locale: str = DEFAULT_LOCALE
+) -> Meeting:
+    """The host explicitly closes a live meeting. Unlike the scheduled end_time
+    (just an estimate), this is what unlocks the owner's post-meeting
+    accept/reject call on the originating request — a call that wraps up early
+    doesn't force them to wait out the full booked slot."""
+    meeting = await db.get(Meeting, meeting_id)
+    if not meeting:
+        raise NotFoundError(t("meetings", "meeting.not_found", locale))
+    if meeting.counterpart_id != owner_id:
+        raise ForbiddenError(t("meetings", "meeting.owner_only", locale))
+    if meeting.ended_at is not None:
+        raise ValidationError(t("meetings", "meeting.already_ended", locale))
+
+    if meeting.room_name:
+        try:
+            await daily_client.delete_room(meeting.room_name)
+        except DailyError:
+            # Best-effort — the room may already be gone (expired via `exp`),
+            # and we still want ended_at set so the accept/reject gate unlocks.
+            logger.warning("Failed to delete Daily room for meeting %s", meeting.id, exc_info=True)
+
+    meeting.ended_at = datetime.now(timezone.utc)
+    await db.commit()
+    await db.refresh(meeting)
     return meeting
 
 
