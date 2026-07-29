@@ -12,7 +12,7 @@ Bayn is a secure collaborative workspace platform designed to bridge the gap bet
 
 The platform enables users to:
 * Register and verify accounts seamlessly
-* Browse an Ideas and Skills
+* Browse Ideas and Skills
 * Sign and manage legal NDAs
 * Schedule and conduct meetings
 * Manage project tasks and track progress via a central dashboard
@@ -99,6 +99,10 @@ Added capabilities to handle meeting recording artifacts and securely manage pro
   Due to time constraints, frontend developer had to make direct backend modifications to schemas and functions without full context, working under extreme pressure.
   * **Solution:** The team sacrificed sleep and personal time to push the MVP across the finish line. 
   * **Lesson Learned:** Strictly enforce API contracts and allocate a buffer phase specifically for frontend-backend integration.
+* **Challenge 5: Direct Frontend-to-Integration Communication**  
+  Initially, the frontend was configured to send requests directly to the Authentica third-party service. This was an architectural flaw, as there should be no direct communication between the end-user and external integrations.
+  * **Solution:** The workflow was refactored so that the frontend only sends the request to the backend, which then securely communicates with Authentica. Additionally, a rate limit was implemented, restricting users to three failed input attempts per day.
+  * **Lesson Learned:** Never allow direct communication between the client-side and third-party integrations; always proxy external requests securely through the backend.
 
 ### 2.3 Recommendations for Future Projects
 * Utilize UML diagrams and whiteboards to map out business logic and file relationships comprehensively before writing code.
