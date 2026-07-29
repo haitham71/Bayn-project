@@ -176,15 +176,6 @@ export default function IdeaDetailsPage({ onNavigate }) {
             <div className="id__grid">
               {/* Main */}
               <section className="id__card">
-                <div className="id__card-actions">
-                  <button type="button" className="id__icon-btn" aria-label={t('ideaDetails.save')}>
-                    <Bookmark width={20} height={20} aria-hidden="true" />
-                  </button>
-                  <button type="button" className="id__icon-btn" aria-label={t('ideaDetails.share')}>
-                    <Share2 width={20} height={20} aria-hidden="true" />
-                  </button>
-                </div>
-
                 <h1 className="id__title">{idea.title}</h1>
 
                 <div className="id__meta">
