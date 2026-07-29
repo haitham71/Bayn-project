@@ -81,6 +81,6 @@ Budgeting constraints | utilize low-cost tools and optimized ad campaigns - ads 
 |-------|--------------|-------------|
 **Stage 1:** Idea Development | May 3 – May 16 <br> (2 Weeks) | Completed |
 **Stage 2:** Project Charter Development | May 17 – June 13 <br> (4 Weeks) | Completed |
-**Stage 3:** Technical Documentation | June 14 – June 27 <br> (2 Weeks) | Current | 
-**Stage 4:** MVP Development| June 28 – July 25 <br> (4 Weeks) | Upcoming |
-**Stage 5:** Project Closure | July 26 – July 30 <br> (5 Days) | Upcoming |
+**Stage 3:** Technical Documentation | June 14 – June 27 <br> (2 Weeks) | Completed | 
+**Stage 4:** MVP Development| June 28 – July 25 <br> (4 Weeks) | Completed |
+**Stage 5:** Project Closure | July 26 – July 30 <br> (5 Days) | Current |
