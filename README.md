@@ -1,4 +1,17 @@
 # Portfolio Project
+
+## Table of Contents
+- [Overview](#overview)
+- Project's Stages:  
+[1st Stage: Team Formation and Idea Development](#1st-stage-team-formation-and-idea-development)  
+[2nd Stage: Project Charter Development](#2nd-stage-project-charter-development)  
+[3rd Stage: Technical Documentation](#3rd-stage-technical-documentation)  
+[4th Stage: MVP Development and Execution](#4th-stage-mvp-development-and-execution)  
+[5th Stage: Project Closure](#5th-stage-project-closure)  
+- [Team Members](#team-members)  
+
+
+
 ## Overview
 The Holberton School portfolio project is a capstone that concludes the Foundations year, requiring students to build a complete product from idea to working MVP. Students have full freedom over their technology stack and topic. 
 
@@ -72,8 +85,24 @@ Translating plans, designs, and technical documentation into a functional Minimu
 - A thoroughly validated product that has passed unit, integration, and user acceptance testing  
 - Documented sprint cycles, including daily stand-ups, stakeholder demos, and team retrospectives
 
+## 5th Stage: Project Closure
+
+### What is this stage about
+The closure stage provides an opportunity to consolidate the team's learning, showcase the final product, and evaluate the overall success of the project. This stage emphasizes the importance of reflecting on the process, documenting insights, and presenting outcomes effectively. By engaging in these activities, the team gains experience in professional reporting, public speaking, and constructive self-assessment.
+
+### Objectives
+* Document the final results of the project, including successes, challenges, and lessons learned
+* Reflect on the entire project lifecycle, from ideation to delivery, and evaluate team performance
+* Prepare and deliver a professional presentation that highlights the project journey and demonstrates the MVP
+* Celebrate team achievements while identifying areas for improvement for future projects
+
+### Outcomes
+* A comprehensive final report that includes a results summary, lessons learned, and team retrospective highlights
+* A professional presentation slide deck encompassing all key project stages and the MVP demo flow
+* A live presentation delivered to stakeholders, featuring a functional demonstration of the MVP
+
 ## Team Members
-Fai Al-Sharekh  
-Afnan Al-Faidi  
-Layla Al-Shehri  
-Haitham Al-Shehri
+**Afnan Al-Faidi**  
+**Fai Al-Sharekh**  
+**Haitham Al-Shehri**  
+**Layla Al-Shehri**  
