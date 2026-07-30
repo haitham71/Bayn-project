@@ -20,12 +20,11 @@ from bayn.common.exceptions import NotFoundError, ValidationError
 from bayn.core.i18n import DEFAULT_LOCALE, t
 from bayn.features.contracts.models import Contract, ContractStatus
 from bayn.features.identity.models import User
-from bayn.features.projects.models import Project
 from bayn.integrations.nda_service import NDAServiceError, nda_service_client
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_CONFIDENTIALITY_MONTHS = 52
+DEFAULT_CONFIDENTIALITY_MONTHS = 12
 
 
 def _full_name(user: User) -> str:
@@ -75,12 +74,9 @@ async def create_nda_for_request(
     if requester is None or owner is None:
         raise NotFoundError(t("contracts", "errors.party_not_found", locale))
 
-    idae_title = await get_project_title(db, request.project_id)
-
     contract = Contract(
         meeting_request_id=request.id,
         project_id=request.project_id,
-        
         confidentiality_period_months=DEFAULT_CONFIDENTIALITY_MONTHS,
         party_one_user_id=owner.id,
         party_one_name=_full_name(owner),
@@ -105,7 +101,6 @@ async def create_nda_for_request(
             party_two_name=contract.party_two_name,
             party_two_national_id=contract.party_two_national_id,
             party_two_email=requester.email,
-            idae_title=idae_title,
         )
     except NDAServiceError as exc:
         # Nothing is persisted, so the owner can just accept again once
@@ -157,12 +152,6 @@ async def sync_contract(db: AsyncSession, contract: Contract) -> Contract:
     return contract
 
 
-async def get_project_title(db: AsyncSession, project_id: uuid.UUID | None) -> str | None:
-    if project_id is None:
-        return None
-    return await db.scalar(select(Project.title).where(Project.id == project_id))
-
-
 async def sync_and_get_contract_status(
     db: AsyncSession,
     contract_id: uuid.UUID,
@@ -175,5 +164,4 @@ async def sync_and_get_contract_status(
     await sync_contract(db, contract)
     await db.commit()
     await db.refresh(contract)
-    contract.idae_title = await get_project_title(db, contract.project_id)
     return contract

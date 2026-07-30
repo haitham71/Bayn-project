@@ -23,7 +23,6 @@ class ContractResponse(BaseModel):
     meeting_request_id: Optional[uuid.UUID]
     meeting_id: Optional[uuid.UUID]
     project_id: Optional[uuid.UUID]
-    idae_title: str
     created_at: datetime
     updated_at: datetime
 
