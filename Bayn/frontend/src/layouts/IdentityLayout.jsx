@@ -42,7 +42,7 @@ export default function IdentityLayout({ children, contentClassName = '' }) {
           upward just behind it — see styles/enter.css. */}
       <section className="identity-layout__form">
         <div className="identity-layout__brand bayn-enter">
-          <Logo width={64} height={48} aria-label="Bayn" />
+          <Logo width={64} height={48} aria-label="Beyn" />
         </div>
         <div
           className={`identity-layout__content bayn-enter ${contentClassName}`.trim()}
