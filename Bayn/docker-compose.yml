@@ -31,7 +31,7 @@ services:
       timeout: 5s
       retries: 5
   api:
-    build: .
+    build: ./backend
     container_name: bayn_api
     restart: unless-stopped
     extra_hosts:
@@ -71,14 +71,25 @@ services:
       postgres:
         condition: service_healthy
     volumes:
-      - ./bayn:/app/bayn
-      - ./tests:/app/tests
-      - ./pytest.ini:/app/pytest.ini
+      - ./backend/bayn:/app/bayn
+      - ./backend/tests:/app/tests
+      - ./backend/pytest.ini:/app/pytest.ini
     command: >
       uvicorn bayn.main:app
       --host 0.0.0.0
       --port 8000
       --reload
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: ${VITE_API_URL}
+    container_name: bayn_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:8080"
+    depends_on:
+      - api
 volumes:
   postgres_data:
     name: bayn_postgres_data
