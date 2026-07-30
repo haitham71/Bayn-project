@@ -222,7 +222,7 @@ export default function CallRoom({ onLeave, endsAt, meetingId }) {
             {formatRemaining(remaining)}
           </span>
         )}
-        <img src={logoUrl} alt="Bayn" className="cr__logo" />
+        <img src={logoUrl} alt="Beyn" className="cr__logo" />
       </header>
 
       <div className="cr__body">

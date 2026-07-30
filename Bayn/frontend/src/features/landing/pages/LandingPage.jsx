@@ -80,7 +80,7 @@ export default function LandingPage() {
       <header id="lp-hdr">
         <div className="wrap">
           <nav>
-            <a href="#top" className="brand" aria-label="Bayn home">
+            <a href="#top" className="brand" aria-label="Beyn home">
               <Logo />
             </a>
             <div className="navlinks">
@@ -350,7 +350,7 @@ export default function LandingPage() {
             <div className="foot-about">
               <div className="brand">
                 <Logo />
-                <span className="name">Bayn</span>
+                <span className="name">Beyn</span>
               </div>
               <p>{t('landing.footer.about')}</p>
             </div>
