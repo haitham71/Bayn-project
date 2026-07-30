@@ -86,6 +86,7 @@ class NDAServiceClient:
         party_one_user_id: str | None = None,
         party_two_user_id: str | None = None,
         confidentiality_period_months: int | None = None,
+        idae_title: str | None = None,
     ) -> dict:
         """
         Create a new contract. Signature-System emails party one their
@@ -114,6 +115,7 @@ class NDAServiceClient:
             "party_two_name": party_two_name,
             "party_two_national_id": party_two_national_id,
             "party_two_email": party_two_email,
+            "idae_title": idae_title,
         }
 
         async with httpx.AsyncClient(timeout=self._timeout) as client:
