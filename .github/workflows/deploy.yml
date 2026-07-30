@@ -99,7 +99,6 @@ jobs:
     steps:
       - uses: aws-actions/configure-aws-credentials@v4
         with:
-<<<<<<< Updated upstream
           role-to-assume: arn:aws:iam::205839628237:role/bayn-deploy
           aws-region: eu-north-1
 
@@ -118,7 +117,7 @@ jobs:
               "git config --system --add safe.directory /home/ubuntu/Bayn-project",
               "cd /home/ubuntu/Bayn-project",
               "git pull origin staging",
-              "cd Bayn/backend",
+              "cd Bayn",
               "docker compose -p bayn run --rm --no-deps api alembic upgrade head"
             ]' \
             --query "Command.CommandId" --output text)
@@ -135,19 +134,6 @@ jobs:
             echo "SSM command failed with status: $STATUS"
             exit 1
           fi
-=======
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            set -e
-            cd ~/Bayn-project
-            git pull origin staging
-            cd Bayn
-            # -p bayn matches the project name the running containers already use;
-            # --no-deps means this never touches the long-running postgres container.
-            docker compose -p bayn run --rm --no-deps api alembic upgrade head
->>>>>>> Stashed changes
 
   # Fourth: rebuild and restart the running containers with the new code.
   deploy:
@@ -160,7 +146,6 @@ jobs:
     steps:
       - uses: aws-actions/configure-aws-credentials@v4
         with:
-<<<<<<< Updated upstream
           role-to-assume: arn:aws:iam::205839628237:role/bayn-deploy
           aws-region: eu-north-1
 
@@ -169,15 +154,15 @@ jobs:
           INSTANCE_ID: i-0b423f22e5a4b6b10
         run: |
           set -e
-          # Same project name as the running stack, scoped to api only so
-          # the existing postgres container is never recreated or touched.
+          # Same project name as the running stack, scoped to api + frontend
+          # so the existing postgres container is never recreated or touched.
           COMMAND_ID=$(aws ssm send-command \
             --instance-ids "$INSTANCE_ID" \
             --document-name "AWS-RunShellScript" \
             --parameters commands='[
               "set -e",
-              "cd /home/ubuntu/Bayn-project/Bayn/backend",
-              "docker compose -p bayn up -d --build --no-deps api"
+              "cd /home/ubuntu/Bayn-project/Bayn",
+              "docker compose -p bayn up -d --build --no-deps api frontend"
             ]' \
             --query "Command.CommandId" --output text)
 
@@ -193,14 +178,3 @@ jobs:
             echo "SSM command failed with status: $STATUS"
             exit 1
           fi
-=======
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            set -e
-            cd ~/Bayn-project/Bayn
-            # Same project name as the running stack, scoped to api + frontend
-            # so the existing postgres container is never recreated or touched.
-            docker compose -p bayn up -d --build --no-deps api frontend
->>>>>>> Stashed changes
