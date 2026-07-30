@@ -26,7 +26,8 @@ jobs:
           POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
           POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-        working-directory: Bayn/backend
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+        working-directory: Bayn
         run: docker compose build
 
       - name: Run tests
@@ -58,16 +59,16 @@ jobs:
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           SMTP_PORT: ${{ secrets.SMTP_PORT }}
           SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
-        working-directory: Bayn/backend
+        working-directory: Bayn
         run: |
           docker compose up -d postgres
           docker compose run --rm api pytest -v
 
-  # Second: build the production image on its own, isolated from compose's
+  # Second: build the production images on their own, isolated from compose's
   # cache — catches Dockerfile/dependency issues before we ever touch the
   # server.
   build:
-    name: Build Production Image
+    name: Build Production Images
     runs-on: ubuntu-latest
     needs: test
     steps:
@@ -76,6 +77,13 @@ jobs:
       - name: Build backend image
         working-directory: Bayn/backend
         run: docker build -t bayn-backend:${{ github.sha }} .
+
+      - name: Build frontend image
+        working-directory: Bayn/frontend
+        run: |
+          docker build \
+            --build-arg VITE_API_URL=${{ secrets.VITE_API_URL }} \
+            -t bayn-frontend:${{ github.sha }} .
 
   # Third: pull the new code on the server and run any pending Alembic
   # migrations, before the app that depends on them restarts.
@@ -91,6 +99,7 @@ jobs:
     steps:
       - uses: aws-actions/configure-aws-credentials@v4
         with:
+<<<<<<< Updated upstream
           role-to-assume: arn:aws:iam::205839628237:role/bayn-deploy
           aws-region: eu-north-1
 
@@ -126,6 +135,19 @@ jobs:
             echo "SSM command failed with status: $STATUS"
             exit 1
           fi
+=======
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            cd ~/Bayn-project
+            git pull origin staging
+            cd Bayn
+            # -p bayn matches the project name the running containers already use;
+            # --no-deps means this never touches the long-running postgres container.
+            docker compose -p bayn run --rm --no-deps api alembic upgrade head
+>>>>>>> Stashed changes
 
   # Fourth: rebuild and restart the running containers with the new code.
   deploy:
@@ -138,6 +160,7 @@ jobs:
     steps:
       - uses: aws-actions/configure-aws-credentials@v4
         with:
+<<<<<<< Updated upstream
           role-to-assume: arn:aws:iam::205839628237:role/bayn-deploy
           aws-region: eu-north-1
 
@@ -170,3 +193,14 @@ jobs:
             echo "SSM command failed with status: $STATUS"
             exit 1
           fi
+=======
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            cd ~/Bayn-project/Bayn
+            # Same project name as the running stack, scoped to api + frontend
+            # so the existing postgres container is never recreated or touched.
+            docker compose -p bayn up -d --build --no-deps api frontend
+>>>>>>> Stashed changes
