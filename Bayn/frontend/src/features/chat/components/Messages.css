@@ -166,6 +166,16 @@
   animation: msg-pop 0.16s ease;
 }
 
+/* The 360px anchor only leaves the window on screen above roughly 820px of
+   viewport height: below that its top — which carries the header, and the
+   header is the drag handle — sits above the fold, so it can't be read or
+   dragged back. Short screens get it near the bottom instead. */
+@media (max-height: 820px) {
+  .dm {
+    bottom: calc(24px + var(--app-safe-bottom));
+  }
+}
+
 /* While dragging, drop the open animation and keep the pointer from selecting
    text or scrolling the page under a touch drag. */
 .dm--dragging {

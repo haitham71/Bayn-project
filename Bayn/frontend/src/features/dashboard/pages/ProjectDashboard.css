@@ -4,7 +4,7 @@
 /* Project Dashboard — tasks, team, meetings, applications, contract, for a
    single selected project. Mirrors the layout conventions used by
    MyProjectsPage/JoinRequestsPage/MeetingsPage (fixed floating sidebar,
-   108px inline-start offset for content). */
+   content cleared by the --app-pad-* tokens). */
 
 .pd {
   height: 100vh;
@@ -13,8 +13,8 @@
 }
 
 .pd__main {
-  padding-block: 22px 40px;
-  padding-inline: 108px 40px;
+  padding-block: 22px calc(40px + var(--app-safe-bottom));
+  padding-inline: var(--app-pad-start) var(--app-pad-end);
 }
 
 .pd__body {

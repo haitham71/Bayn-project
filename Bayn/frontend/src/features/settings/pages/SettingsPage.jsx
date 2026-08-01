@@ -8,14 +8,12 @@ import { useAccountSettings } from '../hooks/useAccountSettings';
 import { usePasswordChange } from '../hooks/usePasswordChange';
 import AccountSection from '../components/AccountSection';
 import PasswordSection from '../components/PasswordSection';
-import NotificationsSection from '../components/NotificationsSection';
 import LegalSection from '../components/LegalSection';
 import './SettingsPage.css';
 
 const NAV_SECTIONS = [
   { key: 'account', labelKey: 'settings.navAccount' },
   { key: 'security', labelKey: 'settings.navSecurity' },
-  { key: 'notifications', labelKey: 'settings.navNotifications' },
   { key: 'legal', labelKey: 'settings.navLegal' },
 ];
 
@@ -80,7 +78,6 @@ export default function SettingsPage({ onNavigate }) {
           <div className="st__content">
             <AccountSection account={account} />
             <PasswordSection pw={pw} />
-            <NotificationsSection />
             <LegalSection />
           </div>
         </div>

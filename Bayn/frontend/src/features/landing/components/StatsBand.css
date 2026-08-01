@@ -1,0 +1,58 @@
+/* ---------- Stats band ---------- */
+.lp .band {
+  background: var(--green-deep);
+  color: var(--cream);
+  border-radius: 28px;
+  padding: 56px 40px;
+  position: relative;
+  overflow: hidden;
+}
+
+.lp .band .wrapx {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 30px;
+  position: relative;
+  z-index: 1;
+  text-align: center;
+}
+
+.lp .band .band-stat b {
+  font-family: var(--font-sans);
+  font-size: clamp(34px,4.4vw,52px);
+  font-weight: 700;
+  color: var(--cream);
+  letter-spacing: -.02em;
+  display: block;
+}
+
+.lp .band .band-stat span {
+  font-size: 14px;
+  color: rgba(235,229,220,.7);
+}
+
+.lp .band-glow {
+  position: absolute;
+  width: 420px;
+  height: 420px;
+  border-radius: 50%;
+  background: rgba(41,94,77,.55);
+  filter: blur(40px);
+  top: -160px;
+  right: -80px;
+}
+
+@media(max-width:960px) {
+  .lp .band .wrapx {
+    grid-template-columns: repeat(2,1fr);
+    gap: 34px;
+  }
+
+}
+
+@media(max-width:600px) {
+  .lp .band {
+    padding: 44px 24px;
+  }
+
+}

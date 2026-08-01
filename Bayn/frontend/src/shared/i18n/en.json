@@ -568,7 +568,6 @@
   "settings": {
     "navAccount": "Account information",
     "navSecurity": "Security",
-    "navNotifications": "Notifications",
     "navLegal": "Legal",
     "legalTitle": "Privacy & Terms",
     "legalDesc": "Read how we handle your data and the terms of using Beyn.",
@@ -578,18 +577,7 @@
     "subtitle": "Manage your account, security, and notification preferences.",
     "accountTitle": "Account information",
     "accountDesc": "Your username, email, and phone number.",
-    "passwordDesc": "Change your account password.",
-    "notifTitle": "Notifications",
-    "notifDesc": "Choose what you get notified about, and how.",
-    "notifJoinRequests": "Join requests",
-    "notifJoinRequestsSub": "When someone applies to your idea, or your application status changes",
-    "notifMeetings": "Meeting reminders",
-    "notifMeetingsSub": "Email reminders before scheduled meetings",
-    "notifContracts": "Contract updates",
-    "notifContractsSub": "NDA and commitment signing status",
-    "notifChat": "Chat messages",
-    "notifChatSub": "New messages in your project channels",
-    "notifNotWired": "Notification preferences aren't saved to your account yet."
+    "passwordDesc": "Change your account password."
   },
   "profileView": {
     "memberSince": "Member since"
@@ -656,7 +644,6 @@
       "milestoneShipped": "Join request accepted",
       "milestoneMeta": "A new member joined the team"
     },
-
     "features": {
       "eyebrow": "Everything in one place",
       "title": "From first idea to shipped project",
@@ -672,7 +659,39 @@
       "aiTitle": "AI Matching",
       "aiDesc": "Smart recommendations connect your idea with the collaborators most likely to make it real, based on skills and interests.",
       "profilesTitle": "Profiles & Skills",
-      "profilesDesc": "A profile that shows what you can do, skills, past projects, and roles, so the right teams can find you and trust your work."
+      "profilesDesc": "A profile that shows what you can do, skills, past projects, and roles, so the right teams can find you and trust your work.",
+      "peek": {
+        "stageMvp": "MVP",
+        "stageIdea": "Idea",
+        "stageLaunched": "Launched",
+        "results": "24 ideas",
+        "ideaTitle": "Smart irrigation for rooftop farms",
+        "ideaOwner": "Noura Fahad · Product",
+        "ideaTitle2": "Arabic voice notes for clinics",
+        "ideaOwner2": "Faisal Naif · Backend",
+        "details": "Details",
+        "requests": "Join requests",
+        "reqName": "Sara Mohammed",
+        "reqRole": "Frontend Developer",
+        "reqName2": "Majed Saad",
+        "reqRole2": "UI/UX Designer",
+        "todo": "To do",
+        "doing": "In progress",
+        "done": "Done",
+        "meetingWhen": "Tue, 12 Aug · 4:30 PM",
+        "meetingTitle": "Sprint review",
+        "meetingWhen2": "Thu, 14 Aug · 11:00 AM",
+        "meetingTitle2": "Design handoff",
+        "join": "Join",
+        "profileName": "Layan Khalid",
+        "profileRole": "Full-stack Developer",
+        "recTitle": "Sprint review",
+        "recWhen": "Tue, 12 Aug",
+        "recTitle2": "Design handoff",
+        "recWhen2": "Thu, 7 Aug"
+      },
+      "recordingTitle": "Meeting Recordings",
+      "recordingDesc": "Every meeting is recorded on its own, then saved to the project. Go back to it later to check a decision or catch what you missed."
     },
     "how": {
       "eyebrow": "How to start",
@@ -754,7 +773,35 @@
       "help": "Help center",
       "privacy": "Privacy Policy",
       "terms": "User Agreement",
-      "rights": "© 2026 Beyn. All rights reserved."
+      "rights": "© 2026 Beyn. All rights reserved.",
+      "nda": "Idea protection"
+    },
+    "nda": {
+      "eyebrow": "Protected by default",
+      "title": "Your idea is covered before you pitch it",
+      "lead": "Every meeting request raises a non-disclosure agreement first. Nobody sees the detail behind your idea until both sides have signed for it.",
+      "point1": "An NDA is drawn up automatically with each meeting request, before any discussion starts",
+      "point2": "Both parties sign digitally against a verified national ID, with the time of signing recorded",
+      "point3": "The signed PDF is kept on the project, with a set confidentiality period",
+      "docTitle": "Non-disclosure agreement",
+      "docMeta": "Smart irrigation for rooftop farms",
+      "statusSigned": "Signed",
+      "party1": "Noura Fahad",
+      "party1Role": "Idea owner",
+      "signedOn1": "12 Aug",
+      "party2": "Faisal Naif",
+      "party2Role": "Requesting party",
+      "signedOn2": "12 Aug",
+      "pdf": "Signed copy stored"
+    },
+    "team": {
+      "eyebrow": "The team",
+      "title": "The people behind Beyn",
+      "lead": "Beyn was designed and built as a graduation project by four students.",
+      "m1": "Haitham Al-Shehri",
+      "m2": "Afnan Al-Faidi",
+      "m3": "Fai Al-Sharikh",
+      "m4": "Layla Al-Shehri"
     }
   }
 }

@@ -1,0 +1,226 @@
+/* ---------- Hero ---------- */
+.lp .hero {
+  position: relative;
+  padding: 70px 0 40px;
+  overflow: hidden;
+}
+
+.lp .hero-grid {
+  display: grid;
+  grid-template-columns: 1.05fr .95fr;
+  gap: 56px;
+  align-items: center;
+}
+
+.lp .hero h1 {
+  font-size: clamp(38px,5.4vw,62px);
+  margin: 20px 0 22px;
+}
+
+.lp .hero h1 .accent {
+  color: var(--green);
+}
+
+.lp .hero p.lead {
+  font-size: 19px;
+  margin-bottom: 34px;
+}
+
+.lp .hero-actions {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.lp .hero-meta {
+  display: flex;
+  gap: 28px;
+  margin-top: 38px;
+  flex-wrap: wrap;
+}
+
+.lp .hero-meta .m {
+  display: flex;
+  flex-direction: column;
+}
+
+.lp .hero-meta .m b {
+  font-size: 26px;
+  color: var(--green-deep);
+  font-weight: 700;
+  letter-spacing: -.02em;
+}
+
+.lp .hero-meta .m span {
+  font-size: 13.5px;
+  color: var(--muted);
+}
+
+.lp .blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: .5;
+  z-index: -1;
+}
+
+.lp .blob.a {
+  width: 420px;
+  height: 420px;
+  background: #cdd9c9;
+  top: -120px;
+  right: -80px;
+}
+
+.lp .blob.b {
+  width: 360px;
+  height: 360px;
+  background: #e8d9bf;
+  bottom: -140px;
+  left: -120px;
+}
+
+/* ---------- Hero product mock ---------- */
+/* Leans towards the pointer; the angles are fed in by the Tilt component. */
+.lp .tilt {
+  perspective: 1100px;
+}
+
+.lp .mock {
+  position: relative;
+  background: var(--white);
+  border-radius: 22px;
+  padding: 18px;
+  box-shadow: var(--shadow);
+  border: 1px solid rgba(201,189,168,.6);
+  transform: rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));
+  transform-style: preserve-3d;
+  transition: transform .15s ease-out;
+}
+
+/* Longer ease back to flat so releasing feels settled rather than snapped. */
+.lp .tilt.resting .mock {
+  transition: transform .6s ease;
+}
+
+/* The rail and the floating card ride above the panel surface, so the lean
+   reads as real depth instead of a flat image being skewed. */
+.lp .mock-rail {
+  position: absolute;
+  inset-inline-start: -14px;
+  top: 34px;
+  bottom: 34px;
+  width: 52px;
+  background: var(--green-deep);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  padding: 16px 0;
+  box-shadow: 0 14px 30px -14px rgba(15,61,46,.7);
+  transform: translateZ(40px);
+}
+
+.lp .mock-rail i {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: rgba(235,229,220,.28);
+  display: block;
+}
+
+.lp .mock-rail i.active {
+  background: var(--cream);
+}
+
+.lp .mock-inner {
+  margin-inline-start: 44px;
+}
+
+.lp .float-card {
+  position: absolute;
+  inset-inline-end: -22px;
+  bottom: 22px;
+  background: var(--white);
+  border-radius: 14px;
+  padding: 13px 15px;
+  box-shadow: var(--shadow);
+  border: 1px solid rgba(201,189,168,.6);
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  transform: translateZ(60px);
+  animation: lp-floaty 5s ease-in-out infinite;
+}
+
+/* Carries the card's depth offset, since an animated transform would otherwise
+   overwrite the translateZ that lifts it off the panel. */
+@keyframes lp-floaty {
+  0%,
+  100% {
+    transform: translate3d(0,0,60px);
+  }
+
+  50% {
+    transform: translate3d(0,-9px,60px);
+  }
+
+}
+
+.lp .float-card .ic {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--green);
+  color: var(--cream);
+  display: grid;
+  place-items: center;
+}
+
+.lp .float-card b {
+  font-size: 13px;
+  color: var(--green-deep);
+  display: block;
+}
+
+.lp .float-card span {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp .mock,
+  .lp .mock-rail,
+  .lp .float-card {
+    transform: none;
+    transition: none;
+    animation: none;
+  }
+
+}
+
+@media(max-width:960px) {
+  .lp .hero-grid {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+
+  .lp .hero-visual {
+    order: -1;
+  }
+
+}
+
+@media(max-width:600px) {
+  .lp .float-card {
+    inset-inline-end: 8px;
+    transform: scale(.9);
+  }
+
+  .lp .hero-meta {
+    gap: 20px;
+  }
+
+}

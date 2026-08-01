@@ -1,0 +1,42 @@
+/* ---------- NDA showcase ---------- */
+/* Signature stamp on each party row of the contract mock. */
+.lp .nda-sig {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex: none;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--green);
+  background: rgba(41,94,77,.1);
+  border-radius: 20px;
+  padding: 4px 9px;
+  white-space: nowrap;
+}
+
+.lp .nda-terms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--line);
+}
+
+.lp .nda-term {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--muted);
+  background: var(--beige-soft);
+  border: 1px solid rgba(201,189,168,.6);
+  border-radius: 9px;
+  padding: 6px 11px;
+}
+
+.lp .nda-term svg {
+  color: var(--green);
+  flex: none;
+}

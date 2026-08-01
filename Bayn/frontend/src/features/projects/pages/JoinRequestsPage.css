@@ -9,8 +9,8 @@
 }
 
 .jr__main {
-  padding-block: 22px 40px;
-  padding-inline: 108px 40px;
+  padding-block: 22px calc(40px + var(--app-safe-bottom));
+  padding-inline: var(--app-pad-start) var(--app-pad-end);
 }
 
 .jr__back {
