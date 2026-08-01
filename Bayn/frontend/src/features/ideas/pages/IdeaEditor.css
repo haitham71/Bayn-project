@@ -7,8 +7,8 @@
 .ci__main {
   /* Extra bottom room so the last form field (and its open dropdown) never sits
      flush against the end of the page. */
-  padding-block: 22px 96px;
-  padding-inline: 108px 40px;
+  padding-block: 22px calc(96px + var(--app-safe-bottom));
+  padding-inline: var(--app-pad-start) var(--app-pad-end);
 }
 
 /* Back-to-projects link (edit page). */

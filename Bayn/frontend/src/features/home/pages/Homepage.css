@@ -6,11 +6,11 @@
   background: var(--bg-surface-primary);
 }
 
-/* Clears the fixed floating sidebar rail (16px offset + 76px collapsed width). */
+/* Clears the sidebar: the side rail on desktop, the bottom bar on phones. */
 
 .home__main {
-  padding-block: 22px 40px;
-  padding-inline: 108px 40px;
+  padding-block: 22px calc(40px + var(--app-safe-bottom));
+  padding-inline: var(--app-pad-start) var(--app-pad-end);
 }
 
 .home__body {
@@ -378,8 +378,10 @@
 }
 
 @media (max-width: 680px) {
-  .home__main {
-    padding-inline: 96px 20px;
+  /* Rides above the sidebar's bottom bar instead of sitting behind it. */
+  .home__support-wrap {
+    inset-inline-end: 16px;
+    bottom: var(--app-safe-bottom);
   }
   .home__cards {
     grid-template-columns: 1fr;

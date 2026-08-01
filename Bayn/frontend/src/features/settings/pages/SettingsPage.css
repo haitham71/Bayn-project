@@ -1,7 +1,7 @@
 /* Settings page — layout, header, side nav and the shared panel frame. */
 
 /* Settings — single scrollable page with a left anchor-nav, matching the
-   fixed floating sidebar + 108px inline-start offset convention used across
+   fixed floating sidebar + --app-pad-* clearance convention used across
    MyProjectsPage/JoinRequestsPage/MeetingsPage/ProjectDashboard. */
 
 .st {
@@ -11,8 +11,8 @@
 }
 
 .st__main {
-  padding-block: 22px 0;
-  padding-inline: 108px 40px;
+  padding-block: 22px var(--app-safe-bottom);
+  padding-inline: var(--app-pad-start) var(--app-pad-end);
 }
 
 .st__head {

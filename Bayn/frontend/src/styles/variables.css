@@ -157,4 +157,22 @@
   --type-small-weight: 400;
   --type-supporting-size: 12px;
   --type-supporting-weight: 400;
+
+  /* App shell — how far a page's content clears the fixed sidebar rail
+     (16px offset + 76px collapsed width, plus breathing room). */
+  --app-pad-start: 108px;
+  --app-pad-end: 40px;
+  /* Extra room under the content; only needed once the rail becomes a
+     bottom bar and would otherwise sit on top of the last element. */
+  --app-safe-bottom: 0px;
+}
+
+/* Phones: the rail moves to the bottom of the screen, so the side clearance
+   goes away and the bottom clearance appears. See Sidebar.css. */
+@media (max-width: 680px) {
+  :root {
+    --app-pad-start: 16px;
+    --app-pad-end: 16px;
+    --app-safe-bottom: 76px;
+  }
 }

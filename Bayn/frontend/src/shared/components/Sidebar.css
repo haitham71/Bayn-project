@@ -193,3 +193,107 @@
     transition: none;
   }
 }
+
+/* ---------- Phones ---------- */
+/* The floating rail becomes a bottom bar. Two reasons it can't stay a rail:
+   there is no hover on touch, so it could never expand to show its labels,
+   and a 92px side strip costs a quarter of the width on a 375px screen.
+   The :hover rule is restated here because it outranks the plain class. */
+@media (max-width: 680px) {
+  .bayn-sidebar,
+  .bayn-sidebar:hover,
+  .bayn-sidebar--pinned {
+    top: auto;
+    bottom: 0;
+    inset-inline: 0;
+    transform: none;
+    width: 100%;
+    height: auto;
+    flex-direction: row;
+    align-items: center;
+    padding: 6px 6px calc(6px + env(safe-area-inset-bottom, 0px));
+    border-radius: 18px 18px 0 0;
+    box-shadow: 0 -8px 24px -10px rgba(4, 18, 14, 0.45);
+    transition: none;
+  }
+
+  /* No room for the mark, and pinning means nothing once the bar no longer
+     expands. */
+  .bayn-sidebar__brand,
+  .bayn-sidebar__head {
+    display: none;
+  }
+
+  .bayn-sidebar__nav {
+    flex: 1 1 auto;
+    overflow: visible;
+  }
+
+  /* Settings / language / logout keep their grouping, but as a divider on
+     the side rather than above. */
+  .bayn-sidebar__footer {
+    margin-top: 0;
+    padding-top: 0;
+    padding-inline-start: 6px;
+    border-top: none;
+    border-inline-start: 1px solid rgba(201, 186, 161, 0.14);
+  }
+
+  .bayn-sidebar__list {
+    flex-direction: row;
+    justify-content: space-around;
+    gap: 0;
+  }
+
+  .bayn-sidebar__item {
+    position: relative;
+    justify-content: center;
+    width: auto;
+    height: auto;
+    padding: 7px 9px;
+    border-radius: 10px;
+  }
+
+  /* The icon cell was sized to the collapsed rail width; in the bar it only
+     needs to fit its own tile. */
+  .bayn-sidebar__icon {
+    width: auto;
+    height: auto;
+  }
+
+  .bayn-sidebar__icon-tile {
+    width: 28px;
+    height: 28px;
+  }
+
+  .bayn-sidebar__icon-tile svg {
+    width: 23px;
+    height: 23px;
+  }
+
+  /* Eight items leave no width for readable text, so the labels are hidden
+     visually but kept for screen readers — they are the buttons' only name. */
+  .bayn-sidebar__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    clip-path: inset(50%);
+  }
+
+  /* Hover styling sticks after a tap on touch, which would leave a second
+     item looking selected. */
+  .bayn-sidebar__item:hover {
+    background: transparent;
+    color: var(--sidebar-text-default);
+  }
+
+  .bayn-sidebar__item--active,
+  .bayn-sidebar__item--active:hover {
+    background: var(--sidebar-hover-button);
+    color: var(--color-secondary-400);
+  }
+}
