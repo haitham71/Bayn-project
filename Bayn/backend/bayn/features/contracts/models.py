@@ -10,9 +10,12 @@ class ContractType(str, enum.Enum):
     service_agreement = "service_agreement"
 
 class ContractStatus(str, enum.Enum):
+    pending_creation = "pending_creation"
+    creation_failed = "creation_failed"
     pending_party_one = "pending_party_one"
     pending_party_two = "pending_party_two"
     signed = "signed"
+    
 
 class Contract(Base):
     """
@@ -24,7 +27,7 @@ class Contract(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     contract_type = Column(Enum(ContractType), default=ContractType.nda, nullable=False)
-    status = Column(Enum(ContractStatus), default=ContractStatus.pending_party_one, nullable=False)
+    status = Column(Enum(ContractStatus), default=ContractStatus.pending_creation, nullable=False)
     
     # Relations & Foreign Keys
 
