@@ -1,0 +1,224 @@
+/* ---------- Product mock primitives ---------- */
+/* The fake in-app surfaces shared by the hero panel and both showcase panels:
+   the mk-* dashboard rows and the idea-card feed item. Imported by every
+   component that renders one, so none of them depends on another's stylesheet. */
+.lp .panel {
+  background: var(--white);
+  border-radius: 24px;
+  padding: 20px;
+  box-shadow: var(--shadow);
+  border: 1px solid rgba(201,189,168,.6);
+  position: relative;
+}
+
+.lp .mk-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.lp .mk-title {
+  font-weight: 600;
+  color: var(--green-deep);
+  font-size: 17px;
+}
+
+.lp .mk-sub {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.lp .mk-badge {
+  background: var(--green);
+  color: var(--cream);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 11px;
+  border-radius: 20px;
+}
+
+.lp .mk-stats {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.lp .mk-stat {
+  background: var(--beige-soft);
+  border: 1px solid rgba(201,189,168,.6);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.lp .mk-stat b {
+  font-size: 20px;
+  color: var(--green-deep);
+  display: block;
+  letter-spacing: -.02em;
+}
+
+.lp .mk-stat span {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.lp .mk-bar {
+  height: 9px;
+  border-radius: 6px;
+  background: var(--beige);
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.lp .mk-bar>i {
+  display: block;
+  height: 100%;
+  background: var(--green);
+  border-radius: 6px;
+}
+
+.lp .mk-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin-top: 4px;
+}
+
+.lp .mk-row {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  background: var(--beige-soft);
+  border: 1px solid rgba(201,189,168,.55);
+  border-radius: 11px;
+  padding: 11px 13px;
+}
+
+.lp .mk-av {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  color: var(--cream);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.lp .mk-row .t {
+  flex: 1;
+  min-width: 0;
+}
+
+.lp .mk-row .t b {
+  font-size: 13px;
+  color: var(--brown);
+  font-weight: 600;
+  display: block;
+}
+
+.lp .mk-row .t span {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.lp .mk-tag {
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 4px 9px;
+  border-radius: 20px;
+  background: var(--cream);
+  color: var(--green);
+  border: 1px solid var(--line);
+}
+
+/* ---------- Idea feed card ---------- */
+.lp .idea-card {
+  background: var(--beige-soft);
+  border: 1px solid rgba(201,189,168,.6);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.lp .idea-card:last-child {
+  margin-bottom: 0;
+}
+
+.lp .idea-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  gap: 10px;
+}
+
+.lp .idea-top b {
+  font-size: 15px;
+  color: var(--green-deep);
+}
+
+.lp .chip {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: var(--green-deep);
+  color: var(--cream);
+  white-space: nowrap;
+}
+
+.lp .chip.alt {
+  background: transparent;
+  color: var(--green);
+  border: 1px solid var(--line);
+}
+
+.lp .idea-card p {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+
+.lp .idea-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.lp .stack {
+  display: flex;
+}
+
+.lp .stack .a {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--white);
+  margin-inline-start: -8px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.lp .stack .a:first-child {
+  margin-inline-start: 0;
+}
+
+.lp .idea-foot .join {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--green);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+[dir='rtl'] .lp .idea-foot .join svg {
+  transform: scaleX(-1);
+}

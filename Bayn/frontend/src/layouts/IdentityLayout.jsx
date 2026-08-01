@@ -36,25 +36,6 @@ export default function IdentityLayout({ children, contentClassName = '' }) {
     };
   }, [supportOpen]);
 
-  // Support contact popover — closes on outside click or Escape.
-  const [supportOpen, setSupportOpen] = useState(false);
-  const supportRef = useRef(null);
-  useEffect(() => {
-    if (!supportOpen) return undefined;
-    function onDown(e) {
-      if (supportRef.current && !supportRef.current.contains(e.target)) setSupportOpen(false);
-    }
-    function onKey(e) {
-      if (e.key === 'Escape') setSupportOpen(false);
-    }
-    document.addEventListener('mousedown', onDown);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onDown);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [supportOpen]);
-
   return (
     <div className="identity-layout">
       {/* Entrance: the hero slides in from its edge while the form settles

@@ -1,0 +1,50 @@
+/* ---------- Showcase layout ---------- */
+/* The alternating copy / panel rows, shared by the marketplace and dashboard
+   showcases. */
+.lp .showcase-grid {
+  display: grid;
+  grid-template-columns: .95fr 1.05fr;
+  gap: 56px;
+  align-items: center;
+}
+
+.lp .feat-list {
+  list-style: none;
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.lp .feat-list li {
+  display: flex;
+  gap: 13px;
+  align-items: flex-start;
+  font-size: 15.5px;
+  color: var(--brown);
+}
+
+.lp .feat-list .tick {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  background: var(--green);
+  color: var(--cream);
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  margin-top: 1px;
+}
+
+@media(max-width:960px) {
+  .lp .showcase-grid {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+
+  /* Keeps the panel on top once the row stacks, matching the hero. */
+  .lp .showcase-grid .panel {
+    order: -1;
+  }
+
+}

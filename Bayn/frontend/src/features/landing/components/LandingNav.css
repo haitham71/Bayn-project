@@ -1,0 +1,82 @@
+/* ---------- Nav ---------- */
+.lp header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  transition: box-shadow .25s ease,background .25s ease;
+}
+
+.lp header.scrolled {
+  background: rgba(235,229,220,.82);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 1px 0 rgba(201,189,168,.7);
+}
+
+/* Full-width nav so the logo and the auth buttons sit near the two corners
+   with matching padding, instead of floating inside the centred 1200px wrap. */
+.lp header .wrap {
+  max-width: none;
+  padding-inline: 40px;
+}
+
+.lp nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 76px;
+}
+
+.lp .navlinks {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 34px;
+}
+
+.lp .navlinks a {
+  display: inline-block;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--brown);
+  transition: color .15s ease, transform .15s ease;
+}
+
+.lp .navlinks a:hover {
+  color: var(--green);
+  transform: scale(1.08);
+}
+
+.lp .navcta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.lp .login-link {
+  font-weight: 600;
+  color: var(--green-deep);
+  font-size: 15px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+@media(max-width:960px) {
+  .lp .navlinks {
+    display: none;
+  }
+
+}
+
+@media(max-width:600px) {
+  .lp .navcta .login-link {
+    display: none;
+  }
+
+  .lp header .wrap {
+    padding-inline: 20px;
+  }
+
+}
