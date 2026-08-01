@@ -6,9 +6,9 @@ export default function Logo({ href = '#', className = '' }) {
     <a
       className={`bayn-logo${className ? ` ${className}` : ''}`}
       href={href}
-      aria-label="Bayn home"
+      aria-label="Beyn home"
     >
-      <img src={logoUrl} alt="Bayn" />
+      <img src={logoUrl} alt="Beyn" />
     </a>
   );
 }

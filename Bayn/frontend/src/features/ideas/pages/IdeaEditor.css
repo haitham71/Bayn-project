@@ -5,7 +5,9 @@
 }
 
 .ci__main {
-  padding-block: 22px 40px;
+  /* Extra bottom room so the last form field (and its open dropdown) never sits
+     flush against the end of the page. */
+  padding-block: 22px 96px;
   padding-inline: 108px 40px;
 }
 

@@ -26,6 +26,14 @@
   flex: 0 0 auto;
 }
 
+/* Left cluster of the top bar: the personal "leave" link plus, for the host,
+   the "end for everyone" button. */
+.cr__bar-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+}
+
 .cr__back {
   display: inline-flex;
   align-items: center;
@@ -37,6 +45,78 @@
   font-size: 15px;
   color: var(--btn-primary-default, #295e4d);
   cursor: pointer;
+}
+
+/* Recording indicator: meetings are recorded automatically, so a steady red
+   "Recording" badge sits in the top bar for the whole call. */
+.cr__rec {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(178, 59, 46, 0.12);
+  color: #b23b2e;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+[dir='rtl'] .cr__rec {
+  font-family: var(--font-ar);
+}
+
+.cr__rec-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #b23b2e;
+  animation: cr-rec-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes cr-rec-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cr__rec-dot { animation: none; }
+}
+
+/* Host-only: ends the session for every participant. Tinted red to read as the
+   more consequential action, distinct from the plain "leave" link beside it. */
+.cr__end {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #b23b2e;
+  border-radius: 999px;
+  background: #b23b2e;
+  padding: 6px 14px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+[dir='rtl'] .cr__end {
+  font-family: var(--font-ar);
+}
+
+.cr__end:hover {
+  opacity: 0.85;
+}
+
+.cr__end-error {
+  margin: 0;
+  color: #b23b2e;
+  font-size: 14px;
+}
+
+[dir='rtl'] .cr__end-error {
+  font-family: var(--font-ar);
 }
 
 [dir='rtl'] .cr__back {

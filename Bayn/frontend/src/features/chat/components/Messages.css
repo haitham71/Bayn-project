@@ -166,6 +166,13 @@
   animation: msg-pop 0.16s ease;
 }
 
+/* While dragging, drop the open animation and keep the pointer from selecting
+   text or scrolling the page under a touch drag. */
+.dm--dragging {
+  animation: none;
+  user-select: none;
+}
+
 .dm__head {
   display: flex;
   align-items: center;
@@ -173,6 +180,18 @@
   padding: 12px 14px;
   background: var(--color-primary-600, #0f3d2e);
   color: var(--color-neutral-100, #ebe5dc);
+  /* The title bar is the drag handle. */
+  cursor: grab;
+  touch-action: none;
+}
+
+.dm--dragging .dm__head {
+  cursor: grabbing;
+}
+
+/* The close button keeps its own pointer. */
+.dm__head button {
+  cursor: pointer;
 }
 
 .dm__head-avatar {

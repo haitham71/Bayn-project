@@ -8,6 +8,7 @@ import Checkbox from '@/shared/components/Checkbox';
 import Eye from '@/assets/icons/eye.svg?react';
 import EyeOff from '@/assets/icons/eye-off.svg?react';
 import PasswordStrength from '@/shared/components/PasswordStrength';
+import { LegalLink } from '@/features/legal/components/LegalLink';
 import {
   validateEmail,
   validateName,
@@ -111,7 +112,7 @@ export default function SignUpPage({ onNavigate, initialData = {}, onDataChange 
         email, username,
         firstNameEn, lastNameEn,
         firstNameAr, lastNameAr,
-        password, dob, phone,
+        password, dob, phone, agreed,
       });
       onDataChange?.({ pendingToken: res.pending_token });
       onNavigate('verification');
@@ -246,11 +247,9 @@ export default function SignUpPage({ onNavigate, initialData = {}, onDataChange 
               label={
                 <span className="su__terms-text">
                   {t('signup.termsPrefix')}
-                  <a href="/terms" className="su__terms-link">{t('signup.termsAgreement')}</a>
-                  {t('signup.termsComma')}
-                  <a href="/privacy" className="su__terms-link">{t('signup.termsPrivacy')}</a>
+                  <LegalLink to="/terms" fromCrumb={{ label: 'إنشاء الحساب', to: '/signup' }} className="su__terms-link">{t('signup.termsAgreement')}</LegalLink>
                   {t('signup.termsAnd')}
-                  <a href="/cookies" className="su__terms-link">{t('signup.termsCookies')}</a>
+                  <LegalLink to="/privacy" fromCrumb={{ label: 'إنشاء الحساب', to: '/signup' }} className="su__terms-link">{t('signup.termsPrivacy')}</LegalLink>
                 </span>
               }
             />

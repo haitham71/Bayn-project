@@ -5,7 +5,7 @@ import Navbar from '@/shared/components/Navbar';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
 import { useNow } from '@/shared/hooks/useNow';
 import { listMeetings } from '@/features/meetings/services/meetingService';
-import { canJoin, minutesUntilOpen } from '@/features/meetings/lib/joinWindow';
+import { canJoin, minutesUntilOpen, isEnded } from '@/features/meetings/lib/joinWindow';
 import Video from '@/assets/icons/video.svg?react';
 import './MeetingsPage.css';
 
@@ -25,10 +25,10 @@ export default function MeetingsPage({ onNavigate }) {
 
   const now = useNow();
   const upcoming = meetings
-    .filter((m) => new Date(m.end_time).getTime() >= now)
+    .filter((m) => !isEnded(m, now))
     .sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
   const past = meetings
-    .filter((m) => new Date(m.end_time).getTime() < now)
+    .filter((m) => isEnded(m, now))
     .sort((a, b) => new Date(b.start_time) - new Date(a.start_time));
 
   // Upcoming split into "this week" and "later".
@@ -120,6 +120,10 @@ export default function MeetingsPage({ onNavigate }) {
           <header className="mt__header">
             <h1 className="mt__page-title">{t('meetings.title')}</h1>
             <p className="mt__page-sub">{t('meetings.subtitle')}</p>
+            <p className="mt__rec-note">
+              <span className="mt__rec-dot" aria-hidden="true" />
+              {t('meetings.recordedNote')}
+            </p>
           </header>
 
           <div className="mt__tabs" role="tablist">

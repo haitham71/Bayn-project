@@ -48,10 +48,19 @@ export function useJoinRequests(projectId) {
 
   const openAccept = (id) => { setAcceptId(id); setAcceptTitle(''); };
   const closeAccept = () => setAcceptId(null);
-  function confirmAccept() {
+  async function confirmAccept() {
     const id = acceptId;
     setAcceptId(null);
-    runAction(id, () => acceptMeetingRequest(id, acceptTitle.trim() || null));
+    setActioningId(id); // keeps the button in its "Sending…" state until the reload
+    setActionError('');
+    try {
+      await acceptMeetingRequest(id, acceptTitle.trim() || null);
+      // The NDA/meeting state only shows after a reload, so refresh shortly after.
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (e) {
+      setActionError(getApiErrorMessage(e, t('joinRequests.actionError')));
+      setActioningId(null);
+    }
   }
   const handleReject = (id) => runAction(id, () => rejectMeetingRequest(id));
   const handleFinalize = (id, approve) => runAction(id, () => finalizeMeetingRequest(id, approve));

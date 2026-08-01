@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLangNavigate, useLangSwitch } from '@/shared/hooks/useLang';
 import { useTranslation } from 'react-i18next';
 import heroImage from '@/assets/images/register-photo-page-1.png';
 import Button from '@/shared/components/Button';
@@ -13,12 +13,28 @@ import './IdentityLayout.css';
 // Split-screen shell for the identity/authentication flow: form column on one
 // side, branded hero image on the other. The form content is passed as children.
 export default function IdentityLayout({ children, contentClassName = '' }) {
-  const { t, i18n } = useTranslation();
-  const navigate = useNavigate();
+  const { t } = useTranslation();
+  const navigate = useLangNavigate();
+  const toggleLanguage = useLangSwitch();
 
-  const toggleLanguage = () => {
-    i18n.changeLanguage(i18n.language === 'ar' ? 'en' : 'ar');
-  };
+  // Support contact popover — closes on outside click or Escape.
+  const [supportOpen, setSupportOpen] = useState(false);
+  const supportRef = useRef(null);
+  useEffect(() => {
+    if (!supportOpen) return undefined;
+    function onDown(e) {
+      if (supportRef.current && !supportRef.current.contains(e.target)) setSupportOpen(false);
+    }
+    function onKey(e) {
+      if (e.key === 'Escape') setSupportOpen(false);
+    }
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [supportOpen]);
 
   // Support contact popover — closes on outside click or Escape.
   const [supportOpen, setSupportOpen] = useState(false);
@@ -41,15 +57,22 @@ export default function IdentityLayout({ children, contentClassName = '' }) {
 
   return (
     <div className="identity-layout">
+      {/* Entrance: the hero slides in from its edge while the form settles
+          upward just behind it — see styles/enter.css. */}
       <section className="identity-layout__form">
-        <div className="identity-layout__brand">
-          <Logo width={64} height={48} aria-label="Bayn" />
+        <div className="identity-layout__brand bayn-enter">
+          <Logo width={64} height={48} aria-label="Beyn" />
         </div>
-        <div className={`identity-layout__content ${contentClassName}`.trim()}>{children}</div>
+        <div
+          className={`identity-layout__content bayn-enter ${contentClassName}`.trim()}
+          style={{ '--enter-delay': '0.1s' }}
+        >
+          {children}
+        </div>
       </section>
 
       <aside
-        className="identity-layout__hero"
+        className="identity-layout__hero bayn-enter--side"
         style={{ backgroundImage: `url(${heroImage})` }}
       >
         <div className="identity-layout__hero-overlay" />

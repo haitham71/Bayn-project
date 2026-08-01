@@ -4,6 +4,7 @@ import ChevronRight from '@/assets/icons/chevron-right.svg?react';
 import { listMeetingRequests } from '@/features/meetings/services/meetingService';
 import { stageOf } from '@/features/meetings/lib/requestStatus';
 import { timeAgo } from '@/shared/lib/relativeTime';
+import { useAvatars } from '@/shared/hooks/useAvatars';
 
 // "Application's status" card: latest join requests for a chosen owned project.
 export default function ApplicationsCard({ projects }) {
@@ -26,6 +27,7 @@ export default function ApplicationsCard({ projects }) {
       .catch(() => setRequests([]));
   }, [projectId]);
 
+  const avatars = useAvatars(requests.map((r) => r.requester?.id));
   const project = projects.find((p) => p.id === projectId) || null;
   const next = () => {
     if (projects.length < 2) return;
@@ -63,9 +65,14 @@ export default function ApplicationsCard({ projects }) {
                 {requests.slice(0, 8).map((r) => {
                   const name = ((locale === 'ar' ? r.requester?.name_ar : r.requester?.name_en) || '').trim();
                   const stage = stageOf(r);
+                  const avatarUrl = avatars[r.requester?.id];
                   return (
                     <li key={r.id} className="home__status-item">
-                      <span className="home__team-avatar">{name.charAt(0).toUpperCase() || '؟'}</span>
+                      {avatarUrl ? (
+                        <img className="home__team-avatar home__team-avatar--img" src={avatarUrl} alt="" />
+                      ) : (
+                        <span className="home__team-avatar">{name.charAt(0).toUpperCase() || '؟'}</span>
+                      )}
                       <span className="home__team-info">
                         <span className="home__team-name">{name || t('home.profileName')}</span>
                         <span className="home__team-role">{t('joinRequests.applied', { when: timeAgo(r.created_at, locale) })}</span>

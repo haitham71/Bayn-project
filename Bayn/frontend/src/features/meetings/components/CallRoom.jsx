@@ -12,13 +12,16 @@ import {
   useAppMessage,
 } from '@daily-co/daily-react';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
+import { endMeeting } from '@/features/meetings/services/meetingService';
 import ArrowLeft from '@/assets/icons/arrow-left.svg?react';
 import Clock from '@/assets/icons/clock.svg?react';
+import PhoneOff from '@/assets/icons/phone-off.svg?react';
 import Maximize from '@/assets/icons/maximize.svg?react';
 import Minimize from '@/assets/icons/minimize.svg?react';
 import logoUrl from '@/assets/logo/Bayn-svg.svg?url';
 import BaynLogo from '@/assets/logo/Bayn-svg.svg?react';
 import ConfirmDialog from '@/shared/components/ConfirmDialog';
+import PageLoader from '@/shared/components/PageLoader';
 import { formatRemaining } from '../lib/callFormat';
 import CallTile from './CallTile';
 import CallControls from './CallControls';
@@ -26,7 +29,7 @@ import CallChatPanel from './CallChatPanel';
 
 // Inner room (inside the DailyProvider): joins the preset room and renders the
 // custom call UI.
-export default function CallRoom({ onLeave, endsAt }) {
+export default function CallRoom({ onLeave, endsAt, meetingId }) {
   const { t } = useTranslation();
   const daily = useDaily();
   const participantIds = useParticipantIds();
@@ -42,6 +45,10 @@ export default function CallRoom({ onLeave, endsAt }) {
   // 'left-meeting' doesn't bounce the user away before they see the notice.
   const endedRef = useRef(false);
   const [confirmLeaveOpen, setConfirmLeaveOpen] = useState(false);
+  // Host-only "end for everyone" flow, separate from a personal leave.
+  const [confirmEndOpen, setConfirmEndOpen] = useState(false);
+  const [ending, setEnding] = useState(false);
+  const [endError, setEndError] = useState('');
 
   // ── Live chat (Daily data channel, not persisted) ──
   const [messages, setMessages] = useState([]);
@@ -151,6 +158,26 @@ export default function CallRoom({ onLeave, endsAt }) {
     if (daily) daily.leave(); else onLeave();
   }, [daily, onLeave]);
 
+  // The host closes the room for everyone. On success the backend has already
+  // deleted the Daily room, so peers get bounced on their own; we mark this as
+  // an intentional end so we hold on the "ended" notice instead of navigating.
+  const requestEnd = useCallback(() => { setEndError(''); setConfirmEndOpen(true); }, []);
+  const doEnd = useCallback(() => {
+    setEnding(true);
+    setEndError('');
+    endMeeting(meetingId)
+      .then(() => {
+        endedRef.current = true;
+        setConfirmEndOpen(false);
+        setStatus('ended');
+        daily?.leave();
+      })
+      .catch(() => {
+        setEnding(false);
+        setEndError(t('meetingRoom.endError'));
+      });
+  }, [meetingId, daily, t]);
+
   if (status === 'ended') {
     return (
       <div className="cr cr--center">
@@ -169,10 +196,23 @@ export default function CallRoom({ onLeave, endsAt }) {
   return (
     <div className="cr">
       <header className="cr__bar">
-        <button type="button" className="cr__back" onClick={requestLeave}>
-          <ArrowLeft width={20} height={20} aria-hidden="true" />
-          {t('meetingRoom.leave')}
-        </button>
+        <div className="cr__bar-left">
+          <button type="button" className="cr__back" onClick={requestLeave}>
+            <ArrowLeft width={20} height={20} aria-hidden="true" />
+            {t('meetingRoom.leave')}
+          </button>
+          {isHost && (
+            <button type="button" className="cr__end" onClick={requestEnd}>
+              <PhoneOff width={16} height={16} aria-hidden="true" />
+              {t('meetingRoom.endSession')}
+            </button>
+          )}
+          {/* Meetings are recorded automatically (server-side cloud recording). */}
+          <span className="cr__rec" title={t('meetingRoom.recordedNote')}>
+            <span className="cr__rec-dot" aria-hidden="true" />
+            {t('meetingRoom.recording')}
+          </span>
+        </div>
         {remaining != null && (
           <span
             className={`cr__timer${remaining <= 60000 ? ' cr__timer--low' : ''}`}
@@ -182,15 +222,18 @@ export default function CallRoom({ onLeave, endsAt }) {
             {formatRemaining(remaining)}
           </span>
         )}
-        <img src={logoUrl} alt="Bayn" className="cr__logo" />
+        <img src={logoUrl} alt="Beyn" className="cr__logo" />
       </header>
 
       <div className="cr__body">
         <div className={`cr__stage${sharing ? ' cr__stage--sharing' : ''}`}>
-          {status !== 'joined' && (
-            <p className={`cr__state${status === 'error' ? ' cr__state--error' : ''}`}>
-              {status === 'error' ? t('meetingRoom.error') : t('meetingRoom.connecting')}
-            </p>
+          {status === 'error' && (
+            <p className="cr__state cr__state--error">{t('meetingRoom.error')}</p>
+          )}
+          {status === 'connecting' && (
+            <div className="cr__state">
+              <PageLoader onDark inline label={t('meetingRoom.connecting')} />
+            </div>
           )}
 
           {sharing && (
@@ -249,6 +292,19 @@ export default function CallRoom({ onLeave, endsAt }) {
         onConfirm={doLeave}
         onCancel={() => setConfirmLeaveOpen(false)}
       />
+
+      <ConfirmDialog
+        open={confirmEndOpen}
+        title={t('meetingRoom.confirmEndTitle')}
+        message={t('meetingRoom.confirmEndMsg')}
+        confirmLabel={t('meetingRoom.endSession')}
+        cancelLabel={t('meetingRoom.stay')}
+        confirmDisabled={ending}
+        onConfirm={doEnd}
+        onCancel={() => { if (!ending) { setConfirmEndOpen(false); setEndError(''); } }}
+      >
+        {endError && <p className="cr__end-error">{endError}</p>}
+      </ConfirmDialog>
     </div>
   );
 }

@@ -33,19 +33,70 @@
 /* ---- Filter bar ---- */
 .im__filters {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   flex-wrap: wrap;
-  gap: 28px;
+  gap: 20px 28px;
   padding: 14px 20px;
   border: 1px solid var(--bg-surface-secondary, #d7cbb9);
-  border-radius: 8px;
-  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.12);
+  border-radius: 12px;
+  background: #F2EEEB;
+  box-shadow:  0 0 8px rgba(0, 0, 0, 0.12);
+}
+
+/* Card heading — spans the full width above the filter controls. */
+.im__filters-title {
+  flex: 1 1 100%;
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-title, #0f3d2e);
+}
+
+[dir='rtl'] .im__filters-title {
+  font-family: var(--font-ar);
 }
 
 .im__filter {
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+
+/* Skills filter grows to fill the top row beside the two dropdowns. */
+.im__filter--skills {
+  flex: 1 1 260px;
+  min-width: 240px;
+}
+
+.im__filter--skills .im__skills-input {
+  width: 100%;
+}
+
+/* Keep the selected-skill chips on one horizontally-scrolling row so picking
+   skills never grows the filter card taller. */
+.im__filter--skills .skills__chips {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.im__filter--skills .skills__chip {
+  flex: 0 0 auto;
+}
+
+/* Stage chips + the clear button share the bottom row. */
+.im__stage-row {
+  flex: 1 1 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+}
+
+.im__filter--stage {
+  flex: 0 1 auto;
 }
 
 .im__filter-label {
@@ -96,8 +147,7 @@
 }
 
 .im__clear {
-  margin-inline-start: auto;
-  align-self: center;
+  align-self: flex-end;
   border: none;
   background: none;
   padding: 0;
@@ -105,6 +155,7 @@
   color: var(--text-error, #900000);
   text-decoration: underline;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .im__count {
@@ -132,7 +183,7 @@
   border: 1px solid var(--bg-surface-secondary, #d7cbb9);
   border-radius: 20px;
   background: var(  --color-secondary-200);
-  box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.25);
 }
 
 /* Owner */

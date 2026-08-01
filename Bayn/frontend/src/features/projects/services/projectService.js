@@ -78,3 +78,21 @@ export const listAssignedTasks = (projects, userId, { includeDone = true } = {})
           (includeDone || (task.status || 'todo').toLowerCase() !== 'done'),
       ),
   );
+
+// ── Project files (shared attachments) ───────────────────────────────────────
+export const listProjectFiles = (projectId) =>
+  api.get(`${API.projects.base}/${projectId}/files`).then((r) => r.data);
+
+// Multipart upload — let the browser set the boundary. Field name is "file".
+export const uploadProjectFile = (projectId, file) => {
+  const form = new FormData();
+  form.append('file', file);
+  return api
+    .post(`${API.projects.base}/${projectId}/files`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    .then((r) => r.data);
+};
+
+export const deleteProjectFile = (projectId, fileId) =>
+  api.delete(`${API.projects.base}/${projectId}/files/${fileId}`).then((r) => r.data);

@@ -116,18 +116,25 @@
     "removeTime": "Remove time",
     "removeDate": "Remove {{date}}"
   },
+  "noAccess": {
+    "memberTitle": "You don't have access to this board",
+    "memberMsg": "This dashboard is only for the project's team.",
+    "ownerTitle": "You don't have access to this page",
+    "ownerMsg": "Only the project's owner can manage it."
+  },
   "myProjects": {
     "youOwn": "Projects you own",
     "youWorkOn": "Projects you work on",
     "projectLabel": "Project",
     "postNew": "Post new idea/project",
-    "limitReached": "You've reached the limit of 2 projects",
+    "limitReached": "You've reached the limit of 3 projects",
     "viewDetails": "View details",
     "joinRequests": "Join requests",
     "dashboard": "Dashboard",
     "backToProjects": "Back to your projects",
     "opening": "{{count}} Opening",
     "postedDaysAgo": "Posted {{count}} days ago",
+    "openTasks": "{{count}} open tasks",
     "tasksTitle": "Tasks",
     "tasksEmpty": "No tasks assigned to you yet.",
     "upcomingMeetings": "Upcoming meetings"
@@ -190,7 +197,8 @@
     "publishError": "Couldn't publish your idea, please try again.",
     "editSummaryTitle": "Edit idea",
     "editSummaryReady": "Update your idea's details",
-    "editSummaryHint": "Change what you need, then save — updates show on your idea page right away."
+    "editSummaryHint": "Change what you need, then save — updates show on your idea page right away.",
+    "applicantMeetingTimes": "Meeting times for applicants"
   },
   "markdown": {
     "bold": "Bold",
@@ -204,6 +212,10 @@
     "industry": "Industry",
     "sortByDate": "Sort by date",
     "ideaStage": "Idea stage",
+    "filtersTitle": "Filter ideas",
+    "skillsFilter": "Skills",
+    "skillsFilterHint": "Show ideas needing any of these skills — the skills required by published ideas will appear here",
+    "skillsFilterPlaceholder": "Filter by skill…",
     "allIndustries": "All industries",
     "mostRecent": "Most recent",
     "oldest": "Oldest",
@@ -228,10 +240,13 @@
     "opensSoon": "Opens 5 min before",
     "ended": "Ended",
     "meeting": "Meeting",
-    "empty": "No meetings yet."
+    "empty": "No meetings yet.",
+    "recordedNote": "All meetings are recorded automatically."
   },
   "meetingRoom": {
     "leave": "Leave meeting",
+    "recording": "Recording",
+    "recordedNote": "This meeting is being recorded.",
     "connecting": "Connecting to the meeting…",
     "error": "Couldn't connect to the meeting. It may not be open yet.",
     "guest": "Guest",
@@ -255,6 +270,10 @@
     "confirmLeaveTitle": "Leave the meeting?",
     "confirmLeaveMsg": "You can rejoin while the meeting is still on.",
     "stay": "Stay",
+    "endSession": "End session",
+    "confirmEndTitle": "End the session for everyone?",
+    "confirmEndMsg": "This closes the meeting for all participants and can't be undone.",
+    "endError": "Couldn't end the session. Please try again.",
     "fullscreen": "Fullscreen",
     "exitFullscreen": "Exit fullscreen"
   },
@@ -326,6 +345,7 @@
     "skills": "Skills",
     "applied": "Applied {{when}}",
     "accept": "Send NDA",
+    "sending": "Sending…",
     "acceptTitle": "Send the NDA?",
     "acceptMsg": "Both parties will receive the NDA to sign, then a meeting is scheduled.",
     "meetingTitle": "Meeting title",
@@ -334,12 +354,6 @@
     "reject": "Reject",
     "empty": "No requests here yet.",
     "actionError": "That didn't go through, please try again.",
-    "saveEdit": "Save Edit",
-    "manageTitle": "Manage project",
-    "meetingTimes": "Meeting times",
-    "saving": "Saving…",
-    "saved": "Saved.",
-    "saveError": "Couldn't save, please try again.",
     "viewProfile": "View Profile",
     "hideProfile": "Hide Profile",
     "experience": "Experience",
@@ -399,7 +413,7 @@
       "One number",
       "One special character (#, $, @)"
     ],
-    "termsPrefix": "By clicking here you agree to Bayn's ",
+    "termsPrefix": "By clicking here you agree to Beyn's ",
     "termsAgreement": "User Agreement",
     "termsComma": ", ",
     "termsPrivacy": "Privacy Policy",
@@ -431,7 +445,7 @@
     "greetEvening": "Good Evening",
     "greetName": " ",
     "sub": "Here's what's happening today",
-    "search": "Search on Bayn",
+    "search": "Search on Beyn",
     "notifications": "Notifications",
     "messages": "Messages",
     "profileName": "User",
@@ -484,6 +498,11 @@
     "you": "You",
     "upcomingMeetingsTitle": "Upcoming meetings",
     "meetingsEmpty": "No upcoming meetings.",
+    "recordedMeetingsTitle": "Recorded meetings",
+    "recordedEmpty": "No recorded meetings yet.",
+    "watchRecording": "Watch recording",
+    "recordingOpening": "Opening…",
+    "recordingError": "Couldn't open the recording. Try again.",
     "meeting": "Meeting",
     "confirmed": "Confirmed",
     "myContract": "My contract",
@@ -504,6 +523,18 @@
     "scheduleFailed": "Couldn't schedule the meeting. Please try again.",
     "scheduleBtn": "Schedule",
     "contracts": "Contracts",
+    "files": "Files",
+    "uploadFile": "Upload",
+    "uploading": "Uploading…",
+    "filesLoading": "Loading files…",
+    "filesEmpty": "No files shared yet.",
+    "fileDownload": "Open",
+    "fileShare": "Copy link",
+    "fileCopied": "Copied",
+    "fileDelete": "Delete",
+    "fileDeleteTitle": "Delete this file?",
+    "fileDeleteMsg": "The file will be removed for everyone on the team.",
+    "fileUploadFailed": "Couldn't upload the file — max 20MB, and the type must be allowed.",
     "newTaskTitle": "New task",
     "taskDescLabel": "Description",
     "taskPriorityLabel": "Priority",
@@ -540,7 +571,7 @@
     "navNotifications": "Notifications",
     "navLegal": "Legal",
     "legalTitle": "Privacy & Terms",
-    "legalDesc": "Read how we handle your data and the terms of using Bayn.",
+    "legalDesc": "Read how we handle your data and the terms of using Beyn.",
     "privacyPolicy": "Privacy Policy",
     "userAgreement": "User Agreement",
     "title": "Settings",
@@ -602,10 +633,10 @@
       "eyebrow": "Between two sides, a space where ideas are born",
       "titlePre": "We document every step,",
       "titleAccent": "so you can build the future.",
-      "lead": "Bayn turns a spark of an idea into a shipped project. Post what you're building, find the right collaborators, run everything from one dashboard, and keep a record of every decision along the way.",
+      "lead": "Beyn turns a spark of an idea into a shipped project. Post what you're building, find the right collaborators, run everything from one dashboard, and keep a record of every decision along the way.",
       "ctaPrimary": "Create your account",
       "ctaSecondary": "How to start",
-      "metaBuilders": "Builders on Bayn",
+      "metaBuilders": "Users on Beyn",
       "metaIdeas": "Ideas launched",
       "metaTeams": "Teams formed"
     },
@@ -625,13 +656,11 @@
       "milestoneShipped": "Join request accepted",
       "milestoneMeta": "A new member joined the team"
     },
-    "trust": {
-      "label": "Trusted by builders at"
-    },
+
     "features": {
       "eyebrow": "Everything in one place",
       "title": "From first idea to shipped project",
-      "lead": "Bayn brings the marketplace, the team, and the workflow together, so nothing gets lost between the idea and the build.",
+      "lead": "Beyn brings the marketplace, the team, and the workflow together, so nothing gets lost between the idea and the build.",
       "marketplaceTitle": "Ideas Marketplace",
       "marketplaceDesc": "Publish your idea or browse a live feed of projects looking for builders. Filter by skills, stage, and category to find your next thing.",
       "teamTitle": "Team Building",
@@ -656,7 +685,7 @@
       "step3Title": "Build your team",
       "step3Desc": "Approve join requests, form your team, and kick off the project dashboard together.",
       "step4Title": "Ship & document",
-      "step4Desc": "Run milestones and meetings while Bayn records every step of how you got there."
+      "step4Desc": "Run milestones and meetings while Beyn records every step of how you got there."
     },
     "market": {
       "eyebrow": "Ideas Marketplace",
@@ -676,7 +705,7 @@
       "idea3Desc": "An app that makes learning Arabic feel like a conversation, not a textbook."
     },
     "stats": {
-      "builders": "Active builders",
+      "builders": "Active Users",
       "ideas": "Ideas posted",
       "teams": "Teams formed",
       "again": "Would build again"
@@ -684,7 +713,7 @@
     "dash": {
       "eyebrow": "Project Dashboard & Meetings",
       "title": "Run the whole project from one screen",
-      "lead": "Milestones, tasks, members, and meetings, organized and shared. Bayn keeps a documented trail so anyone can catch up on how the project got here.",
+      "lead": "Milestones, tasks, members, and meetings, organized and shared. Beyn keeps a documented trail so anyone can catch up on how the project got here.",
       "point1": "Progress tracking with milestones and tasks",
       "point2": "Meetings with shared notes and action items",
       "point3": "A documented history of every decision",
@@ -701,13 +730,13 @@
       "milestone": "Milestone: MVP launch"
     },
     "quote": {
-      "text": "I came to Bayn with just an idea and no team. Three weeks later I had four collaborators, a working prototype, and a record of every step we took to get there.",
+      "text": "I came to Beyn with just an idea and no team. Three weeks later I had four collaborators, a working prototype, and a record of every step we took to get there.",
       "name": "Assaf Al-saeed",
       "role": "Founder, Finara"
     },
     "cta": {
       "title": "Your idea is waiting to be built.",
-      "lead": "Join thousands of builders documenting every step on Bayn. Create your account and post your first idea in minutes.",
+      "lead": "Join thousands of builders documenting every step on Beyn. Create your account and post your first idea in minutes.",
       "primary": "Create your account",
       "secondary": "Explore features"
     },
@@ -725,7 +754,7 @@
       "help": "Help center",
       "privacy": "Privacy Policy",
       "terms": "User Agreement",
-      "rights": "© 2026 Bayn. All rights reserved."
+      "rights": "© 2026 Beyn. All rights reserved."
     }
   }
 }

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import SendHorizontal from '@/assets/icons/send-horizontal.svg?react';
 import X from '@/assets/icons/x.svg?react';
+import useDraggable from '@/shared/hooks/useDraggable';
 import { useConversation } from '../hooks/useConversation';
 
 // A floating 1-on-1 direct-message window (bottom corner). `peer` is the other
@@ -10,7 +11,10 @@ export default function DirectChatWindow({ conversation, peer, currentUserId, lo
   const { t } = useTranslation();
   const [draft, setDraft] = useState('');
   const scrollRef = useRef(null);
+  const windowRef = useRef(null);
   const { messages, loading, send } = useConversation(conversation?.id);
+  // The window can be dragged around by its title bar, and stays where it's put.
+  const drag = useDraggable(windowRef, { storageKey: 'bayn.dm.pos' });
 
   const peerName = ((locale === 'ar' ? peer?.name_ar : peer?.name_en) || peer?.username || '').trim();
   const peerInitial = (peerName || '?').charAt(0).toUpperCase();
@@ -38,8 +42,15 @@ export default function DirectChatWindow({ conversation, peer, currentUserId, lo
   }
 
   return (
-    <div className="dm" role="dialog" aria-label={peerName}>
-      <header className="dm__head">
+    <div
+      className={`dm${drag.dragging ? ' dm--dragging' : ''}`}
+      role="dialog"
+      aria-label={peerName}
+      ref={windowRef}
+      style={drag.style || undefined}
+    >
+      {/* Double-click the bar to send the window back to its default corner. */}
+      <header className="dm__head" onDoubleClick={drag.reset} {...drag.handleProps}>
         <span className="dm__head-avatar" aria-hidden="true">
           {peer?.avatar_url ? <img src={peer.avatar_url} alt="" /> : peerInitial}
         </span>

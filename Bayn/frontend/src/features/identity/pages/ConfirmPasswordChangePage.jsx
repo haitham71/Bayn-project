@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
+import { useLangNavigate } from '@/shared/hooks/useLang';
 import { useTranslation } from 'react-i18next';
 import IdentityLayout from '@/layouts/IdentityLayout';
 import Button from '@/shared/components/Button';
@@ -11,7 +12,7 @@ import './ConfirmPasswordChangePage.css';
 // the URL is the proof of identity; confirming applies the pending password.
 export default function ConfirmPasswordChangePage() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
+  const navigate = useLangNavigate();
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token') || '';
 

@@ -1,31 +1,47 @@
-import { useState, lazy, Suspense } from 'react';
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import LoginPage        from '@/features/identity/pages/LoginPage';
-import SignUpPage       from '@/features/identity/pages/SignUpPage';
-import VerificationPage from '@/features/identity/pages/VerificationPage';
-import ProfileSetupPage from '@/features/identity/pages/ProfileSetupPage';
-import ConfirmPasswordChangePage from '@/features/identity/pages/ConfirmPasswordChangePage';
-import ForgotPasswordPage from '@/features/identity/pages/ForgotPasswordPage';
-import ResetPasswordPage from '@/features/identity/pages/ResetPasswordPage';
-import LandingPage      from '@/features/landing/pages/LandingPage';
-import HomePage         from '@/features/home/pages/Homepage';
-import MyProfilePage    from '@/features/profile/pages/MyProfilePage';
-import MyProjectsPage   from '@/features/projects/pages/MyProjectsPage';
-import JoinRequestsPage from '@/features/projects/pages/JoinRequestsPage';
-import ProjectDashboardPage from '@/features/dashboard/pages/ProjectDashboard';
-import SettingsPage from '@/features/settings/pages/SettingsPage';
-import CreateIdeaPage   from '@/features/ideas/pages/CreateIdeaPage';
-import EditIdeaPage    from '@/features/ideas/pages/EditIdeaPage';
-import IdeasMarketplacePage from '@/features/ideas/pages/IdeasMarketplacePage';
-import IdeaDetailsPage from '@/features/ideas/pages/IdeaDetailsPage';
-import MeetingsPage from '@/features/meetings/pages/MeetingsPage';
-// Lazy: pulls in the heavy Daily SDK only when a user actually opens a meeting.
-const MeetingRoomPage = lazy(() => import('@/features/meetings/pages/MeetingRoomPage'));
+import { useState, useEffect, lazy, Suspense } from 'react';
+import { Routes, Route, Navigate, useNavigate, useParams, useLocation } from 'react-router-dom';
 import ProtectedRoute from './ProtectedRoute';
 import { isAuthenticated } from '@/shared/lib/authToken';
+import PageLoader from '@/shared/components/PageLoader';
+import i18n, { SUPPORTED_LANGS, detectLang } from '@/shared/i18n/i18n';
+
+// The public landing page is the first paint, so keep it eager (no chunk flash).
+import LandingPage from '@/features/landing/pages/LandingPage';
+
+// Each page shows the loader for exactly as long as its chunk takes to arrive —
+// no artificial hold, so on a fast connection it barely flashes and on a slow one
+// it stays until the code is actually here. Only the first visit to a route
+// waits; React caches the module after that, so later visits render instantly.
+const lazyPage = (load) => lazy(load);
+
+// Every other page is code-split — its chunk is only fetched when its route is
+// first visited, keeping the initial bundle small.
+const LoginPage = lazyPage(() => import('@/features/identity/pages/LoginPage'));
+const SignUpPage = lazyPage(() => import('@/features/identity/pages/SignUpPage'));
+const VerificationPage = lazyPage(() => import('@/features/identity/pages/VerificationPage'));
+const ProfileSetupPage = lazyPage(() => import('@/features/identity/pages/ProfileSetupPage'));
+const ConfirmPasswordChangePage = lazyPage(() => import('@/features/identity/pages/ConfirmPasswordChangePage'));
+const ForgotPasswordPage = lazyPage(() => import('@/features/identity/pages/ForgotPasswordPage'));
+const ResetPasswordPage = lazyPage(() => import('@/features/identity/pages/ResetPasswordPage'));
+const HomePage = lazyPage(() => import('@/features/home/pages/Homepage'));
+const MyProfilePage = lazyPage(() => import('@/features/profile/pages/MyProfilePage'));
+const MyProjectsPage = lazyPage(() => import('@/features/projects/pages/MyProjectsPage'));
+const JoinRequestsPage = lazyPage(() => import('@/features/projects/pages/JoinRequestsPage'));
+const ProjectDashboardPage = lazyPage(() => import('@/features/dashboard/pages/ProjectDashboard'));
+const SettingsPage = lazyPage(() => import('@/features/settings/pages/SettingsPage'));
+const CreateIdeaPage = lazyPage(() => import('@/features/ideas/pages/CreateIdeaPage'));
+const EditIdeaPage = lazyPage(() => import('@/features/ideas/pages/EditIdeaPage'));
+const IdeasMarketplacePage = lazyPage(() => import('@/features/ideas/pages/IdeasMarketplacePage'));
+const IdeaDetailsPage = lazyPage(() => import('@/features/ideas/pages/IdeaDetailsPage'));
+const MeetingsPage = lazyPage(() => import('@/features/meetings/pages/MeetingsPage'));
+// Pulls in the heavy Daily SDK only when a user actually opens a meeting.
+const MeetingRoomPage = lazyPage(() => import('@/features/meetings/pages/MeetingRoomPage'));
+// Public legal pages — Arabic-only by design, shown without signing in.
+const PrivacyPolicyPage = lazyPage(() => import('@/features/legal/pages/PrivacyPolicyPage'));
+const TermsPage = lazyPage(() => import('@/features/legal/pages/TermsPage'));
 
 // Pages navigate with short keys (onNavigate('home')); this maps each key to its
-// URL so the page components don't need to know about routing.
+// (language-less) URL. goTo() prepends the active /:lang prefix.
 const PATHS = {
   login: '/login',
   signup: '/signup',
@@ -41,30 +57,65 @@ const PATHS = {
   createidea: '/create-idea',
   dashboard: '/projects/dashboard',
   settings: '/settings',
+  privacy: '/privacy',
+  terms: '/terms',
 };
 
-export default function App() {
+// Holds the branded loader for at least `ms` every time it mounts, then reveals
+// the page. Unlike React.lazy's one-time chunk wait, this fires on every entry —
+// so the login and sign-up screens always open on a full loader cycle, even on a
+// repeat visit where the chunk is already cached. The child (a lazy page) isn't
+// rendered until the hold is over, so its own entrance animation plays fresh.
+function EntryHold({ ms = 3000, children }) {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    const id = setTimeout(() => setReady(true), ms);
+    return () => clearTimeout(id);
+  }, [ms]);
+  return ready ? children : <PageLoader />;
+}
+
+// All the app's routes, mounted under /:lang. The active language is driven by
+// the URL prefix — visiting /ar/... or /en/... sets i18next accordingly.
+function LangApp() {
+  const { lang, '*': splat } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const [signupData, setSignupData] = useState({});
 
-  // Same onNavigate(key) API the pages already use, now backed by the router.
-  const goTo = (key) => navigate(PATHS[key] || '/login');
+  const isSupported = SUPPORTED_LANGS.includes(lang);
 
-  // Merge each step's slice so pages only touch their own fields and never
-  // clobber values captured on the other steps.
+  // Keep i18next in sync with the URL's language.
+  useEffect(() => {
+    if (isSupported && i18n.language !== lang) i18n.changeLanguage(lang);
+  }, [isSupported, lang]);
+
+  // A missing/unknown prefix (e.g. an old /login link or /ideas/5 without a
+  // language) is treated as a real path and redirected under the detected
+  // language, preserving the rest of the path and the query string.
+  if (!isSupported) {
+    const rebuilt = `/${lang}${splat ? `/${splat}` : ''}`;
+    return <Navigate to={`/${detectLang()}${rebuilt}${location.search}`} replace />;
+  }
+
+  const goTo = (key) => navigate(`/${lang}${PATHS[key] || '/login'}`);
   const patchData = (patch) => setSignupData((prev) => ({ ...prev, ...patch }));
 
   return (
     <Routes>
       {/* Public landing page; signed-in visitors go straight to their home. */}
-      <Route path="/" element={isAuthenticated() ? <Navigate to="/home" replace /> : <LandingPage />} />
-      <Route path="/login" element={<LoginPage onNavigate={goTo} />} />
+      <Route path="" element={isAuthenticated() ? <Navigate to={`/${lang}/home`} replace /> : <LandingPage />} />
+      <Route path="login" element={<EntryHold><LoginPage onNavigate={goTo} /></EntryHold>} />
       <Route
-        path="/signup"
-        element={<SignUpPage onNavigate={goTo} initialData={signupData} onDataChange={patchData} />}
+        path="signup"
+        element={(
+          <EntryHold>
+            <SignUpPage onNavigate={goTo} initialData={signupData} onDataChange={patchData} />
+          </EntryHold>
+        )}
       />
       <Route
-        path="/verification"
+        path="verification"
         element={(
           <VerificationPage
             email={signupData.email}
@@ -76,27 +127,47 @@ export default function App() {
         )}
       />
       <Route
-        path="/profile-setup"
+        path="profile-setup"
         element={<ProfileSetupPage onNavigate={goTo} initialData={signupData} onDataChange={patchData} />}
       />
-      <Route path="/confirm-password-change" element={<ConfirmPasswordChangePage />} />
-      <Route path="/forgot-password" element={<ForgotPasswordPage onNavigate={goTo} />} />
-      <Route path="/reset-password" element={<ResetPasswordPage onNavigate={goTo} />} />
-      <Route path="/home" element={<ProtectedRoute><HomePage onNavigate={goTo} /></ProtectedRoute>} />
-      <Route path="/ideas" element={<ProtectedRoute><IdeasMarketplacePage onNavigate={goTo} /></ProtectedRoute>} />
-      <Route path="/ideas/:id" element={<ProtectedRoute><IdeaDetailsPage onNavigate={goTo} /></ProtectedRoute>} />
-      <Route path="/my-profile" element={<ProtectedRoute><MyProfilePage onNavigate={goTo} /></ProtectedRoute>} />
-      <Route path="/my-projects" element={<ProtectedRoute><MyProjectsPage onNavigate={goTo} /></ProtectedRoute>} />
-      <Route path="/meetings" element={<ProtectedRoute><MeetingsPage onNavigate={goTo} /></ProtectedRoute>} />
-      <Route path="/meeting/:id" element={<ProtectedRoute><Suspense fallback={null}><MeetingRoomPage onNavigate={goTo} /></Suspense></ProtectedRoute>} />
-      <Route path="/join-requests" element={<ProtectedRoute><JoinRequestsPage onNavigate={goTo} /></ProtectedRoute>} />
-      <Route path="/join-requests/:projectId" element={<ProtectedRoute><JoinRequestsPage onNavigate={goTo} /></ProtectedRoute>} />
-      <Route path="/create-idea" element={<ProtectedRoute><CreateIdeaPage onNavigate={goTo} /></ProtectedRoute>} />
-      <Route path="/edit-idea/:id" element={<ProtectedRoute><EditIdeaPage onNavigate={goTo} /></ProtectedRoute>} />
-      <Route path="/projects/dashboard" element={<ProtectedRoute><ProjectDashboardPage onNavigate={goTo} /></ProtectedRoute>} />
-      <Route path="/projects/:projectId/dashboard" element={<ProtectedRoute><ProjectDashboardPage onNavigate={goTo} /></ProtectedRoute>} />
-      <Route path="/settings" element={<ProtectedRoute><SettingsPage onNavigate={goTo} /></ProtectedRoute>} />
-      <Route path="*" element={<Navigate to="/login" replace />} />
+      <Route path="confirm-password-change" element={<ConfirmPasswordChangePage />} />
+      <Route path="forgot-password" element={<ForgotPasswordPage onNavigate={goTo} />} />
+      <Route path="reset-password" element={<ResetPasswordPage onNavigate={goTo} />} />
+      <Route path="home" element={<ProtectedRoute><HomePage onNavigate={goTo} /></ProtectedRoute>} />
+      <Route path="ideas" element={<ProtectedRoute><IdeasMarketplacePage onNavigate={goTo} /></ProtectedRoute>} />
+      <Route path="ideas/:id" element={<ProtectedRoute><IdeaDetailsPage onNavigate={goTo} /></ProtectedRoute>} />
+      <Route path="my-profile" element={<ProtectedRoute><MyProfilePage onNavigate={goTo} /></ProtectedRoute>} />
+      <Route path="my-projects" element={<ProtectedRoute><MyProjectsPage onNavigate={goTo} /></ProtectedRoute>} />
+      <Route path="meetings" element={<ProtectedRoute><MeetingsPage onNavigate={goTo} /></ProtectedRoute>} />
+      <Route path="meeting/:id" element={<ProtectedRoute><MeetingRoomPage onNavigate={goTo} /></ProtectedRoute>} />
+      <Route path="join-requests" element={<ProtectedRoute><JoinRequestsPage onNavigate={goTo} /></ProtectedRoute>} />
+      <Route path="join-requests/:projectId" element={<ProtectedRoute><JoinRequestsPage onNavigate={goTo} /></ProtectedRoute>} />
+      <Route path="create-idea" element={<ProtectedRoute><CreateIdeaPage onNavigate={goTo} /></ProtectedRoute>} />
+      <Route path="edit-idea/:id" element={<ProtectedRoute><EditIdeaPage onNavigate={goTo} /></ProtectedRoute>} />
+      <Route path="projects/dashboard" element={<ProtectedRoute><ProjectDashboardPage onNavigate={goTo} /></ProtectedRoute>} />
+      <Route path="projects/:projectId/dashboard" element={<ProtectedRoute><ProjectDashboardPage onNavigate={goTo} /></ProtectedRoute>} />
+      <Route path="settings" element={<ProtectedRoute><SettingsPage onNavigate={goTo} /></ProtectedRoute>} />
+      {/* Public legal pages — no auth, always Arabic. */}
+      <Route path="privacy" element={<PrivacyPolicyPage />} />
+      <Route path="terms" element={<TermsPage />} />
+      {/* Unknown path: absolute target, otherwise the redirect keeps appending
+          itself to the current URL and re-matches this same route forever. */}
+      <Route
+        path="*"
+        element={<Navigate to={isAuthenticated() ? `/${lang}/home` : `/${lang}`} replace />}
+      />
     </Routes>
+  );
+}
+
+export default function App() {
+  return (
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
+        <Route path="/:lang/*" element={<LangApp />} />
+        {/* No language in the URL — send the visitor to their detected language. */}
+        <Route path="*" element={<Navigate to={`/${detectLang()}`} replace />} />
+      </Routes>
+    </Suspense>
   );
 }

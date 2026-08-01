@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useLangNavigate, useLangSwitch } from '@/shared/hooks/useLang';
 import { getAnalyticsOverview } from '../services/analyticsService';
 import BaynLogo from '@/assets/logo/Bayn-svg.svg?react';
 import ArrowRight from '@/assets/icons/arrow-right.svg?react';
@@ -27,11 +27,10 @@ function Tick() {
 
 export default function LandingPage() {
   const { t, i18n } = useTranslation();
-  const navigate = useNavigate();
+  const navigate = useLangNavigate();
+  const toggleLang = useLangSwitch();
   const rootRef = useRef(null);
   const [stats, setStats] = useState({ users: 0, ideas: 0, teams: 0 });
-
-  const toggleLang = () => i18n.changeLanguage(i18n.language === 'ar' ? 'en' : 'ar');
   // Always Western digits — the big display font may not carry Arabic-Indic
   // glyphs, and the stat numbers read cleaner in Latin either way.
   const fmt = (n) => new Intl.NumberFormat('en-US').format(n || 0);
@@ -81,7 +80,7 @@ export default function LandingPage() {
       <header id="lp-hdr">
         <div className="wrap">
           <nav>
-            <a href="#top" className="brand" aria-label="Bayn home">
+            <a href="#top" className="brand" aria-label="Beyn home">
               <Logo />
             </a>
             <div className="navlinks">
@@ -351,7 +350,7 @@ export default function LandingPage() {
             <div className="foot-about">
               <div className="brand">
                 <Logo />
-                <span className="name">Bayn</span>
+                <span className="name">Beyn</span>
               </div>
               <p>{t('landing.footer.about')}</p>
             </div>
@@ -369,8 +368,18 @@ export default function LandingPage() {
             <div className="foot-col">
               <h4>{t('landing.footer.resources')}</h4>
               <a href="#top">{t('landing.footer.help')}</a>
-              <a href="#top">{t('landing.footer.privacy')}</a>
-              <a href="#top">{t('landing.footer.terms')}</a>
+              <a
+                href={`/${i18n.language}/privacy`}
+                onClick={(e) => { e.preventDefault(); navigate('/privacy', { state: { crumb: { label: 'الرئيسية', to: '/' } } }); }}
+              >
+                {t('landing.footer.privacy')}
+              </a>
+              <a
+                href={`/${i18n.language}/terms`}
+                onClick={(e) => { e.preventDefault(); navigate('/terms', { state: { crumb: { label: 'الرئيسية', to: '/' } } }); }}
+              >
+                {t('landing.footer.terms')}
+              </a>
             </div>
           </div>
           <div className="foot-bottom">

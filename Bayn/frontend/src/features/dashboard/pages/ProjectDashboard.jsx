@@ -1,12 +1,16 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
+import { useLangNavigate } from '@/shared/hooks/useLang';
 import { useTranslation } from 'react-i18next';
 import Sidebar from '@/shared/components/Sidebar';
 import Navbar from '@/shared/components/Navbar';
+import NoAccess from '@/shared/components/NoAccess';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
+import { useAvatars } from '@/shared/hooks/useAvatars';
 import CheckSquare from '@/assets/icons/check-square.svg?react';
 import Clock from '@/assets/icons/clock.svg?react';
 import Calendar from '@/assets/icons/calendar.svg?react';
+import Video from '@/assets/icons/video.svg?react';
 import Send from '@/assets/icons/send-horizontal.svg?react';
 import Plus from '@/assets/icons/plus.svg?react';
 import ArrowLeft from '@/assets/icons/arrow-left.svg?react';
@@ -14,6 +18,7 @@ import CalendarPicker from '@/shared/components/Calendar';
 import Select from '@/shared/components/Select';
 import ConfirmDialog from '@/shared/components/ConfirmDialog';
 import { stageOf } from '@/features/meetings/lib/requestStatus';
+import { isEnded } from '@/features/meetings/lib/joinWindow';
 import {
   getMyProjects,
   getProject,
@@ -24,14 +29,19 @@ import {
   listMeetingRequests,
   createTeamMeeting,
   cancelTeamMeeting,
+  getMeetingRecording,
 } from '@/features/meetings/services/meetingService';
 import { useProjectTasks } from '../hooks/useProjectTasks';
 import TaskBoard from '../components/TaskBoard';
 import TaskSheet from '../components/TaskSheet';
 import TeamChat from '../components/TeamChat';
 import AssigneePicker from '../components/AssigneePicker';
+import FilesCard from '../components/FilesCard';
 import { toDateStr, parseDateStr } from '../lib/dates';
 import './ProjectDashboard.css';
+
+// team panel shows this many members, anything past it scrolls
+const TEAM_VISIBLE_ROWS = 4;
 
 const WEEK_MS = 7 * 86400000;
 const NOW = Date.now();
@@ -53,7 +63,7 @@ const timeToMin = (hhmm) => {
 
 export default function ProjectDashboardPage({ onNavigate }) {
   const { t, i18n } = useTranslation();
-  const navigate = useNavigate();
+  const navigate = useLangNavigate();
   const { user, fullName } = useCurrentUser();
   const { projectId: routeProjectId } = useParams();
   const locale = i18n.language === 'ar' ? 'ar' : 'en';
@@ -73,6 +83,10 @@ export default function ProjectDashboardPage({ onNavigate }) {
   const [meetings, setMeetings] = useState([]);
   const [incomingRequests, setIncomingRequests] = useState([]);
   const [cancelMeetingId, setCancelMeetingId] = useState(null);
+  // Recording download: which row is currently fetching its URL, and which one
+  // failed on the last attempt.
+  const [recordingBusyId, setRecordingBusyId] = useState(null);
+  const [recordingErrorId, setRecordingErrorId] = useState(null);
 
   // "Schedule a team meeting" form: title/date/time + the members to invite.
   const [scheduleForm, setScheduleForm] = useState({
@@ -89,12 +103,21 @@ export default function ProjectDashboardPage({ onNavigate }) {
   // it) — decides which panels this dashboard shows.
   const isOwner = myProjects.find((p) => p.id === projectId)?.role === 'owner';
 
+  // This board is for the project's own team. The API rejects non-members on
+  // every panel anyway; this keeps a hand-typed project id from rendering an
+  // empty shell of someone else's board.
+  const [projectsLoaded, setProjectsLoaded] = useState(false);
+  const denied = projectsLoaded && !!projectId && !myProjects.some((p) => p.id === projectId);
+
   // Load my projects once, to resolve the selected project and my role in it.
   useEffect(() => {
     getMyProjects()
       .then((rows) => {
         setMyProjects(rows || []);
         if (!routeProjectId && rows?.length) setProjectId(rows[0].id);
+        // Only a successful load can tell us we're not a member — a failed one
+        // must not lock the user out of their own board.
+        setProjectsLoaded(true);
       })
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -265,6 +288,7 @@ export default function ProjectDashboardPage({ onNavigate }) {
     setSheetOpen(true);
   };
 
+  const requestAvatars = useAvatars(incomingRequests.map((r) => r.requester?.id));
   const requesterName = (r) =>
     r.requester
       ? locale === 'ar'
@@ -280,8 +304,18 @@ export default function ProjectDashboardPage({ onNavigate }) {
 
   const now = Date.now();
   const upcomingMeetings = projectMeetings
-    .filter((m) => new Date(m.end_time).getTime() >= now)
+    .filter((m) => !isEnded(m, now))
     .sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
+
+  // Recorded meetings for this project, newest first — only those whose
+  // recording has finished processing (recording_available).
+  const recordedMeetings = useMemo(
+    () =>
+      projectMeetings
+        .filter((m) => m.recording_available)
+        .sort((a, b) => new Date(b.start_time) - new Date(a.start_time)),
+    [projectMeetings],
+  );
 
   const doneCount = tasks.filter(
     (task) => (task.status || 'todo').toLowerCase() === 'done',
@@ -299,7 +333,7 @@ export default function ProjectDashboardPage({ onNavigate }) {
   const meetingsThisWeek = projectMeetings.filter(
     (m) =>
       new Date(m.start_time).getTime() <= now + WEEK_MS &&
-      new Date(m.end_time).getTime() >= now,
+      !isEnded(m, now),
   ).length;
 
   const pendingIncoming = incomingRequests.filter(
@@ -411,16 +445,62 @@ export default function ProjectDashboardPage({ onNavigate }) {
     </section>
   );
 
-  const contractPanel = (
+  // Fetch the (short-lived) recording URL on demand and open it in a new tab.
+  async function openRecording(id) {
+    setRecordingErrorId(null);
+    setRecordingBusyId(id);
+    try {
+      const { url } = await getMeetingRecording(id);
+      if (url) window.open(url, '_blank', 'noopener');
+      else setRecordingErrorId(id);
+    } catch {
+      setRecordingErrorId(id);
+    } finally {
+      setRecordingBusyId(null);
+    }
+  }
+
+  const recordedMeetingsPanel = (
     <section className="pd__panel">
       <div className="pd__panel-head">
-        <h3>{t(isOwner ? 'projectDashboard.contracts' : 'projectDashboard.myContract')}</h3>
-        <button type="button" className="pd__panel-link">
-          {t('projectDashboard.viewAll')}
-        </button>
+        <h3>{t('projectDashboard.recordedMeetingsTitle')}</h3>
       </div>
-      <p className="pd__empty">{t('projectDashboard.contractUnavailable')}</p>
+      {recordedMeetings.length === 0 ? (
+        <p className="pd__empty">{t('projectDashboard.recordedEmpty')}</p>
+      ) : (
+        <ul className="pd__meetings pd__meetings--scroll bayn-scroll">
+          {recordedMeetings.map((m) => (
+            <li key={m.id} className="pd__meeting-row">
+              <span className="pd__meeting-date">
+                <span className="pd__meeting-day">{dayNum(m.start_time)}</span>
+                <span className="pd__meeting-month">{monthShort(m.start_time)}</span>
+              </span>
+              <div className="pd__rec-info">
+                <p className="pd__meeting-title">{m.title || t('projectDashboard.meeting')}</p>
+                {recordingErrorId === m.id && (
+                  <span className="pd__rec-error">{t('projectDashboard.recordingError')}</span>
+                )}
+              </div>
+              <button
+                type="button"
+                className="pd__rec-btn"
+                onClick={() => openRecording(m.id)}
+                disabled={recordingBusyId === m.id}
+              >
+                <Video width={16} height={16} aria-hidden="true" />
+                {recordingBusyId === m.id
+                  ? t('projectDashboard.recordingOpening')
+                  : t('projectDashboard.watchRecording')}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
+  );
+
+  const filesPanel = (
+    <FilesCard projectId={projectId} isOwner={isOwner} currentUserId={user?.id} />
   );
 
   const joinRequestsPanel = (
@@ -445,7 +525,11 @@ export default function ProjectDashboardPage({ onNavigate }) {
               <li key={r.id} className="pd__request-row">
                 <div className="pd__request-top">
                   <span className="pd__request-avatar" aria-hidden="true">
-                    {requesterName(r).trim().charAt(0).toUpperCase()}
+                    {requestAvatars[r.requester?.id] ? (
+                      <img src={requestAvatars[r.requester?.id]} alt="" className="pd__request-avatar-img" />
+                    ) : (
+                      requesterName(r).trim().charAt(0).toUpperCase()
+                    )}
                   </span>
                   <div>
                     <p className="pd__request-name">{requesterName(r)}</p>
@@ -474,7 +558,7 @@ export default function ProjectDashboardPage({ onNavigate }) {
       {team.length === 0 ? (
         <p className="pd__empty">{t('projectDashboard.teamUnavailable')}</p>
       ) : (
-        <ul className="pd__team">
+        <ul className={`pd__team${team.length > TEAM_VISIBLE_ROWS ? ' pd__team--scroll' : ''}`}>
           {team.map((member) => {
             const name = locale === 'ar' ? member.name_ar : member.name_en;
             const specialization =
@@ -482,18 +566,27 @@ export default function ProjectDashboardPage({ onNavigate }) {
             const isMe = member.user_id === user?.id;
             return (
               <li key={member.user_id} className="pd__team-row">
-                <div>
-                  <p className="pd__team-name">
-                    {name || '—'}
-                    {member.username && (
-                      <span className="pd__team-username"> · <bdi>@{member.username}</bdi></span>
+                <div className="pd__team-main">
+                  <span className="pd__team-avatar" aria-hidden="true">
+                    {member.avatar_url ? (
+                      <img src={member.avatar_url} alt="" className="pd__team-avatar-img" />
+                    ) : (
+                      (name || '—').trim().charAt(0).toUpperCase()
                     )}
-                  </p>
-                  <p className="pd__team-role">
-                    {member.role === 'owner' ? t('projectDashboard.owner') : ''}
-                    {member.role === 'owner' && specialization ? ' · ' : ''}
-                    {specialization || ''}
-                  </p>
+                  </span>
+                  <div>
+                    <p className="pd__team-name">
+                      {name || '—'}
+                      {member.username && (
+                        <span className="pd__team-username"> · <bdi>@{member.username}</bdi></span>
+                      )}
+                    </p>
+                    <p className="pd__team-role">
+                      {member.role === 'owner' ? t('projectDashboard.owner') : ''}
+                      {member.role === 'owner' && specialization ? ' · ' : ''}
+                      {specialization || ''}
+                    </p>
+                  </div>
                 </div>
                 {isMe && <span className="pd__team-you">{t('projectDashboard.you')}</span>}
               </li>
@@ -511,11 +604,23 @@ export default function ProjectDashboardPage({ onNavigate }) {
       <div className="pd__main">
         <Navbar userName={fullName} />
 
-        <button type="button" className="pd__back" onClick={() => onNavigate?.('myprojects')}>
-          <ArrowLeft width={22} height={22} aria-hidden="true" />
-          {t('myProjects.backToProjects')}
-        </button>
+        {/* The denied state has its own way back, so the top link would be noise. */}
+        {!denied && (
+          <button type="button" className="pd__back" onClick={() => onNavigate?.('myprojects')}>
+            <ArrowLeft width={22} height={22} aria-hidden="true" />
+            {t('myProjects.backToProjects')}
+          </button>
+        )}
 
+        {denied ? (
+          <main>
+            <NoAccess
+              title={t('noAccess.memberTitle')}
+              message={t('noAccess.memberMsg')}
+              onAction={() => onNavigate?.('myprojects')}
+            />
+          </main>
+        ) : (
         <main className="pd__body">
           <div className="pd__head">
             <div>
@@ -670,14 +775,15 @@ export default function ProjectDashboardPage({ onNavigate }) {
                 <>
                   {joinRequestsPanel}
                   {upcomingMeetingsPanel}
-                  {contractPanel}
+                  {recordedMeetingsPanel}
+                  {filesPanel}
                   {projectTeamPanel}
                 </>
               ) : (
                 <>
                   {upcomingMeetingsPanel}
                   <div className="pd__mid-row">
-                    {contractPanel}
+                    {filesPanel}
                     {projectTeamPanel}
                   </div>
                 </>
@@ -705,6 +811,7 @@ export default function ProjectDashboardPage({ onNavigate }) {
             onOpenTask={openTaskDetails}
           />
         </main>
+        )}
       </div>
 
       <TaskSheet

@@ -21,6 +21,7 @@ class NotificationType(str, enum.Enum):
     meeting_request_accepted = "meeting_request_accepted"
     meeting_request_rejected = "meeting_request_rejected"
     meeting_scheduled = "meeting_scheduled"
+    meeting_cancelled = "meeting_cancelled"
     task_assigned = "task_assigned"
 
 
@@ -37,6 +38,7 @@ class Notification(Base):
 
     is_read: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     def __repr__(self) -> str:
         return f"<Notification user={self.user_id} type={self.type}>"

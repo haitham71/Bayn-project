@@ -24,6 +24,31 @@
   gap: 20px;
 }
 
+/* Back-to-projects link. */
+.pd__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 12px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--btn-primary-default, #295e4d);
+  font-family: var(--font-sans);
+  font-size: 20px;
+  font-weight: 550;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+[dir='rtl'] .pd__back {
+  font-family: var(--font-ar);
+}
+
+.pd__back:hover { opacity: 0.8; }
+
+[dir='rtl'] .pd__back svg { transform: scaleX(-1); }
+
 /* ---- Head: title + project switcher ---- */
 
 .pd__head {
@@ -436,12 +461,24 @@ color: var(--color-error-700);
 /* ---- Project team ---- */
 
 .pd__team {
+  /* row height is fixed so the scrolling variant can show exactly 4 rows */
+  --pd-team-row-h: 54.4px;
+  --pd-team-gap: 4px;
+
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--pd-team-gap);
+}
+
+/* more than 4 members: cap the list at 4 rows and scroll the rest */
+.pd__team--scroll {
+  max-height: calc((var(--pd-team-row-h) * 4) + (var(--pd-team-gap) * 3));
+  overflow-y: auto;
+  /* keeps the scrollbar off the row text */
+  padding-inline-end: 4px;
 }
 
 .pd__team-row {
@@ -450,10 +487,42 @@ color: var(--color-error-700);
   justify-content: space-between;
   gap: 10px;
   padding: 8px 0;
+  min-height: var(--pd-team-row-h);
+  box-sizing: border-box;
+  flex: none;
   border-bottom: 1px solid var(--bg-surface-secondary, #d7cbb9);
 }
 
 .pd__team-row:last-child { border-bottom: none; }
+
+/* avatar + name/role, kept together so the "you" badge stays at the far end */
+.pd__team-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.pd__team-avatar {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-primary-300), var(--color-primary-600));
+  color: var(--color-neutral-100);
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 12px;
+  overflow: hidden;
+}
+
+.pd__team-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 
 .pd__team-name {
   margin: 0;
@@ -545,6 +614,13 @@ color: var(--color-error-700);
   font-family: var(--font-sans);
   font-weight: 700;
   font-size: 12px;
+  overflow: hidden;
+}
+
+.pd__request-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .pd__request-name {
@@ -686,6 +762,47 @@ color: #9a3b2e; }
 .pd__meeting-cancel:hover {
   background: rgba(144, 0, 0, 0.08);
   border-color: rgba(144, 0, 0, 0.35);
+}
+
+/* Recorded-meetings card: title + optional error, then a "watch" button. */
+.pd__rec-info {
+  min-width: 0;
+}
+
+.pd__rec-error {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--input-error, #900000);
+}
+
+.pd__rec-btn {
+  margin-inline-start: auto;
+  align-self: center;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--btn-primary-default, #295e4d);
+  border-radius: 8px;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--btn-primary-default, #295e4d);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.pd__rec-btn:hover:not(:disabled) {
+  background: var(--btn-primary-default, #295e4d);
+  color: var(--btn-text, #ebe5dc);
+}
+
+.pd__rec-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 
 .pd__meeting-date {

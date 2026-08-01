@@ -106,7 +106,7 @@ export default function RequestCard({ request: r, now, actioningId, onAccept, on
         {r.status === 'pending' && (
           <>
             <Button variant="primary" size="sm" onClick={() => onAccept(r.id)} disabled={busy}>
-              {t('joinRequests.accept')}
+              {busy ? t('joinRequests.sending') : t('joinRequests.accept')}
             </Button>
             <Button variant="secondary" size="sm" onClick={() => onReject(r.id)} disabled={busy}>
               {t('joinRequests.reject')}

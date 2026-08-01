@@ -1,0 +1,91 @@
+/* Project files card — file list with upload / open / share / delete. */
+
+.pd__files {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.pd__file {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--bg-surface-secondary, #d7cbb9);
+  border-radius: 10px;
+  background: var(--color-secondary-200, #ebe5dc);
+}
+
+.pd__file-ico {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: var(--bg-surface-secondary, #d7cbb9);
+  color: var(--btn-primary-default, #295e4d);
+}
+
+.pd__file-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.pd__file-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-title, #0f3d2e);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pd__file-meta {
+  font-size: 12px;
+  color: var(--text-supporting, #786c57);
+}
+
+.pd__file-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.pd__file-btn {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-supporting, #786c57);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.pd__file-btn:hover {
+  background: var(--bg-surface-secondary, #d7cbb9);
+  color: var(--text-title, #0f3d2e);
+}
+
+.pd__file-btn--danger:hover {
+  background: var(--color-error-100, rgba(178, 59, 59, 0.12));
+  color: var(--color-error-700, #b23b3b);
+}
+
+.pd__files-error {
+  margin: 4px 0 8px;
+  font-size: 12.5px;
+  color: var(--color-error-700, #b23b3b);
+}

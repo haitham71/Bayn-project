@@ -1,9 +1,11 @@
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Sidebar from '@/shared/components/Sidebar';
 import Navbar from '@/shared/components/Navbar';
 import Input from '@/shared/components/Input';
 import ConfirmDialog from '@/shared/components/ConfirmDialog';
+import NoAccess from '@/shared/components/NoAccess';
 import { useCurrentUser } from '@/shared/hooks/useCurrentUser';
 import { STAGES } from '@/features/meetings/lib/requestStatus';
 import ArrowLeft from '@/assets/icons/arrow-left.svg?react';
@@ -12,20 +14,31 @@ import CircleCheck from '@/assets/icons/circle-check.svg?react';
 import CircleX from '@/assets/icons/circle-x.svg?react';
 import FilePen from '@/assets/icons/file-pen.svg?react';
 import Lightbulb from '@/assets/icons/lightbulb.svg?react';
+import { getProject } from '../services/projectService';
 import { useJoinRequests } from '../hooks/useJoinRequests';
-import { useProjectSettings } from '../hooks/useProjectSettings';
 import RequestCard from '../components/RequestCard';
-import ProjectSettingsRail from '../components/ProjectSettingsRail';
 import './JoinRequestsPage.css';
 
 export default function JoinRequestsPage({ onNavigate }) {
   const { t } = useTranslation();
-  const { fullName } = useCurrentUser();
+  const { user, fullName } = useCurrentUser();
   const { projectId } = useParams();
 
   const jr = useJoinRequests(projectId);
-  const settings = useProjectSettings(projectId);
   const { counts } = jr;
+
+  // The project backs the chip under the title, and tells us whether this page
+  // is ours to open — deciding on join requests is the owner's call alone.
+  const [project, setProject] = useState(null);
+  const [projectLoaded, setProjectLoaded] = useState(false);
+  useEffect(() => {
+    if (!projectId) return;
+    getProject(projectId)
+      .then((p) => { setProject(p); setProjectLoaded(true); })
+      .catch(() => {});
+  }, [projectId]);
+
+  const denied = projectLoaded && project?.owner?.id !== user?.id;
 
   const stats = [
     { icon: Clock, label: t('joinRequests.statPending'), value: counts.pending, note: t('joinRequests.newRequests') },
@@ -34,6 +47,22 @@ export default function JoinRequestsPage({ onNavigate }) {
     { icon: CircleX, label: t('joinRequests.statRejected'), value: counts.rejected, note: t('joinRequests.rejectedRequests') },
   ];
   const tabs = STAGES.map((key) => ({ key, label: t(`joinRequests.tab.${key}`), count: counts[key] }));
+
+  if (denied) {
+    return (
+      <div className="jr bayn-scroll">
+        <Sidebar activeKey="projects" onNavigate={onNavigate} />
+        <div className="jr__main">
+          <Navbar userName={fullName} />
+          <NoAccess
+            title={t('noAccess.ownerTitle')}
+            message={t('noAccess.ownerMsg')}
+            onAction={() => onNavigate?.('myprojects')}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="jr bayn-scroll">
@@ -50,10 +79,10 @@ export default function JoinRequestsPage({ onNavigate }) {
         <main className="jr__body">
           <section className="jr__card jr__content">
             <h1 className="jr__title">{t('joinRequests.title')}</h1>
-            {settings.project?.title && (
+            {project?.title && (
               <span className="jr__project">
                 <Lightbulb width={16} height={16} aria-hidden="true" />
-                {settings.project.title}
+                {project.title}
               </span>
             )}
             <p className="jr__subtitle">{t('joinRequests.subtitle')}</p>
@@ -112,11 +141,6 @@ export default function JoinRequestsPage({ onNavigate }) {
 
             {jr.actionError && <p className="jr__error">{jr.actionError}</p>}
           </section>
-
-          {/* Right rail — manage this project's meeting slots + visibility */}
-          <aside className="jr__side">
-            <ProjectSettingsRail settings={settings} />
-          </aside>
         </main>
       </div>
 

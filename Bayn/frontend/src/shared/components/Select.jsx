@@ -1,7 +1,10 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import ChevronDown from '@/assets/icons/chevron-down.svg?react';
 import Search from '@/assets/icons/search.svg?react';
+import useDropPlacement from '@/shared/hooks/useDropPlacement';
 import './Select.css';
+
+const MENU_MAX = 264; // keep in sync with .bayn-select__menu max-height
 
 // A small round avatar for options that carry one (e.g. people pickers):
 // shows the image, or the name's first letter when there's no picture.
@@ -34,6 +37,9 @@ export default function Select({
   const autoId = useId();
   const listId = `${id || autoId}-list`;
   const rootRef = useRef(null);
+  const fieldRef = useRef(null);
+  const panelRef = useRef(null);
+  const menuRef = useRef(null);
   const searchRef = useRef(null);
 
   const [open, setOpen] = useState(false);
@@ -59,6 +65,12 @@ export default function Select({
     document.addEventListener('mousedown', onDocClick);
     return () => document.removeEventListener('mousedown', onDocClick);
   }, [open]);
+
+  // Keep the menu on screen — drops up near the bottom of the page.
+  const drop = useDropPlacement(open, fieldRef, menuRef, MENU_MAX, {
+    panelRef,
+    deps: [visibleOptions.length],
+  });
 
   // Reset the query and focus the search box each time the menu opens.
   useEffect(() => {
@@ -113,6 +125,7 @@ export default function Select({
   const classes = [
     'bayn-select',
     open && 'bayn-select--open',
+    drop.up && 'bayn-select--up',
     error && 'bayn-select--error',
     disabled && 'bayn-select--disabled',
     isFloating && 'bayn-select--filled',
@@ -124,6 +137,7 @@ export default function Select({
   return (
     <div className={classes} ref={rootRef}>
       <button
+        ref={fieldRef}
         type="button"
         className="bayn-select__field"
         disabled={disabled}
@@ -153,7 +167,7 @@ export default function Select({
       </button>
 
       {open && (
-        <div className="bayn-select__panel">
+        <div className="bayn-select__panel" ref={panelRef}>
           {searchable && (
             <div className="bayn-select__search">
               <Search width={16} height={16} aria-hidden="true" />
@@ -168,7 +182,13 @@ export default function Select({
               />
             </div>
           )}
-          <ul className="bayn-select__menu bayn-scroll" id={listId} role="listbox">
+          <ul
+            ref={menuRef}
+            className="bayn-select__menu bayn-scroll"
+            id={listId}
+            role="listbox"
+            style={drop.listMax ? { maxHeight: drop.listMax } : undefined}
+          >
             {visibleOptions.length === 0 ? (
               <li className="bayn-select__empty">—</li>
             ) : (

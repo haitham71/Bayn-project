@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useVisiblePoll } from '@/shared/hooks/useVisiblePoll';
 import {
   listNotifications,
   getUnreadCount,
   markNotificationRead,
+  markAllNotificationsRead,
   deleteNotification,
   clearAllNotifications,
 } from '../services/notificationService';
@@ -21,11 +23,7 @@ export function useNotifications() {
       .catch(() => {});
 
   // Poll the unread count so the bell badge stays roughly current.
-  useEffect(() => {
-    refreshUnread();
-    const id = setInterval(refreshUnread, 20000);
-    return () => clearInterval(id);
-  }, []);
+  useVisiblePoll(refreshUnread, 20000);
 
   // Load the full list (called when the dropdown opens).
   function load() {
@@ -46,11 +44,10 @@ export function useNotifications() {
   }
 
   function markAllRead() {
-    const unreadIds = items.filter((n) => !n.is_read).map((n) => n.id);
-    if (unreadIds.length === 0) return;
+    if (items.every((n) => n.is_read)) return;
     setItems((list) => list.map((n) => ({ ...n, is_read: true })));
     setUnread(0);
-    Promise.all(unreadIds.map((id) => markNotificationRead(id).catch(() => {})));
+    markAllNotificationsRead().catch(() => {});
   }
 
   function remove(id) {

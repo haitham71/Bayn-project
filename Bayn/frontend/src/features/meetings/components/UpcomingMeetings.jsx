@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useNow } from '@/shared/hooks/useNow';
-import { canJoin, minutesUntilOpen } from '@/features/meetings/lib/joinWindow';
+import { canJoin, minutesUntilOpen, isEnded } from '@/features/meetings/lib/joinWindow';
 import './UpcomingMeetings.css';
 
 const ACCENTS = [
@@ -49,7 +49,7 @@ export default function UpcomingMeetings({ meetings = [] }) {
   const now = useNow();
 
   const upcoming = meetings
-    .filter((m) => new Date(m.end_time).getTime() >= now)
+    .filter((m) => !isEnded(m, now))
     .sort((a, b) => new Date(a.start_time) - new Date(b.start_time))
     .slice(0, 20);
 

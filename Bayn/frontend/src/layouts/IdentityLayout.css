@@ -2,6 +2,10 @@
   display: flex;
   min-height: 100vh;
   background: var(--bg-surface-primary, #ebe5dc);
+  /* The hero starts offset past its edge on entry; clip that overhang so it
+     can't flash a horizontal scrollbar. `clip` rather than `hidden` — hidden
+     would make this a scroll container and break the hero's sticky column. */
+  overflow-x: clip;
 }
 
 /* Form column */

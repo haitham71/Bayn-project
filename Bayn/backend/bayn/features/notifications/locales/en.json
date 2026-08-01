@@ -4,7 +4,8 @@
     "meeting_request_accepted": "{actor_name} accepted your meeting request for {project_title}",
     "meeting_request_rejected": "{actor_name} declined your meeting request for {project_title}",
     "meeting_scheduled": "Your meeting with {actor_name} for {project_title} has been scheduled",
-    "task_assigned": "{actor_name} assigned you a task: {task_title}"
+    "task_assigned": "{actor_name} assigned you a task: {task_title}",
+    "meeting_cancelled": "{actor_name} cancelled the meeting for {project_title}"
   },
   "errors": {
     "not_found": "Notification not found"

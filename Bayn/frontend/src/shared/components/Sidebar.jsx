@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useLangSwitch } from '@/shared/hooks/useLang';
 import House from '@/assets/icons/house.svg?react';
 import Lightbulb from '@/assets/icons/lightbulb.svg?react';
 import Presentation from '@/assets/icons/presentation.svg?react';
@@ -37,7 +38,8 @@ export default function Sidebar({
   defaultActiveKey = 'projects',
   onNavigate,
 }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const toggleLanguage = useLangSwitch();
   const [internalActive, setInternalActive] = useState(defaultActiveKey);
   const active = activeKey ?? internalActive;
   const [pinned, setPinned] = useState(false);
@@ -45,10 +47,6 @@ export default function Sidebar({
   function handleNavigate(item) {
     if (activeKey === undefined) setInternalActive(item.key);
     if (item.page) onNavigate?.(item.page);
-  }
-
-  function toggleLanguage() {
-    i18n.changeLanguage(i18n.language === 'ar' ? 'en' : 'ar');
   }
 
   // Clears the stored tokens and sends the user back to the login page.

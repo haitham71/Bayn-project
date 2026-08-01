@@ -13,7 +13,7 @@ import './MyProjectsPage.css';
 export default function MyProjectsPage({ onNavigate }) {
   const { t } = useTranslation();
   const { user, fullName } = useCurrentUser();
-  const { meetings, owned, working, myTasks, atLimit } = useMyProjectsData(user?.id);
+  const { meetings, owned, working, myTasks, projectStats, atLimit } = useMyProjectsData(user?.id);
 
   return (
     <div className="mp">
@@ -32,18 +32,18 @@ export default function MyProjectsPage({ onNavigate }) {
                   <OwnedProjectCard key={p.id} project={p} />
                 ))}
 
-                <button
-                  type="button"
-                  className="mp__add"
-                  onClick={() => onNavigate?.('createidea')}
-                  disabled={atLimit}
-                  title={atLimit ? t('myProjects.limitReached') : undefined}
-                >
-                  <Plus width={56} height={56} aria-hidden="true" />
-                  <span className="mp__add-label">
-                    {atLimit ? t('myProjects.limitReached') : t('myProjects.postNew')}
-                  </span>
-                </button>
+                {/* Once every project slot is taken there's nothing to add, so
+                    the tile goes away rather than sitting there disabled. */}
+                {!atLimit && (
+                  <button
+                    type="button"
+                    className="mp__add"
+                    onClick={() => onNavigate?.('createidea')}
+                  >
+                    <Plus width={56} height={56} aria-hidden="true" />
+                    <span className="mp__add-label">{t('myProjects.postNew')}</span>
+                  </button>
+                )}
               </div>
             </section>
 
@@ -52,7 +52,7 @@ export default function MyProjectsPage({ onNavigate }) {
               <h1 className="mp__title">{t('myProjects.youWorkOn')}</h1>
               <div className="mp__cards">
                 {working.map((p) => (
-                  <WorkingProjectCard key={p.id} project={p} />
+                  <WorkingProjectCard key={p.id} project={p} stats={projectStats[p.id]} />
                 ))}
               </div>
             </section>

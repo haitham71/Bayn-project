@@ -1,6 +1,6 @@
 // A user can belong to at most this many projects (owner + member) — mirrors
 // the backend's MAX_MEMBERSHIPS_PER_USER.
-export const MAX_PROJECTS = 2;
+export const MAX_PROJECTS = 3;
 
 // Maps a backend ProjectStage to its translated label (reuses the create-idea keys).
 export const STAGE_LABEL = {

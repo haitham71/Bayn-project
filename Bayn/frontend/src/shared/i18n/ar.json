@@ -116,18 +116,25 @@
     "removeTime": "إزالة الوقت",
     "removeDate": "إزالة {{date}}"
   },
+  "noAccess": {
+    "memberTitle": "ما عندك صلاحية لهذه اللوحة",
+    "memberMsg": "لوحة المشروع متاحة لأعضاء الفريق فقط.",
+    "ownerTitle": "ما عندك صلاحية لهذه الصفحة",
+    "ownerMsg": "إدارة المشروع متاحة لمالكه فقط."
+  },
   "myProjects": {
     "youOwn": "المشاريع التي تملكها",
     "youWorkOn": "المشاريع التي تعمل عليها",
     "projectLabel": "مشروع",
     "postNew": "انشر فكرة/مشروع جديد",
-    "limitReached": "وصلت للحد الأقصى (مشروعين)",
+    "limitReached": "وصلت للحد الأقصى (3 مشاريع)",
     "viewDetails": "عرض التفاصيل",
     "joinRequests": "طلبات الانضمام",
     "dashboard": "لوحة المشروع",
     "backToProjects": "العودة إلى مشاريعك",
     "opening": "{{count}} شاغر",
     "postedDaysAgo": "نُشر قبل {{count}} أيام",
+    "openTasks": "{{count}} مهمة مفتوحة",
     "tasksTitle": "المهام",
     "tasksEmpty": "لا مهام مسندة إليك حتى الآن.",
     "upcomingMeetings": "الاجتماعات القادمة"
@@ -190,7 +197,8 @@
     "publishError": "تعذّر نشر الفكرة، حاول مرة أخرى.",
     "editSummaryTitle": "تعديل الفكرة",
     "editSummaryReady": "حدّث تفاصيل فكرتك",
-    "editSummaryHint": "عدّل ما تحتاج ثم احفظ التغييرات — تظهر مباشرة في صفحة فكرتك."
+    "editSummaryHint": "عدّل ما تحتاج ثم احفظ التغييرات — تظهر مباشرة في صفحة فكرتك.",
+    "applicantMeetingTimes": "مواعيد الاجتماعات مع المتقدمين"
   },
   "markdown": {
     "bold": "عريض",
@@ -204,6 +212,10 @@
     "industry": "المجال",
     "sortByDate": "الترتيب حسب التاريخ",
     "ideaStage": "مرحلة الفكرة",
+    "filtersTitle": "تصفية الأفكار",
+    "skillsFilter": "المهارات",
+    "skillsFilterHint": "اعرض الأفكار التي تحتاج أياً من هذه المهارات — ستظهر المهارات المطلوبة في الافكار المنشورة",
+    "skillsFilterPlaceholder": "صفِّ حسب المهارة…",
     "allIndustries": "كل المجالات",
     "mostRecent": "الأحدث",
     "oldest": "الأقدم",
@@ -228,10 +240,13 @@
     "opensSoon": "يفتح قبل الموعد بـ 5 د",
     "ended": "انتهى",
     "meeting": "اجتماع",
-    "empty": "لا توجد اجتماعات بعد."
+    "empty": "لا توجد اجتماعات بعد.",
+    "recordedNote": "تُسجّل جميع الاجتماعات تلقائياً."
   },
   "meetingRoom": {
     "leave": "مغادرة الاجتماع",
+    "recording": "يُسجّل",
+    "recordedNote": "هذا الاجتماع قيد التسجيل.",
     "connecting": "جارٍ الاتصال بالاجتماع...",
     "error": "تعذّر الاتصال بالاجتماع. قد لا يكون مفتوحاً بعد.",
     "guest": "ضيف",
@@ -255,6 +270,10 @@
     "confirmLeaveTitle": "مغادرة الاجتماع؟",
     "confirmLeaveMsg": "تقدر ترجع تنضم ما دام الاجتماع قائم.",
     "stay": "البقاء",
+    "endSession": "إنهاء الجلسة",
+    "confirmEndTitle": "إنهاء الجلسة للجميع؟",
+    "confirmEndMsg": "سيؤدي هذا إلى إغلاق الاجتماع لكل المشاركين ولا يمكن التراجع عنه.",
+    "endError": "تعذّر إنهاء الجلسة. حاول مرة أخرى.",
     "fullscreen": "ملء الشاشة",
     "exitFullscreen": "إنهاء ملء الشاشة"
   },
@@ -326,6 +345,7 @@
     "skills": "المهارات",
     "applied": "قدّم {{when}}",
     "accept": "إرسال العقد",
+    "sending": "جارٍ الإرسال…",
     "acceptTitle": "إرسال العقد؟",
     "acceptMsg": "سيستلم الطرفان العقد للتوقيع، ثم يُحدَّد موعد الاجتماع.",
     "meetingTitle": "عنوان الاجتماع",
@@ -334,12 +354,6 @@
     "reject": "رفض",
     "empty": "لا توجد طلبات هنا بعد.",
     "actionError": "تعذّر تنفيذ العملية، حاول مرة أخرى.",
-    "saveEdit": "حفظ التعديل",
-    "manageTitle": "إدارة المشروع",
-    "meetingTimes": "مواعيد الاجتماعات",
-    "saving": "جارٍ الحفظ...",
-    "saved": "تم الحفظ.",
-    "saveError": "تعذّر الحفظ، حاول مرة أخرى.",
     "viewProfile": "عرض الملف",
     "hideProfile": "إخفاء الملف",
     "experience": "الخبرة",
@@ -484,6 +498,11 @@
     "you": "أنت",
     "upcomingMeetingsTitle": "الاجتماعات القادمة",
     "meetingsEmpty": "لا توجد اجتماعات قادمة.",
+    "recordedMeetingsTitle": "الاجتماعات المسجّلة",
+    "recordedEmpty": "لا توجد اجتماعات مسجّلة بعد.",
+    "watchRecording": "مشاهدة التسجيل",
+    "recordingOpening": "جارٍ الفتح…",
+    "recordingError": "تعذّر فتح التسجيل. حاول مرة أخرى.",
     "meeting": "اجتماع",
     "confirmed": "مؤكّد",
     "myContract": "عقدي",
@@ -504,6 +523,18 @@
     "scheduleFailed": "تعذّرت جدولة الاجتماع. حاول مرة أخرى.",
     "scheduleBtn": "جدولة",
     "contracts": "العقود",
+    "files": "الملفات",
+    "uploadFile": "رفع ملف",
+    "uploading": "جارٍ الرفع…",
+    "filesLoading": "جارٍ تحميل الملفات…",
+    "filesEmpty": "لا ملفات مشتركة بعد.",
+    "fileDownload": "فتح",
+    "fileShare": "نسخ الرابط",
+    "fileCopied": "تم النسخ",
+    "fileDelete": "حذف",
+    "fileDeleteTitle": "حذف هذا الملف؟",
+    "fileDeleteMsg": "سيُحذف الملف لكل أعضاء الفريق.",
+    "fileUploadFailed": "تعذّر رفع الملف — الحد 20 ميجابايت، والنوع يجب أن يكون مسموحاً.",
     "newTaskTitle": "مهمة جديدة",
     "taskDescLabel": "الوصف",
     "taskPriorityLabel": "الأولوية",
@@ -625,9 +656,7 @@
       "milestoneShipped": "طلب انضمام مقبول",
       "milestoneMeta": "انضم عضو جديد للفريق"
     },
-    "trust": {
-      "label": "موثوق من صُنّاع في"
-    },
+
     "features": {
       "eyebrow": "كل شيء في مكان واحد",
       "title": "من أول فكرة إلى مشروع منجَز",
@@ -707,7 +736,7 @@
     },
     "cta": {
       "title": "فكرتك تنتظر أن تُبنى.",
-      "lead": "انضم لآلاف الصُنّاع الذين يوثّقون كل خطوة على بيّن. أنشئ حسابك وانشر فكرتك الأولى خلال دقائق.",
+      "lead": "انضم لآلاف المستخدمين الذين يوثّقون كل خطوة على بيّن. أنشئ حسابك وانشر فكرتك الأولى خلال دقائق.",
       "primary": "أنشئ حسابك",
       "secondary": "استكشف المميزات"
     },

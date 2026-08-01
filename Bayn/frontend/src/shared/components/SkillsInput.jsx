@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import Input from '@/shared/components/Input';
+import useDropPlacement from '@/shared/hooks/useDropPlacement';
 import X from '@/assets/icons/x.svg?react';
 import './SkillsInput.css';
+
+const MENU_MAX = 240; // keep in sync with .skills__menu max-height
 
 // Fallback suggestions until the backend supplies skills for the typed query.
 const DEFAULT_SUGGESTIONS = [
@@ -35,6 +38,8 @@ export default function SkillsInput({
 }) {
   const { t } = useTranslation();
   const rootRef = useRef(null);
+  const fieldRef = useRef(null);
+  const menuRef = useRef(null);
 
   const [input, setInput] = useState('');
   const [open, setOpen] = useState(false);
@@ -72,6 +77,12 @@ export default function SkillsInput({
     document.addEventListener('mousedown', onDocClick);
     return () => document.removeEventListener('mousedown', onDocClick);
   }, [open]);
+
+  // Keep the suggestions on screen — drops up near the bottom of the page.
+  const menuOpen = open && filtered.length > 0;
+  const drop = useDropPlacement(menuOpen, fieldRef, menuRef, MENU_MAX, {
+    deps: [filtered.length],
+  });
 
   // Only a known option may be added — free text is rejected.
   function addOption(option) {
@@ -117,7 +128,7 @@ export default function SkillsInput({
 
   return (
     <div className={`skills ${className}`.trim()} ref={rootRef}>
-      <div className="skills__field">
+      <div className={`skills__field${drop.up ? ' skills__field--up' : ''}`} ref={fieldRef}>
         <Input
           label={label}
           value={input}
@@ -127,8 +138,13 @@ export default function SkillsInput({
           className="skills__input"
         />
 
-        {open && filtered.length > 0 && (
-          <ul className="skills__menu bayn-scroll" role="listbox">
+        {menuOpen && (
+          <ul
+            ref={menuRef}
+            className="skills__menu bayn-scroll"
+            role="listbox"
+            style={drop.listMax ? { maxHeight: drop.listMax } : undefined}
+          >
             {filtered.map((opt, i) => (
               <li
                 key={opt}

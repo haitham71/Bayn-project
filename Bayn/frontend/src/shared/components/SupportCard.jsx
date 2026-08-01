@@ -4,7 +4,7 @@ import Phone from '@/assets/icons/phone.svg?react';
 import './SupportCard.css';
 
 export const SUPPORT_EMAIL = 'support@beynsa.com';
-export const SUPPORT_PHONE = '+966 55 123 4567';
+export const SUPPORT_PHONE = '+966 59 679 1960';
 
 // Contact card shown from a support button — email + phone rows. Positioning is
 // left to the caller (wrap it and place it relative to the trigger).

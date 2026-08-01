@@ -1,84 +1,98 @@
 """Comprehensive async test suite for the Bayn Chat module."""
 
 import uuid
+from datetime import date, datetime, timedelta, timezone
+
 import pytest
 import pytest_asyncio
 from httpx import AsyncClient
-from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from bayn.common.exceptions import NotFoundError, ValidationError
+from bayn.core.security import create_access_token
 from bayn.features.identity.models import User
-from bayn.features.chat.models import Conversation, ConversationMember, Message
-from bayn.features.chat.schemas import WSIncomingMessage, WSOutgoingMessage
+from bayn.features.chat.models import Message, message_mentions
 from bayn.features.chat import service
 from bayn.features.chat.manager import ConnectionManager
+
+
+def auth_headers_for(user: User) -> dict:
+    return {"Authorization": f"Bearer {create_access_token(user.id)}"}
 
 
 # ── Fixtures & Setup ──────────────────────────────────────────────────────────
 
 @pytest_asyncio.fixture
-async def user_a(db_session: AsyncSession) -> User:
+async def user_a(db: AsyncSession) -> User:
     """Creates primary test user A."""
     user = User(
         id=uuid.uuid4(),
         username="user_a",
+        email="user_a@example.com",
+        password_hash="test_hash",
+        birth_date=date(2000, 1, 1),
         first_name_ar="علي",
         last_name_ar="أحمد",
         first_name_en="Ali",
         last_name_en="Ahmed",
         is_active=True,
     )
-    db_session.add(user)
-    await db_session.commit()
-    await db_session.refresh(user)
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
     return user
 
 
 @pytest_asyncio.fixture
-async def user_b(db_session: AsyncSession) -> User:
+async def user_b(db: AsyncSession) -> User:
     """Creates secondary test user B."""
     user = User(
         id=uuid.uuid4(),
         username="user_b",
+        email="user_b@example.com",
+        password_hash="test_hash",
+        birth_date=date(2000, 1, 1),
         first_name_ar="سارة",
         last_name_ar="محمد",
         first_name_en="Sara",
         last_name_en="Mohammed",
         is_active=True,
     )
-    db_session.add(user)
-    await db_session.commit()
-    await db_session.refresh(user)
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
     return user
 
 
 @pytest_asyncio.fixture
-async def user_c(db_session: AsyncSession) -> User:
+async def user_c(db: AsyncSession) -> User:
     """Creates tertiary test user C (outsider user)."""
     user = User(
         id=uuid.uuid4(),
         username="user_c",
+        email="user_c@example.com",
+        password_hash="test_hash",
+        birth_date=date(2000, 1, 1),
         first_name_ar="خالد",
         last_name_ar="العتيبي",
         first_name_en="Khaled",
         last_name_en="Al-Otaibi",
         is_active=True,
     )
-    db_session.add(user)
-    await db_session.commit()
-    await db_session.refresh(user)
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
     return user
 
 
 @pytest_asyncio.fixture
 async def direct_conversation(
-    db_session: AsyncSession, user_a: User, user_b: User
+    db: AsyncSession, user_a: User, user_b: User
 ):
     """Initializes a direct 1-on-1 conversation between User A and User B."""
     return await service.get_or_create_direct_conversation(
-        db_session, user_a_id=user_a.id, user_b_id=user_b.id
+        db, user_a_id=user_a.id, user_b_id=user_b.id
     )
 
 
@@ -86,11 +100,11 @@ async def direct_conversation(
 
 @pytest.mark.asyncio
 async def test_get_or_create_direct_conversation_new(
-    db_session: AsyncSession, user_a: User, user_b: User
+    db: AsyncSession, user_a: User, user_b: User
 ):
     """Tests creating a brand-new direct chat between two users."""
     conv_resp = await service.get_or_create_direct_conversation(
-        db_session, user_a_id=user_a.id, user_b_id=user_b.id
+        db, user_a_id=user_a.id, user_b_id=user_b.id
     )
     assert conv_resp.id is not None
     assert len(conv_resp.members) == 2
@@ -101,36 +115,36 @@ async def test_get_or_create_direct_conversation_new(
 
 @pytest.mark.asyncio
 async def test_get_or_create_direct_conversation_idempotent(
-    db_session: AsyncSession, user_a: User, user_b: User
+    db: AsyncSession, user_a: User, user_b: User
 ):
     """Ensures repeated calls return the same existing conversation ID instead of creating duplicates."""
     conv_1 = await service.get_or_create_direct_conversation(
-        db_session, user_a_id=user_a.id, user_b_id=user_b.id
+        db, user_a_id=user_a.id, user_b_id=user_b.id
     )
     conv_2 = await service.get_or_create_direct_conversation(
-        db_session, user_a_id=user_b.id, user_b_id=user_a.id
+        db, user_a_id=user_b.id, user_b_id=user_a.id
     )
     assert conv_1.id == conv_2.id
 
 
 @pytest.mark.asyncio
-async def test_cannot_chat_with_self(db_session: AsyncSession, user_a: User):
+async def test_cannot_chat_with_self(db: AsyncSession, user_a: User):
     """Verifies that starting a chat with oneself throws a ValidationError."""
     with pytest.raises(ValidationError):
         await service.get_or_create_direct_conversation(
-            db_session, user_a_id=user_a.id, user_b_id=user_a.id
+            db, user_a_id=user_a.id, user_b_id=user_a.id
         )
 
 
 @pytest.mark.asyncio
 async def test_save_message_with_mentions(
-    db_session: AsyncSession, user_a: User, user_b: User, direct_conversation
+    db: AsyncSession, user_a: User, user_b: User, direct_conversation
 ):
     """Verifies saving a message with @mentions and checking database state."""
     msg_content = "Hey @user_b check this architecture!"
     
     msg_resp = await service.save_message(
-        db_session,
+        db,
         conversation_id=direct_conversation.id,
         sender_id=user_a.id,
         content=msg_content,
@@ -140,42 +154,46 @@ async def test_save_message_with_mentions(
     assert msg_resp.content == msg_content
     assert msg_resp.sender_id == user_a.id
 
-    # Query DB directly to verify the junction table entry
-    db_msg = await db_session.scalar(
-        select(Message)
-        .where(Message.id == msg_resp.id)
-    )
-    await db_session.refresh(db_msg, ["mentions"])
-    assert len(db_msg.mentions) == 1
-    assert db_msg.mentions[0].id == user_b.id
+    # Query the junction table directly to verify the mention was recorded
+    mentioned_ids = (
+        await db.scalars(
+            select(message_mentions.c.mentioned_user_id)
+            .where(message_mentions.c.message_id == msg_resp.id)
+        )
+    ).all()
+    assert mentioned_ids == [user_b.id]
 
 
 @pytest.mark.asyncio
 async def test_save_message_filters_non_member_mentions(
-    db_session: AsyncSession, user_a: User, user_b: User, user_c: User, direct_conversation
+    db: AsyncSession, user_a: User, user_b: User, user_c: User, direct_conversation
 ):
     """Ensures users tagged in a message who are NOT members of the chat are safely excluded."""
     msg_resp = await service.save_message(
-        db_session,
+        db,
         conversation_id=direct_conversation.id,
         sender_id=user_a.id,
         content="Hey @user_c",
         mentioned_user_ids=[user_c.id],  # User C is not in this conversation
     )
 
-    db_msg = await db_session.scalar(select(Message).where(Message.id == msg_resp.id))
-    await db_session.refresh(db_msg, ["mentions"])
-    assert len(db_msg.mentions) == 0
+    mentioned_ids = (
+        await db.scalars(
+            select(message_mentions.c.mentioned_user_id)
+            .where(message_mentions.c.message_id == msg_resp.id)
+        )
+    ).all()
+    assert mentioned_ids == []
 
 
 @pytest.mark.asyncio
 async def test_save_message_unauthorized_sender(
-    db_session: AsyncSession, user_c: User, direct_conversation
+    db: AsyncSession, user_c: User, direct_conversation
 ):
     """Ensures an outsider user cannot save messages to a room they don't belong to."""
     with pytest.raises(NotFoundError):
         await service.save_message(
-            db_session,
+            db,
             conversation_id=direct_conversation.id,
             sender_id=user_c.id,
             content="Unauthorized message",
@@ -184,20 +202,34 @@ async def test_save_message_unauthorized_sender(
 
 @pytest.mark.asyncio
 async def test_get_conversation_messages_pagination(
-    db_session: AsyncSession, user_a: User, direct_conversation
+    db: AsyncSession, user_a: User, direct_conversation
 ):
     """Verifies chronological pagination when reading chat logs."""
     # Write 3 sequential messages
     for i in range(3):
         await service.save_message(
-            db_session,
+            db,
             conversation_id=direct_conversation.id,
             sender_id=user_a.id,
             content=f"Message {i+1}",
         )
 
+    # SQLite's server_default now() is second-granular — force distinct
+    # timestamps so ordering is deterministic in this test.
+    rows = (
+        await db.scalars(
+            select(Message)
+            .where(Message.conversation_id == direct_conversation.id)
+            .order_by(Message.content)
+        )
+    ).all()
+    base = datetime.now(timezone.utc)
+    for i, row in enumerate(rows):
+        row.created_at = base + timedelta(seconds=i)
+    await db.commit()
+
     messages = await service.get_conversation_messages(
-        db_session, conversation_id=direct_conversation.id, user_id=user_a.id, limit=2, offset=0
+        db, conversation_id=direct_conversation.id, user_id=user_a.id, limit=2, offset=0
     )
 
     assert len(messages) == 2
@@ -210,13 +242,13 @@ async def test_get_conversation_messages_pagination(
 
 @pytest.mark.asyncio
 async def test_api_create_direct_chat(
-    async_client: AsyncClient, user_a: User, user_b: User, auth_headers_a: dict
+    client: AsyncClient, user_a: User, user_b: User
 ):
     """Tests POST /chats/direct endpoint."""
-    response = await async_client.post(
+    response = await client.post(
         "/chats/direct",
         json={"recipient_id": str(user_b.id)},
-        headers=auth_headers_a,
+        headers=auth_headers_for(user_a),
     )
     assert response.status_code == 201
     data = response.json()
@@ -226,10 +258,10 @@ async def test_api_create_direct_chat(
 
 @pytest.mark.asyncio
 async def test_api_list_conversations(
-    async_client: AsyncClient, user_a: User, direct_conversation, auth_headers_a: dict
+    client: AsyncClient, user_a: User, direct_conversation
 ):
     """Tests GET /chats endpoint."""
-    response = await async_client.get("/chats", headers=auth_headers_a)
+    response = await client.get("/chats", headers=auth_headers_for(user_a))
     assert response.status_code == 200
     data = response.json()
     assert len(data) >= 1
@@ -238,12 +270,12 @@ async def test_api_list_conversations(
 
 @pytest.mark.asyncio
 async def test_api_get_chat_history(
-    async_client: AsyncClient, user_a: User, direct_conversation, auth_headers_a: dict
+    client: AsyncClient, user_a: User, direct_conversation
 ):
     """Tests GET /chats/{conversation_id}/messages endpoint."""
-    response = await async_client.get(
+    response = await client.get(
         f"/chats/{direct_conversation.id}/messages?limit=10&offset=0",
-        headers=auth_headers_a,
+        headers=auth_headers_for(user_a),
     )
     assert response.status_code == 200
     assert isinstance(response.json(), list)
