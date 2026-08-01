@@ -568,7 +568,6 @@
   "settings": {
     "navAccount": "معلومات الحساب",
     "navSecurity": "الأمان",
-    "navNotifications": "الإشعارات",
     "navLegal": "الخصوصية والشروط",
     "legalTitle": "الخصوصية والاتفاقية",
     "legalDesc": "اطّلع على كيفية تعاملنا مع بياناتك وشروط استخدام بيّن.",
@@ -578,18 +577,7 @@
     "subtitle": "أدر حسابك وإعدادات الأمان وتفضيلات الإشعارات.",
     "accountTitle": "معلومات الحساب",
     "accountDesc": "اسم المستخدم والبريد الإلكتروني ورقم الجوال.",
-    "passwordDesc": "غيّر كلمة مرور حسابك.",
-    "notifTitle": "الإشعارات",
-    "notifDesc": "اختر ما تحب تستلم إشعارات عنه، وكيف.",
-    "notifJoinRequests": "طلبات الانضمام",
-    "notifJoinRequestsSub": "عند تقديم أحد على فكرتك، أو تغيّر حالة طلبك",
-    "notifMeetings": "تذكير الاجتماعات",
-    "notifMeetingsSub": "تذكير عبر الإيميل قبل الاجتماعات المجدولة",
-    "notifContracts": "تحديثات العقود",
-    "notifContractsSub": "حالة توقيع اتفاقية عدم الإفشاء والالتزام",
-    "notifChat": "رسائل المحادثة",
-    "notifChatSub": "رسائل جديدة في قنوات مشاريعك",
-    "notifNotWired": "تفضيلات الإشعارات غير محفوظة بحسابك بعد."
+    "passwordDesc": "غيّر كلمة مرور حسابك."
   },
   "profileView": {
     "memberSince": "عضو منذ"

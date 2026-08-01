@@ -568,7 +568,6 @@
   "settings": {
     "navAccount": "Account information",
     "navSecurity": "Security",
-    "navNotifications": "Notifications",
     "navLegal": "Legal",
     "legalTitle": "Privacy & Terms",
     "legalDesc": "Read how we handle your data and the terms of using Beyn.",
@@ -578,18 +577,7 @@
     "subtitle": "Manage your account, security, and notification preferences.",
     "accountTitle": "Account information",
     "accountDesc": "Your username, email, and phone number.",
-    "passwordDesc": "Change your account password.",
-    "notifTitle": "Notifications",
-    "notifDesc": "Choose what you get notified about, and how.",
-    "notifJoinRequests": "Join requests",
-    "notifJoinRequestsSub": "When someone applies to your idea, or your application status changes",
-    "notifMeetings": "Meeting reminders",
-    "notifMeetingsSub": "Email reminders before scheduled meetings",
-    "notifContracts": "Contract updates",
-    "notifContractsSub": "NDA and commitment signing status",
-    "notifChat": "Chat messages",
-    "notifChatSub": "New messages in your project channels",
-    "notifNotWired": "Notification preferences aren't saved to your account yet."
+    "passwordDesc": "Change your account password."
   },
   "profileView": {
     "memberSince": "Member since"
