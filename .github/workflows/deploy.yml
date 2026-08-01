@@ -12,10 +12,32 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # First: run the backend test suite (same as tests.yml).
+  # Zeroth: a frontend-only push has no backend code to test — skip straight
+  # to building/deploying instead of paying for a full pytest run.
+  changes:
+    name: Detect Changed Areas
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'Bayn/backend/**'
+
+  # First: run the backend test suite (same as tests.yml) — only if backend
+  # code actually changed.
   test:
     name: Run Tests
     runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
     steps:
       - uses: actions/checkout@v4
 
@@ -70,7 +92,10 @@ jobs:
   build:
     name: Build Production Images
     runs-on: ubuntu-latest
-    needs: test
+    needs: [changes, test]
+    # Runs whether test ran (and passed) or was skipped for a frontend-only
+    # push — but not if it ran and failed.
+    if: always() && needs.test.result != 'failure'
     steps:
       - uses: actions/checkout@v4
 
@@ -123,14 +148,22 @@ jobs:
             ]' \
             --query "Command.CommandId" --output text)
 
-          aws ssm wait command-executed --command-id "$COMMAND_ID" --instance-id "$INSTANCE_ID" || true
+          # The default `aws ssm wait command-executed` gives up after ~100s
+          # (20 attempts x 5s), which is shorter than this command can take —
+          # poll manually with a much longer budget instead.
+          for i in $(seq 1 60); do
+            STATUS=$(aws ssm get-command-invocation --command-id "$COMMAND_ID" --instance-id "$INSTANCE_ID" --query "Status" --output text)
+            if [ "$STATUS" != "Pending" ] && [ "$STATUS" != "InProgress" ]; then
+              break
+            fi
+            sleep 15
+          done
 
           aws ssm get-command-invocation --command-id "$COMMAND_ID" --instance-id "$INSTANCE_ID" \
             --query "StandardOutputContent" --output text
           aws ssm get-command-invocation --command-id "$COMMAND_ID" --instance-id "$INSTANCE_ID" \
             --query "StandardErrorContent" --output text
 
-          STATUS=$(aws ssm get-command-invocation --command-id "$COMMAND_ID" --instance-id "$INSTANCE_ID" --query "Status" --output text)
           if [ "$STATUS" != "Success" ]; then
             echo "SSM command failed with status: $STATUS"
             exit 1
@@ -167,14 +200,21 @@ jobs:
             ]' \
             --query "Command.CommandId" --output text)
 
-          aws ssm wait command-executed --command-id "$COMMAND_ID" --instance-id "$INSTANCE_ID" || true
+          # Same reasoning as the migrate job: `docker compose --build` for the
+          # frontend image regularly runs past the default waiter's ~100s budget.
+          for i in $(seq 1 60); do
+            STATUS=$(aws ssm get-command-invocation --command-id "$COMMAND_ID" --instance-id "$INSTANCE_ID" --query "Status" --output text)
+            if [ "$STATUS" != "Pending" ] && [ "$STATUS" != "InProgress" ]; then
+              break
+            fi
+            sleep 15
+          done
 
           aws ssm get-command-invocation --command-id "$COMMAND_ID" --instance-id "$INSTANCE_ID" \
             --query "StandardOutputContent" --output text
           aws ssm get-command-invocation --command-id "$COMMAND_ID" --instance-id "$INSTANCE_ID" \
             --query "StandardErrorContent" --output text
 
-          STATUS=$(aws ssm get-command-invocation --command-id "$COMMAND_ID" --instance-id "$INSTANCE_ID" --query "Status" --output text)
           if [ "$STATUS" != "Success" ]; then
             echo "SSM command failed with status: $STATUS"
             exit 1
