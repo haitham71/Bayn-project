@@ -19,6 +19,15 @@
   text-decoration: none;
 }
 
+/* The contact address in the closing sections. Needs to beat the plain link
+   rule above, which is deliberately unstyled for inline cross-references. */
+.lg a.lg__mail {
+  color: var(--text-title);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .lg__wrap {
   max-width: 860px;
   margin: 0 auto;

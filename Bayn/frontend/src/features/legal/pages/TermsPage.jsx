@@ -1,4 +1,5 @@
 import LegalLayout, { LegalLink } from '../components/LegalLayout';
+import { SUPPORT_EMAIL } from '@/shared/components/SupportCard';
 
 const TOC = [
   { id: 's1', label: 'التعريفات' },
@@ -227,7 +228,8 @@ export default function TermsPage() {
 
       <h2 id="s14"><span className="lg__n">١٤.</span> التواصل معنا</h2>
       <p>
-        لأي استفسار حول هذه الاتفاقية يمكنكم التواصل عبر البريد الإلكتروني:
+        لأي استفسار حول هذه الاتفاقية يمكنكم التواصل عبر البريد الإلكتروني:{' '}
+        <a className="lg__mail" href={`mailto:${SUPPORT_EMAIL}`} dir="ltr">{SUPPORT_EMAIL}</a>
       </p>
     </LegalLayout>
   );

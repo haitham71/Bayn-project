@@ -1,4 +1,5 @@
 import LegalLayout, { LegalLink } from '../components/LegalLayout';
+import { SUPPORT_EMAIL } from '@/shared/components/SupportCard';
 
 const TOC = [
   { id: 'p1', label: 'مقدمة ونطاق السياسة' },
@@ -169,7 +170,8 @@ export default function PrivacyPolicyPage() {
 
       <h2 id="p12"><span className="lg__n">١٢.</span> التواصل وتقديم الشكاوى</h2>
       <p>
-        لأي استفسار أو طلب يتعلّق ببياناتك الشخصية، تواصل معنا عبر:
+        لأي استفسار أو طلب يتعلّق ببياناتك الشخصية، تواصل معنا عبر:{' '}
+        <a className="lg__mail" href={`mailto:${SUPPORT_EMAIL}`} dir="ltr">{SUPPORT_EMAIL}</a>
       </p>
       <p>
         وإذا رأيت أن معالجتنا لبياناتك تخالف النظام، فلك التقدّم بشكوى إلى الجهة المختصة

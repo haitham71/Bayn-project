@@ -3,7 +3,7 @@ import Mail from '@/assets/icons/mail.svg?react';
 import Phone from '@/assets/icons/phone.svg?react';
 import './SupportCard.css';
 
-export const SUPPORT_EMAIL = 'support@beynsa.com';
+export const SUPPORT_EMAIL = 'info@Beynsa.com';
 export const SUPPORT_PHONE = '+966 59 679 1960';
 
 // Contact card shown from a support button — email + phone rows. Positioning is
