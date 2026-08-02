@@ -63,7 +63,9 @@ class NDAServiceClient:
     def __init__(self) -> None:
         self._base_url = settings.NDA_SERVICE_URL   # e.g. http://host.docker.internal:5000
         self._api_key = settings.NDA_SERVICE_KEY
-        self._timeout = 15.0
+        # inside the create-contract request, and gives that conversion up to 60s
+        # on its own side — this must comfortably outlast that.
+        self._timeout = 90.0
 
     def _headers(self) -> dict[str, str]:
         return {
@@ -128,12 +130,16 @@ class NDAServiceClient:
         if idempotency_key is not None:
             headers["Idempotency-Key"] = idempotency_key
 
-        async with httpx.AsyncClient(timeout=self._timeout) as client:
-            response = await client.post(
-                f"{self._base_url}/api/v1/contracts",
-                headers=headers,
-                json=body,
-            )
+        try:
+            async with httpx.AsyncClient(timeout=self._timeout) as client:
+                response = await client.post(
+                    f"{self._base_url}/api/v1/contracts",
+                    headers=headers,
+                    json=body,
+                )
+        except httpx.HTTPError as exc:
+            # Covers timeouts/connection errors too, not just non-2xx responses 
+            raise NDAServiceError(f"Failed to reach Signature-System: {exc}") from exc
 
         if not response.is_success:
             raise NDAServiceError(
@@ -160,11 +166,14 @@ class NDAServiceClient:
             NDAContractNotFound: HTTP 404 — no contract with that id
             NDAServiceError:     any other non-2xx response
         """
-        async with httpx.AsyncClient(timeout=self._timeout) as client:
-            response = await client.get(
-                f"{self._base_url}/api/v1/contracts/{contract_id}",
-                headers=self._headers(),
-            )
+        try:
+            async with httpx.AsyncClient(timeout=self._timeout) as client:
+                response = await client.get(
+                    f"{self._base_url}/api/v1/contracts/{contract_id}",
+                    headers=self._headers(),
+                )
+        except httpx.HTTPError as exc:
+            raise NDAServiceError(f"Failed to reach Signature-System: {exc}") from exc
 
         if response.status_code == 404:
             raise NDAContractNotFound(f"No NDA contract found with id={contract_id}")
