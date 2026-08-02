@@ -96,6 +96,12 @@
   background: var(--bg-surface-thirdary, #c9baa1);
 }
 
+/* National ID sits on its own line under the divider, matching the width of
+   the bio and skills fields rather than sharing the two-column name grid. */
+.ps__national-id.bayn-input {
+  width: 100%;
+}
+
 /* Bio: character counter sits at the trailing end below the field. */
 .ps__bio.bayn-input {
   width: 100%;

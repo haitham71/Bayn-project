@@ -66,6 +66,13 @@ export function validateDob(value) {
   return null;
 }
 
+// Saudi ID: 10 digits starting with 1 (citizen) or 2 (resident).
+export function validateNationalId(value) {
+  const v = value.trim();
+  if (!v) return 'errRequired';
+  return /^[12]\d{9}$/.test(v) ? null : 'errNationalId';
+}
+
 export function validatePhone(value) {
   const v = value.replace(/\s/g, '');
   if (!v || v === '+966') return 'errRequired';
@@ -118,6 +125,11 @@ export function formatDob(value) {
   // Join only the parts that exist so there is never a trailing "/" left
   // dangling (which would otherwise block backspace).
   return [day, month, year].filter(Boolean).join('/');
+}
+
+// Digits only, capped at the 10 an ID holds.
+export function formatNationalId(value) {
+  return value.replace(/\D/g, '').slice(0, 10);
 }
 
 // Keeps the fixed +966 prefix intact and allows up to 9 digits after it.

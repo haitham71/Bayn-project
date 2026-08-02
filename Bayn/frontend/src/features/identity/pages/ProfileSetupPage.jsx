@@ -6,7 +6,7 @@ import Button from '@/shared/components/Button';
 import Input from '@/shared/components/Input';
 import Select from '@/shared/components/Select';
 import SkillsInput from '@/shared/components/SkillsInput';
-import { validateName } from '../utils/validation';
+import { validateName, validateNationalId, formatNationalId } from '../utils/validation';
 import {
   getSaudiCountryId,
   getCities,
@@ -54,6 +54,9 @@ export default function ProfileSetupPage({ onNavigate, initialData = {}, onDataC
   const [secondNameAr, setSecondNameAr] = useState(initialData.secondNameAr || '');
   const [thirdNameAr, setThirdNameAr] = useState(initialData.thirdNameAr || '');
   const [lastNameAr, setLastNameAr] = useState(initialData.lastNameAr || '');
+
+  // Needed later for the NDA the backend generates on an accepted meeting.
+  const [nationalId, setNationalId] = useState(initialData.nationalId || '');
 
   const [specializations, setSpecializations] = useState(initialData.specializations || []);
   // The full catalog list, used as the (fixed) options for the dropdown.
@@ -163,9 +166,9 @@ export default function ProfileSetupPage({ onNavigate, initialData = {}, onDataC
     onDataChange?.({
       firstNameEn, secondNameEn, thirdNameEn, lastNameEn,
       firstNameAr, secondNameAr, thirdNameAr, lastNameAr,
-      specializations, experience, location, bio, skills,
+      nationalId, specializations, experience, location, bio, skills,
     });
-  }, [firstNameEn, secondNameEn, thirdNameEn, lastNameEn, firstNameAr, secondNameAr, thirdNameAr, lastNameAr, specializations, experience, location, bio, skills]);
+  }, [firstNameEn, secondNameEn, thirdNameEn, lastNameEn, firstNameAr, secondNameAr, thirdNameAr, lastNameAr, nationalId, specializations, experience, location, bio, skills]);
 
 
   // Both name languages are shown together. First and last names carry over
@@ -205,6 +208,8 @@ export default function ProfileSetupPage({ onNavigate, initialData = {}, onDataC
       const err = validateName(value, { lang, required: true });
       if (err) next[key] = err;
     });
+    const id = validateNationalId(nationalId);
+    if (id) next.nationalId = id;
     return next;
   }
 
@@ -227,6 +232,7 @@ export default function ProfileSetupPage({ onNavigate, initialData = {}, onDataC
         third_name_ar: thirdNameAr || null,
         second_name_en: secondNameEn || null,
         third_name_en: thirdNameEn || null,
+        national_id: nationalId,
         years_of_experience: experience || null,
         country_id: countryId || null,
         city_id: location || null,
@@ -295,6 +301,18 @@ export default function ProfileSetupPage({ onNavigate, initialData = {}, onDataC
             </div>
           ))}
         </div>
+
+        <hr className="ps__divider" />
+
+        <Input
+          label={t('profile.nationalId')}
+          inputMode="numeric"
+          maxLength={10}
+          value={nationalId}
+          onChange={e => { setNationalId(formatNationalId(e.target.value)); clearError('nationalId'); }}
+          className="ps__national-id"
+          {...fieldError('nationalId')}
+        />
 
         <hr className="ps__divider" />
 
