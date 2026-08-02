@@ -91,10 +91,10 @@ async def create_nda_for_request(
         status=ContractStatus.pending_creation,
     )
 
-    # If the process dies or the caller's transaction rolls back before this flush
-    # Persisted before the remote call, so that if the remote call fails and the caller retries, we don't create a second contract on Signature-System's side.
+    # Committed (not just flushed) before the remote call: `get_db` rolls back
     db.add(contract)
-    await db.flush()
+    await db.commit()
+    await db.refresh(contract)
 
     try:
         remote = await nda_service_client.create_contract(
@@ -114,10 +114,12 @@ async def create_nda_for_request(
             idea_title=idea_title,
         )
     except NDAServiceError as exc:
-        # Nothing is persisted, so the owner can just accept again once
-        # Signature-System is reachable.
+        # The contract row (and its id, used as the idempotency key) is kept —
+        # only its status changes — so a retried accept reuses the same
+        # contract.id and Signature-System can recognize the retry instead of
+        # creating a duplicate.
         contract.status = ContractStatus.creation_failed
-        await db.flush()
+        await db.commit()
         logger.exception("NDA creation failed for meeting request %s", request.id)
         raise ValidationError(t("contracts", "errors.external_api_failed", locale)) from exc
     contract.status = ContractStatus.pending_party_one # if the remote call succeeded
