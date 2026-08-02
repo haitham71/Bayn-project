@@ -62,6 +62,9 @@ MAX_MEETINGS_PER_DAY = 3
 MAX_CONCURRENT_MEETINGS_PLATFORM = 3
 # How early participants may enter the video room before the meeting starts.
 JOIN_WINDOW = timedelta(minutes=5)
+# How long after start_time the owner's finalize decision unlocks even if the
+# host never explicitly ends the meeting.
+FINALIZE_GRACE_PERIOD = timedelta(minutes=5)
 
 
 async def _count_overlapping_meetings(db: AsyncSession, start: datetime, end: datetime) -> int:
@@ -702,9 +705,13 @@ async def finalize_meeting_request(
     if request.status not in SCHEDULED_STATUSES:
         raise ValidationError(t("meetings", "request.not_scheduled", locale))
 
-    # Gated on the host explicitly closing the meeting (Meeting.ended_at)
+    # owner can make a decision after 5 minutes.
     meeting = await db.get(Meeting, request.resulting_meeting_id) if request.resulting_meeting_id else None
-    if meeting is None or meeting.ended_at is None:
+    meeting_over = meeting is not None and (
+        meeting.ended_at is not None
+        or datetime.now(timezone.utc) >= _ensure_aware(meeting.start_time) + FINALIZE_GRACE_PERIOD
+    )
+    if not meeting_over:
         raise ValidationError(t("meetings", "request.meeting_not_over", locale))
 
     if not approve:
