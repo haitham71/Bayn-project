@@ -122,6 +122,9 @@
 .home__card {
   display: flex;
   flex-direction: column;
+  /* Grid items default to min-width:auto, so a card would rather overflow the
+     row than shrink under its widest line. Let it shrink and wrap instead. */
+  min-width: 0;
   min-height: 262px;
   padding: 20px;
   border: 1px solid var(--bg-surface-thirdary);
@@ -366,7 +369,11 @@
 
 /* Responsive: stack the schedule under the main content on narrow viewports. */
 
-@media (max-width: 1080px) {
+/* Three cards beside a 346px side column need roughly 1320px of window before
+   the cards start being squeezed under their own content — the side column is
+   a fixed basis and won't give any of it back. Below that the side column
+   drops underneath, which hands the cards the full width. */
+@media (max-width: 1320px) {
   .home__grid {
     flex-direction: column;
   }
@@ -374,6 +381,13 @@
     flex: 1 1 auto;
     width: 100%;
     max-width: 420px;
+  }
+}
+
+/* Two-up before one-up, so the cards never get narrower than they read at. */
+@media (max-width: 900px) {
+  .home__cards {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
