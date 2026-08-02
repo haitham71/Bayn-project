@@ -917,9 +917,14 @@ color: var(--color-error-700);
   max-width: none;
 }
 
-@media (max-width: 1180px) {
+@media (max-width: 1280px) {
   .pd__lower { flex-direction: column; }
   .pd__lower .pd__schedule { flex-basis: auto; width: 100%; max-width: 420px; }
+  /* The chat's `flex: 1 1 0` sizes its width while this row is horizontal, but
+     once it stacks the 0 basis applies to height instead and overrides the
+     600px — with nothing to grow into, the card collapsed to nothing and its
+     overflow:hidden made it vanish. Let its own height stand. */
+  .pd__lower .tc { flex: 0 0 auto; align-self: stretch; width: 100%; }
 }
 
 @media (max-width: 720px) {

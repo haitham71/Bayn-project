@@ -31,10 +31,17 @@ export function countByStage(requests) {
   return counts;
 }
 
+// Mirrors the backend's FINALIZE_GRACE_PERIOD see meetings/service.py
+// finalize unlocks 5 minutes after the meeting was due to start.
+const FINALIZE_GRACE_PERIOD_MS = 5 * 60 * 1000;
+
 // The owner can only judge someone after actually meeting them, which is the
 // same rule the backend enforces on POST /requests/{id}/finalize.
 export function canFinalize(request, now = Date.now()) {
-  return stageOf(request) === 'meeting' && new Date(request.proposed_end_time).getTime() <= now;
+  return (
+    stageOf(request) === 'meeting' &&
+    new Date(request.proposed_start_time).getTime() + FINALIZE_GRACE_PERIOD_MS <= now
+  );
 }
 
 // Signature-System reports one status rather than a flag per party, so the
