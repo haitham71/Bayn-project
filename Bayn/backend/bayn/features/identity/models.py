@@ -124,7 +124,7 @@ class User(Base):
         UUID(as_uuid=True), ForeignKey("countries.id"), nullable=True
     )
     # local number without the dial code, e.g. 501234567
-    phone_number: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    phone_number: Mapped[Optional[int]] = mapped_column(Integer, nullable=True, unique=True)
 
     # country of residence — independent of phone_country_id (dial code can differ from where the user lives)
     country_id: Mapped[Optional[uuid.UUID]] = mapped_column(
