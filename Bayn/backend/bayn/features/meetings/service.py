@@ -831,21 +831,21 @@ async def create_team_meeting(
     participant_ids: list[uuid.UUID],
     locale: str = DEFAULT_LOCALE,
 ) -> Meeting:
-    """The owner schedules a meeting for their project and picks which members
-    attend. Unlike the request flow this is direct (no NDA): every attendee is
-    already a member of the project."""
+    """Any member of the project schedules a meeting and picks who attends —
+    not just the owner. Unlike the request flow this is direct (no NDA): every
+    attendee is already a member of the project."""
     project = await db.get(Project, project_id)
     if project is None:
         raise NotFoundError(t("projects", "project.not_found", locale))
 
-    owner_membership = await db.scalar(
+    membership = await db.scalar(
         select(ProjectMembership).where(
             ProjectMembership.project_id == project_id,
             ProjectMembership.user_id == owner_id,
         )
     )
-    if not owner_membership or owner_membership.role != ProjectMembershipRole.OWNER:
-        raise ForbiddenError(t("meetings", "team.owner_only", locale))
+    if not membership:
+        raise ForbiddenError(t("meetings", "team.member_only", locale))
 
     start = _ensure_aware(start_time)
     end = _ensure_aware(end_time)
@@ -854,8 +854,8 @@ async def create_team_meeting(
     if start < datetime.now(timezone.utc):
         raise ValidationError(t("meetings", "team.past_time", locale))
 
-    # Selected attendees must be members of this same project (owner excluded —
-    # they're added as host regardless).
+    # Selected attendees must be members of this same project (the scheduler is
+    # excluded — they're added as host regardless).
     selected = [uid for uid in dict.fromkeys(participant_ids) if uid != owner_id]
     if selected:
         rows = await db.execute(
@@ -867,6 +867,12 @@ async def create_team_meeting(
         members = {uid for (uid,) in rows.all()}
         if any(uid not in members for uid in selected):
             raise ValidationError(t("meetings", "team.not_a_member", locale))
+
+    # The project owner attends every team meeting, even one a member scheduled
+    # without picking them.
+    project_owner_id = (await _get_owner_membership(db, project_id, locale)).user_id
+    if project_owner_id != owner_id and project_owner_id not in selected:
+        selected.append(project_owner_id)
 
     overlapping = await _count_overlapping_meetings(db, start, end)
     if overlapping >= MAX_CONCURRENT_MEETINGS_PLATFORM:
@@ -932,9 +938,9 @@ async def create_team_meeting(
 async def cancel_team_meeting(
     db: AsyncSession, meeting_id: uuid.UUID, owner_id: uuid.UUID, locale: str = DEFAULT_LOCALE
 ) -> None:
-    """The owner cancels a team meeting they scheduled. Scoped to team
-    meetings only — 1:1 introduction meetings go through the NDA/contract
-    flow and aren't touched here."""
+    """Whoever scheduled the team meeting cancels it. Scoped to team meetings
+    only — 1:1 introduction meetings go through the NDA/contract flow and
+    aren't touched here."""
     meeting = await db.get(Meeting, meeting_id)
     if not meeting:
         raise NotFoundError(t("meetings", "meeting.not_found", locale))
@@ -943,7 +949,7 @@ async def cancel_team_meeting(
         raise ValidationError(t("meetings", "team.not_a_team_meeting", locale))
 
     if meeting.user_id != owner_id:
-        raise ForbiddenError(t("meetings", "team.owner_only", locale))
+        raise ForbiddenError(t("meetings", "team.organizer_only", locale))
 
     # Notify the attendees before the meeting (and its participant rows) are gone.
     participant_ids = (

@@ -223,6 +223,17 @@ async def list_tasks(
     return result.scalars().all()
 
 
+async def list_task_editors(
+    db: AsyncSession, project_id: uuid.UUID, user_id: uuid.UUID, locale: str = DEFAULT_LOCALE
+) -> list[uuid.UUID]:
+    """Members the owner granted full task rights to. Readable by any member —
+    the team list marks who can hand out tasks."""
+    await _require_member(db, project_id, user_id, locale)
+
+    rows = await db.execute(select(TaskEditor.user_id).where(TaskEditor.project_id == project_id))
+    return list(rows.scalars().all())
+
+
 async def grant_task_editor(
     db: AsyncSession, owner_id: uuid.UUID, project_id: uuid.UUID, user_id: uuid.UUID, locale: str = DEFAULT_LOCALE
 ) -> None:

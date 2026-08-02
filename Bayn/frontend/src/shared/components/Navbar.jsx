@@ -1,14 +1,13 @@
 import { useTranslation } from 'react-i18next';
 import { useLangNavigate } from '@/shared/hooks/useLang';
 import { useProfile } from '@/shared/hooks/useProfile';
-import Search from '@/assets/icons/search.svg?react';
 import NotificationsMenu from '@/features/notifications/components/NotificationsMenu';
 import MessagesMenu from '@/features/chat/components/MessagesMenu';
 import './Navbar.css';
 
-// Shared dashboard top bar: search field on the leading edge, notification and
-// message actions plus the signed-in user's profile chip on the trailing edge.
-export default function Navbar({ userName, onSearch }) {
+// Shared dashboard top bar: notification and message actions plus the
+// signed-in user's profile chip, all on the trailing edge.
+export default function Navbar({ userName }) {
   const { t } = useTranslation();
   const navigate = useLangNavigate();
   const { data: profile } = useProfile();
@@ -18,21 +17,6 @@ export default function Navbar({ userName, onSearch }) {
 
   return (
     <header className="bayn-topbar">
-      <form
-        className="bayn-topbar__search"
-        role="search"
-        onSubmit={(e) => e.preventDefault()}
-      >
-        <input
-          type="search"
-          className="bayn-topbar__search-input"
-          placeholder={t('home.search')}
-          aria-label={t('home.search')}
-          onChange={(e) => onSearch?.(e.target.value)}
-        />
-        <Search className="bayn-topbar__search-icon" width={20} height={20} aria-hidden="true" />
-      </form>
-
       <div className="bayn-topbar__actions">
         <NotificationsMenu />
 

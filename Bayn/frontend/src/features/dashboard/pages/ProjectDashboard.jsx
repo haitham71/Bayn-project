@@ -14,6 +14,8 @@ import Video from '@/assets/icons/video.svg?react';
 import Send from '@/assets/icons/send-horizontal.svg?react';
 import Plus from '@/assets/icons/plus.svg?react';
 import ArrowLeft from '@/assets/icons/arrow-left.svg?react';
+import ShieldCheck from '@/assets/icons/shield-check.svg?react';
+import ShieldPlus from '@/assets/icons/shield-plus.svg?react';
 import CalendarPicker from '@/shared/components/Calendar';
 import Select from '@/shared/components/Select';
 import ConfirmDialog from '@/shared/components/ConfirmDialog';
@@ -23,6 +25,9 @@ import {
   getMyProjects,
   getProject,
   listProjectMembers,
+  listTaskEditors,
+  grantTaskEditor,
+  revokeTaskEditor,
 } from '@/features/projects/services/projectService';
 import {
   listMeetings,
@@ -103,6 +108,17 @@ export default function ProjectDashboardPage({ onNavigate }) {
   // it) — decides which panels this dashboard shows.
   const isOwner = myProjects.find((p) => p.id === projectId)?.role === 'owner';
 
+  // Members the owner handed full task rights to (create/assign/delete), plus
+  // the row currently being toggled.
+  const [taskEditors, setTaskEditors] = useState([]);
+  const [editorBusyId, setEditorBusyId] = useState(null);
+  // The member whose rights are pending confirmation.
+  const [permTarget, setPermTarget] = useState(null);
+  const isTaskEditor = (id) => taskEditors.includes(id);
+  // Backend tier: the owner and granted editors manage tasks; everyone else
+  // only toggles status on their own.
+  const canManageTasks = isOwner || isTaskEditor(user?.id);
+
   // This board is for the project's own team. The API rejects non-members on
   // every panel anyway; this keeps a hand-typed project id from rendering an
   // empty shell of someone else's board.
@@ -132,6 +148,9 @@ export default function ProjectDashboardPage({ onNavigate }) {
     listProjectMembers(projectId)
       .then((rows) => setTeam(rows || []))
       .catch(() => setTeam([]));
+    listTaskEditors(projectId)
+      .then((ids) => setTaskEditors(ids || []))
+      .catch(() => setTaskEditors([]));
   }, [projectId]);
 
   // My confirmed meetings (not project-scoped on the backend, so fetch the full
@@ -276,6 +295,29 @@ export default function ProjectDashboardPage({ onNavigate }) {
       setScheduling(false);
     }
   }
+
+  // Owner hands a member task rights, or takes them back — confirmed first,
+  // then applied optimistically and rolled back if the call fails.
+  async function toggleTaskEditor(userId) {
+    const granting = !isTaskEditor(userId);
+    setPermTarget(null);
+    setEditorBusyId(userId);
+    setTaskEditors((ids) => (granting ? [...ids, userId] : ids.filter((id) => id !== userId)));
+    try {
+      if (granting) await grantTaskEditor(projectId, userId);
+      else await revokeTaskEditor(projectId, userId);
+    } catch {
+      setTaskEditors((ids) => (granting ? ids.filter((id) => id !== userId) : [...ids, userId]));
+    } finally {
+      setEditorBusyId(null);
+    }
+  }
+
+  // Tooltip / screen-reader text for the task-rights toggle.
+  const permLabel = (member) =>
+    isTaskEditor(member.user_id)
+      ? t('projectDashboard.taskRightsRevoke')
+      : t('projectDashboard.taskRightsGrant');
 
   const memberById = (id) => team.find((m) => m.user_id === id) || null;
 
@@ -588,7 +630,36 @@ export default function ProjectDashboardPage({ onNavigate }) {
                     </p>
                   </div>
                 </div>
-                {isMe && <span className="pd__team-you">{t('projectDashboard.you')}</span>}
+                <div className="pd__team-end">
+                  {isMe && <span className="pd__team-you">{t('projectDashboard.you')}</span>}
+                  {/* Task rights: the owner toggles them here; everyone else
+                      just sees who holds them. The owner always has them. */}
+                  {member.role !== 'owner' && (isOwner ? (
+                    <button
+                      type="button"
+                      className={`pd__team-perm${isTaskEditor(member.user_id) ? ' pd__team-perm--on' : ''}`}
+                      onClick={() => setPermTarget(member)}
+                      disabled={editorBusyId === member.user_id}
+                      aria-label={permLabel(member)}
+                      aria-pressed={isTaskEditor(member.user_id)}
+                    >
+                      {isTaskEditor(member.user_id) ? (
+                        <ShieldCheck width={15} height={15} aria-hidden="true" />
+                      ) : (
+                        <ShieldPlus width={15} height={15} aria-hidden="true" />
+                      )}
+                      <span className="pd__team-perm-tip" role="tooltip">
+                        {permLabel(member)}
+                      </span>
+                    </button>
+                  ) : (
+                    isTaskEditor(member.user_id) && (
+                      <span className="pd__team-perm-badge">
+                        {t('projectDashboard.taskRightsBadge')}
+                      </span>
+                    )
+                  ))}
+                </div>
               </li>
             );
           })}
@@ -661,133 +732,129 @@ export default function ProjectDashboardPage({ onNavigate }) {
           </div>
 
           <div className="pd__lower">
-            {/* Owner-only: schedule a new team meeting (narrow side card). */}
-            {isOwner && (
-              <section className="pd__panel pd__schedule">
-                <div className="pd__panel-head">
-                  <h3>{t('projectDashboard.scheduleTitle')}</h3>
-                </div>
-                <form className="pd__schedule-form" onSubmit={handleSchedule}>
-                  <label className="pd__field pd__field--grow">
-                    <span className="pd__field-label">
-                      {t('projectDashboard.scheduleName')}
-                    </span>
-                    <input
-                      type="text"
-                      value={scheduleForm.title}
-                      onChange={(e) =>
-                        setScheduleForm((f) => ({
-                          ...f,
-                          title: e.target.value,
-                        }))
+            {/* Schedule a new team meeting (narrow side card) — open to every
+                member of the project, not just the owner. */}
+            <section className="pd__panel pd__schedule">
+              <div className="pd__panel-head">
+                <h3>{t('projectDashboard.scheduleTitle')}</h3>
+              </div>
+              <form className="pd__schedule-form" onSubmit={handleSchedule}>
+                <label className="pd__field pd__field--grow">
+                  <span className="pd__field-label">
+                    {t('projectDashboard.scheduleName')}
+                  </span>
+                  <input
+                    type="text"
+                    value={scheduleForm.title}
+                    onChange={(e) =>
+                      setScheduleForm((f) => ({
+                        ...f,
+                        title: e.target.value,
+                      }))
+                    }
+                    placeholder={t('projectDashboard.scheduleNamePh')}
+                  />
+                </label>
+                <div className="pd__field">
+                  <span className="pd__field-label">
+                    {t('projectDashboard.scheduleDate')}
+                  </span>
+                  <div className="pd__calendar-inline">
+                    <CalendarPicker
+                      initialDate={
+                        scheduleForm.date
+                          ? parseDateStr(scheduleForm.date)
+                          : new Date()
                       }
-                      placeholder={t('projectDashboard.scheduleNamePh')}
+                      selectedDates={
+                        scheduleForm.date
+                          ? [parseDateStr(scheduleForm.date)]
+                          : []
+                      }
+                      onSelectDate={setDate}
                     />
-                  </label>
-                  <div className="pd__field">
-                    <span className="pd__field-label">
-                      {t('projectDashboard.scheduleDate')}
-                    </span>
-                    <div className="pd__calendar-inline">
-                      <CalendarPicker
-                        initialDate={
-                          scheduleForm.date
-                            ? parseDateStr(scheduleForm.date)
-                            : new Date()
-                        }
-                        selectedDates={
-                          scheduleForm.date
-                            ? [parseDateStr(scheduleForm.date)]
-                            : []
-                        }
-                        onSelectDate={setDate}
-                      />
-                    </div>
-                    {scheduleForm.date && (
-                      <p className="pd__field-note">
-                        {formatDateStr(scheduleForm.date)}
-                      </p>
-                    )}
                   </div>
-                  <div className="pd__field">
-                    <span className="pd__field-label">
-                      {t('projectDashboard.scheduleTime')}
-                    </span>
-                    <div className="pd__time-row">
-                      <Select
-                        label={t('projectDashboard.scheduleFrom')}
-                        value={scheduleForm.from}
-                        onChange={setFrom}
-                        options={fromOptions}
-                        className="pd__time-select"
-                      />
-                      <Select
-                        label={t('projectDashboard.scheduleTo')}
-                        value={scheduleForm.to}
-                        onChange={(v) =>
-                          setScheduleForm((f) => ({ ...f, to: v }))
-                        }
-                        options={toOptions}
-                        disabled={!scheduleForm.from}
-                        className="pd__time-select"
-                      />
-                    </div>
-                  </div>
-                  <div className="pd__field">
-                    <span className="pd__field-label">
-                      {t('projectDashboard.scheduleParticipants')}
-                    </span>
-                    {team.filter((m) => m.user_id !== user?.id).length === 0 ? (
-                      <p className="pd__field-note pd__field-note--muted">
-                        {t('projectDashboard.scheduleNoMembers')}
-                      </p>
-                    ) : (
-                      <AssigneePicker
-                        team={team.filter((m) => m.user_id !== user?.id)}
-                        value={selectedMembers}
-                        onChange={setSelectedMembers}
-                        locale={locale}
-                        placeholder={t('projectDashboard.scheduleSelectMembers')}
-                      />
-                    )}
-                  </div>
-
-                  {scheduleError && (
-                    <p className="pd__schedule-error">{scheduleError}</p>
+                  {scheduleForm.date && (
+                    <p className="pd__field-note">
+                      {formatDateStr(scheduleForm.date)}
+                    </p>
                   )}
-
-                  <button
-                    type="submit"
-                    className="pd__schedule-btn"
-                    disabled={!scheduleReady || scheduling}
-                  >
-                    <Plus width={16} height={16} aria-hidden="true" />
-                    {scheduling
-                      ? t('projectDashboard.scheduling')
-                      : t('projectDashboard.scheduleBtn')}
-                  </button>
-                </form>
-              </section>
-            )}
-
-            <div className={`pd__mid pd__mid--${isOwner ? 'owner' : 'member'}`}>
-              {isOwner ? (
-                <>
-                  {joinRequestsPanel}
-                  {upcomingMeetingsPanel}
-                  {recordedMeetingsPanel}
-                  {filesPanel}
-                  {projectTeamPanel}
-                </>
-              ) : (
-                <>
-                  {upcomingMeetingsPanel}
-                  <div className="pd__mid-row">
-                    {filesPanel}
-                    {projectTeamPanel}
+                </div>
+                <div className="pd__field">
+                  <span className="pd__field-label">
+                    {t('projectDashboard.scheduleTime')}
+                  </span>
+                  <div className="pd__time-row">
+                    <Select
+                      label={t('projectDashboard.scheduleFrom')}
+                      value={scheduleForm.from}
+                      onChange={setFrom}
+                      options={fromOptions}
+                      className="pd__time-select"
+                    />
+                    <Select
+                      label={t('projectDashboard.scheduleTo')}
+                      value={scheduleForm.to}
+                      onChange={(v) =>
+                        setScheduleForm((f) => ({ ...f, to: v }))
+                      }
+                      options={toOptions}
+                      disabled={!scheduleForm.from}
+                      className="pd__time-select"
+                    />
                   </div>
-                </>
-              )}
+                </div>
+                <div className="pd__field">
+                  <span className="pd__field-label">
+                    {t('projectDashboard.scheduleParticipants')}
+                  </span>
+                  {team.filter((m) => m.user_id !== user?.id).length === 0 ? (
+                    <p className="pd__field-note pd__field-note--muted">
+                      {t('projectDashboard.scheduleNoMembers')}
+                    </p>
+                  ) : (
+                    <AssigneePicker
+                      team={team.filter((m) => m.user_id !== user?.id)}
+                      value={selectedMembers}
+                      onChange={setSelectedMembers}
+                      locale={locale}
+                      placeholder={t('projectDashboard.scheduleSelectMembers')}
+                    />
+                  )}
+                  {/* The backend adds the owner to every team meeting, so say
+                      so rather than leaving it a surprise. */}
+                  {!isOwner && (
+                    <p className="pd__field-note pd__field-note--muted">
+                      {t('projectDashboard.scheduleOwnerAlways')}
+                    </p>
+                  )}
+                </div>
+
+                {scheduleError && (
+                  <p className="pd__schedule-error">{scheduleError}</p>
+                )}
+
+                <button
+                  type="submit"
+                  className="pd__schedule-btn"
+                  disabled={!scheduleReady || scheduling}
+                >
+                  <Plus width={16} height={16} aria-hidden="true" />
+                  {scheduling
+                    ? t('projectDashboard.scheduling')
+                    : t('projectDashboard.scheduleBtn')}
+                </button>
+              </form>
+            </section>
+
+            {/* Same column width for both roles now that everyone gets the
+                schedule card — only the panels themselves differ. */}
+            <div className="pd__mid">
+              {isOwner && joinRequestsPanel}
+              {upcomingMeetingsPanel}
+              {isOwner && recordedMeetingsPanel}
+              {filesPanel}
+              {projectTeamPanel}
             </div>
 
             {selectedProject && (
@@ -804,7 +871,7 @@ export default function ProjectDashboardPage({ onNavigate }) {
           <TaskBoard
             tasks={tasks}
             tasksError={tasksError}
-            isOwner={isOwner}
+            isOwner={canManageTasks}
             memberById={memberById}
             locale={locale}
             onNewTask={openNewTask}
@@ -819,7 +886,7 @@ export default function ProjectDashboardPage({ onNavigate }) {
         task={sheetTask}
         projectId={projectId}
         team={team}
-        isOwner={isOwner}
+        isOwner={canManageTasks}
         currentUserId={user?.id}
         locale={locale}
         onClose={() => setSheetOpen(false)}
@@ -838,6 +905,31 @@ export default function ProjectDashboardPage({ onNavigate }) {
         onConfirm={confirmCancelMeeting}
         onCancel={() => setCancelMeetingId(null)}
       />
+
+      {permTarget && (
+        <ConfirmDialog
+          open
+          title={t(
+            isTaskEditor(permTarget.user_id)
+              ? 'projectDashboard.taskRightsRevokeTitle'
+              : 'projectDashboard.taskRightsGrantTitle',
+          )}
+          message={t(
+            isTaskEditor(permTarget.user_id)
+              ? 'projectDashboard.taskRightsRevokeMsg'
+              : 'projectDashboard.taskRightsGrantMsg',
+            { name: (locale === 'ar' ? permTarget.name_ar : permTarget.name_en) || `@${permTarget.username}` },
+          )}
+          confirmLabel={t(
+            isTaskEditor(permTarget.user_id)
+              ? 'projectDashboard.taskRightsConfirmRevoke'
+              : 'projectDashboard.taskRightsConfirmGrant',
+          )}
+          cancelLabel={t('projectDashboard.taskCancel')}
+          onConfirm={() => toggleTaskEditor(permTarget.user_id)}
+          onCancel={() => setPermTarget(null)}
+        />
+      )}
     </div>
   );
 }

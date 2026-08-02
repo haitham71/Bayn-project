@@ -543,6 +543,90 @@ color: var(--color-error-700);
   color: var(--text-supporting, #786c57);
 }
 
+/* Right end of a team row: the "you" badge and the task-rights control. */
+.pd__team-end {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* Owner's task-rights toggle: a quiet icon button that fills in once the
+   member holds the rights. Members see the badge below instead. */
+.pd__team-perm {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-supporting, #786c57);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+}
+
+.pd__team-perm:hover:not(:disabled) {
+  background: var(--bg-surface-secondary, #d7cbb9);
+  color: var(--text-title, #0f3d2e);
+}
+
+.pd__team-perm--on {
+  background: var(--btn-primary-default, #295e4d);
+  color: #fff;
+}
+
+.pd__team-perm--on:hover:not(:disabled) {
+  background: var(--btn-primary-default, #295e4d);
+  color: #fff;
+  opacity: 0.9;
+}
+
+.pd__team-perm:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Hover label for the icon button — same treatment as the task-board avatars. */
+.pd__team-perm-tip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  inset-inline-end: 0;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: var(--color-primary-600, #0f3d2e);
+  color: var(--color-neutral-100, #ebe5dc);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease;
+  z-index: 4;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+[dir='rtl'] .pd__team-perm-tip {
+  font-family: var(--font-ar);
+}
+
+.pd__team-perm:hover .pd__team-perm-tip,
+.pd__team-perm:focus-visible .pd__team-perm-tip {
+  opacity: 1;
+}
+
+.pd__team-perm-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--bg-surface-secondary, #d7cbb9);
+  color: var(--text-supporting, #786c57);
+}
+
 .pd__team-you {
   font-size: 10px;
   font-weight: 700;
@@ -698,20 +782,13 @@ color: #9a3b2e; }
   align-self: flex-start;
 }
 
-/* The middle info column: panels stack (owner) or meetings-then-a-row (member). */
+/* The middle info column: panels stacked beside the schedule card. */
 .pd__mid {
   flex: 1 1 0;
   min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 20px;
-}
-
-.pd__mid-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  align-items: start;
 }
 
 /* Upcoming meetings list */

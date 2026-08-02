@@ -82,6 +82,19 @@ async def delete_task(
     await service.delete_task(db, task_id, current_user.id, locale)
 
 
+@router.get(
+    "/editors", response_model=list[uuid.UUID],
+    summary="List the members granted full task-editing rights on a project",
+)
+async def list_task_editors(
+    project_id: uuid.UUID = Query(...),
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+    locale: str = Depends(get_locale),
+) -> list[uuid.UUID]:
+    return await service.list_task_editors(db, project_id, current_user.id, locale)
+
+
 @router.post("/editors", status_code=204, summary="Grant a project member full task-editing rights (owner only)")
 async def grant_task_editor(
     payload: TaskEditorGrantRequest,

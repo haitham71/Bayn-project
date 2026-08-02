@@ -59,6 +59,19 @@ export const updateTaskAsMember = (taskId, payload) =>
 export const deleteProjectTask = (taskId) =>
   api.delete(`${API.tasks.base}/${taskId}`).then((r) => r.data);
 
+// Ids of the members the owner granted full task rights to (create, assign,
+// delete). Readable by any member of the project.
+export const listTaskEditors = (projectId) =>
+  api.get(`${API.tasks.base}/editors`, { params: { project_id: projectId } }).then((r) => r.data);
+
+// Owner: let a member hand out and manage tasks.
+export const grantTaskEditor = (projectId, userId) =>
+  api.post(`${API.tasks.base}/editors`, { project_id: projectId, user_id: userId }).then((r) => r.data);
+
+// Owner: take that permission back.
+export const revokeTaskEditor = (projectId, userId) =>
+  api.delete(`${API.tasks.base}/editors/${projectId}/${userId}`).then((r) => r.data);
+
 // Tasks assigned to `userId` across the given projects, each tagged with its
 // project's title. There's no cross-project task endpoint, so this gathers each
 // project's tasks and filters. Pass includeDone=false to drop finished tasks.

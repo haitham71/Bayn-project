@@ -33,6 +33,7 @@
     "namesTitle": "Enter your full name",
     "langEnglish": "English",
     "langArabic": "Arabic",
+    "nationalId": "National ID",
     "experience": "Years of experience",
     "location": "Location",
     "bio": "Bio",
@@ -436,6 +437,7 @@
     "errDobFormat": "Enter your date of birth as DD/MM/YYYY.",
     "errAge": "You must be at least 18 years old.",
     "errPhone": "Enter a valid number: +966 followed by 9 digits.",
+    "errNationalId": "Enter a valid 10-digit national ID.",
     "errPassword": "Password doesn't meet the requirements below.",
     "errSamePassword": "The new password must be different from the current one."
   },
@@ -496,6 +498,15 @@
     "teamUnavailable": "Team members aren't available yet.",
     "owner": "Owner",
     "you": "You",
+    "taskRightsGrant": "Grant task rights",
+    "taskRightsRevoke": "Revoke task rights",
+    "taskRightsBadge": "Manages tasks",
+    "taskRightsGrantTitle": "Grant task rights?",
+    "taskRightsGrantMsg": "{{name}} will be able to create, assign and delete this project's tasks.",
+    "taskRightsRevokeTitle": "Revoke task rights?",
+    "taskRightsRevokeMsg": "{{name}} will go back to only updating the status of tasks assigned to them.",
+    "taskRightsConfirmGrant": "Grant",
+    "taskRightsConfirmRevoke": "Revoke",
     "upcomingMeetingsTitle": "Upcoming meetings",
     "meetingsEmpty": "No upcoming meetings.",
     "recordedMeetingsTitle": "Recorded meetings",
@@ -519,6 +530,7 @@
     "scheduleParticipants": "Invite members",
     "scheduleSelectMembers": "Select members",
     "scheduleNoMembers": "No other members to invite yet.",
+    "scheduleOwnerAlways": "The project owner is always invited.",
     "scheduling": "Scheduling…",
     "scheduleFailed": "Couldn't schedule the meeting. Please try again.",
     "scheduleBtn": "Schedule",
@@ -800,7 +812,7 @@
       "lead": "Beyn was designed and built as a graduation project by four students.",
       "m1": "Haitham Al-Shehri",
       "m2": "Afnan Al-Faidi",
-      "m3": "Fai Al-Sharikh",
+      "m3": "Fai Al-Sharekh",
       "m4": "Layla Al-Shehri"
     }
   }
