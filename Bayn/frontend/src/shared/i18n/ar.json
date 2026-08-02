@@ -521,6 +521,7 @@
     "scheduleParticipants": "دعوة الأعضاء",
     "scheduleSelectMembers": "اختر الأعضاء",
     "scheduleNoMembers": "لا يوجد أعضاء آخرين لدعوتهم بعد.",
+    "scheduleOwnerAlways": "صاحب المشروع مدعو دائماً.",
     "scheduling": "جاري الجدولة…",
     "scheduleFailed": "تعذّرت جدولة الاجتماع. حاول مرة أخرى.",
     "scheduleBtn": "جدولة",

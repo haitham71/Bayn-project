@@ -28,7 +28,8 @@
     "bad_signature": "Invalid webhook signature"
   },
   "team": {
-    "owner_only": "Only the project owner can schedule a team meeting",
+    "member_only": "Only members of this project can schedule a team meeting",
+    "organizer_only": "Only the person who scheduled this meeting can cancel it",
     "bad_time_range": "The end time must be after the start time",
     "past_time": "The meeting time must be in the future",
     "not_a_member": "You can only invite members of this project",

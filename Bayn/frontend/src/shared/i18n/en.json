@@ -521,6 +521,7 @@
     "scheduleParticipants": "Invite members",
     "scheduleSelectMembers": "Select members",
     "scheduleNoMembers": "No other members to invite yet.",
+    "scheduleOwnerAlways": "The project owner is always invited.",
     "scheduling": "Scheduling…",
     "scheduleFailed": "Couldn't schedule the meeting. Please try again.",
     "scheduleBtn": "Schedule",

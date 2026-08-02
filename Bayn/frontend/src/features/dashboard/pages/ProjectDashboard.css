@@ -698,20 +698,13 @@ color: #9a3b2e; }
   align-self: flex-start;
 }
 
-/* The middle info column: panels stack (owner) or meetings-then-a-row (member). */
+/* The middle info column: panels stacked beside the schedule card. */
 .pd__mid {
   flex: 1 1 0;
   min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 20px;
-}
-
-.pd__mid-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  align-items: start;
 }
 
 /* Upcoming meetings list */

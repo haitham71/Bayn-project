@@ -661,133 +661,129 @@ export default function ProjectDashboardPage({ onNavigate }) {
           </div>
 
           <div className="pd__lower">
-            {/* Owner-only: schedule a new team meeting (narrow side card). */}
-            {isOwner && (
-              <section className="pd__panel pd__schedule">
-                <div className="pd__panel-head">
-                  <h3>{t('projectDashboard.scheduleTitle')}</h3>
-                </div>
-                <form className="pd__schedule-form" onSubmit={handleSchedule}>
-                  <label className="pd__field pd__field--grow">
-                    <span className="pd__field-label">
-                      {t('projectDashboard.scheduleName')}
-                    </span>
-                    <input
-                      type="text"
-                      value={scheduleForm.title}
-                      onChange={(e) =>
-                        setScheduleForm((f) => ({
-                          ...f,
-                          title: e.target.value,
-                        }))
+            {/* Schedule a new team meeting (narrow side card) — open to every
+                member of the project, not just the owner. */}
+            <section className="pd__panel pd__schedule">
+              <div className="pd__panel-head">
+                <h3>{t('projectDashboard.scheduleTitle')}</h3>
+              </div>
+              <form className="pd__schedule-form" onSubmit={handleSchedule}>
+                <label className="pd__field pd__field--grow">
+                  <span className="pd__field-label">
+                    {t('projectDashboard.scheduleName')}
+                  </span>
+                  <input
+                    type="text"
+                    value={scheduleForm.title}
+                    onChange={(e) =>
+                      setScheduleForm((f) => ({
+                        ...f,
+                        title: e.target.value,
+                      }))
+                    }
+                    placeholder={t('projectDashboard.scheduleNamePh')}
+                  />
+                </label>
+                <div className="pd__field">
+                  <span className="pd__field-label">
+                    {t('projectDashboard.scheduleDate')}
+                  </span>
+                  <div className="pd__calendar-inline">
+                    <CalendarPicker
+                      initialDate={
+                        scheduleForm.date
+                          ? parseDateStr(scheduleForm.date)
+                          : new Date()
                       }
-                      placeholder={t('projectDashboard.scheduleNamePh')}
+                      selectedDates={
+                        scheduleForm.date
+                          ? [parseDateStr(scheduleForm.date)]
+                          : []
+                      }
+                      onSelectDate={setDate}
                     />
-                  </label>
-                  <div className="pd__field">
-                    <span className="pd__field-label">
-                      {t('projectDashboard.scheduleDate')}
-                    </span>
-                    <div className="pd__calendar-inline">
-                      <CalendarPicker
-                        initialDate={
-                          scheduleForm.date
-                            ? parseDateStr(scheduleForm.date)
-                            : new Date()
-                        }
-                        selectedDates={
-                          scheduleForm.date
-                            ? [parseDateStr(scheduleForm.date)]
-                            : []
-                        }
-                        onSelectDate={setDate}
-                      />
-                    </div>
-                    {scheduleForm.date && (
-                      <p className="pd__field-note">
-                        {formatDateStr(scheduleForm.date)}
-                      </p>
-                    )}
                   </div>
-                  <div className="pd__field">
-                    <span className="pd__field-label">
-                      {t('projectDashboard.scheduleTime')}
-                    </span>
-                    <div className="pd__time-row">
-                      <Select
-                        label={t('projectDashboard.scheduleFrom')}
-                        value={scheduleForm.from}
-                        onChange={setFrom}
-                        options={fromOptions}
-                        className="pd__time-select"
-                      />
-                      <Select
-                        label={t('projectDashboard.scheduleTo')}
-                        value={scheduleForm.to}
-                        onChange={(v) =>
-                          setScheduleForm((f) => ({ ...f, to: v }))
-                        }
-                        options={toOptions}
-                        disabled={!scheduleForm.from}
-                        className="pd__time-select"
-                      />
-                    </div>
-                  </div>
-                  <div className="pd__field">
-                    <span className="pd__field-label">
-                      {t('projectDashboard.scheduleParticipants')}
-                    </span>
-                    {team.filter((m) => m.user_id !== user?.id).length === 0 ? (
-                      <p className="pd__field-note pd__field-note--muted">
-                        {t('projectDashboard.scheduleNoMembers')}
-                      </p>
-                    ) : (
-                      <AssigneePicker
-                        team={team.filter((m) => m.user_id !== user?.id)}
-                        value={selectedMembers}
-                        onChange={setSelectedMembers}
-                        locale={locale}
-                        placeholder={t('projectDashboard.scheduleSelectMembers')}
-                      />
-                    )}
-                  </div>
-
-                  {scheduleError && (
-                    <p className="pd__schedule-error">{scheduleError}</p>
+                  {scheduleForm.date && (
+                    <p className="pd__field-note">
+                      {formatDateStr(scheduleForm.date)}
+                    </p>
                   )}
-
-                  <button
-                    type="submit"
-                    className="pd__schedule-btn"
-                    disabled={!scheduleReady || scheduling}
-                  >
-                    <Plus width={16} height={16} aria-hidden="true" />
-                    {scheduling
-                      ? t('projectDashboard.scheduling')
-                      : t('projectDashboard.scheduleBtn')}
-                  </button>
-                </form>
-              </section>
-            )}
-
-            <div className={`pd__mid pd__mid--${isOwner ? 'owner' : 'member'}`}>
-              {isOwner ? (
-                <>
-                  {joinRequestsPanel}
-                  {upcomingMeetingsPanel}
-                  {recordedMeetingsPanel}
-                  {filesPanel}
-                  {projectTeamPanel}
-                </>
-              ) : (
-                <>
-                  {upcomingMeetingsPanel}
-                  <div className="pd__mid-row">
-                    {filesPanel}
-                    {projectTeamPanel}
+                </div>
+                <div className="pd__field">
+                  <span className="pd__field-label">
+                    {t('projectDashboard.scheduleTime')}
+                  </span>
+                  <div className="pd__time-row">
+                    <Select
+                      label={t('projectDashboard.scheduleFrom')}
+                      value={scheduleForm.from}
+                      onChange={setFrom}
+                      options={fromOptions}
+                      className="pd__time-select"
+                    />
+                    <Select
+                      label={t('projectDashboard.scheduleTo')}
+                      value={scheduleForm.to}
+                      onChange={(v) =>
+                        setScheduleForm((f) => ({ ...f, to: v }))
+                      }
+                      options={toOptions}
+                      disabled={!scheduleForm.from}
+                      className="pd__time-select"
+                    />
                   </div>
-                </>
-              )}
+                </div>
+                <div className="pd__field">
+                  <span className="pd__field-label">
+                    {t('projectDashboard.scheduleParticipants')}
+                  </span>
+                  {team.filter((m) => m.user_id !== user?.id).length === 0 ? (
+                    <p className="pd__field-note pd__field-note--muted">
+                      {t('projectDashboard.scheduleNoMembers')}
+                    </p>
+                  ) : (
+                    <AssigneePicker
+                      team={team.filter((m) => m.user_id !== user?.id)}
+                      value={selectedMembers}
+                      onChange={setSelectedMembers}
+                      locale={locale}
+                      placeholder={t('projectDashboard.scheduleSelectMembers')}
+                    />
+                  )}
+                  {/* The backend adds the owner to every team meeting, so say
+                      so rather than leaving it a surprise. */}
+                  {!isOwner && (
+                    <p className="pd__field-note pd__field-note--muted">
+                      {t('projectDashboard.scheduleOwnerAlways')}
+                    </p>
+                  )}
+                </div>
+
+                {scheduleError && (
+                  <p className="pd__schedule-error">{scheduleError}</p>
+                )}
+
+                <button
+                  type="submit"
+                  className="pd__schedule-btn"
+                  disabled={!scheduleReady || scheduling}
+                >
+                  <Plus width={16} height={16} aria-hidden="true" />
+                  {scheduling
+                    ? t('projectDashboard.scheduling')
+                    : t('projectDashboard.scheduleBtn')}
+                </button>
+              </form>
+            </section>
+
+            {/* Same column width for both roles now that everyone gets the
+                schedule card — only the panels themselves differ. */}
+            <div className="pd__mid">
+              {isOwner && joinRequestsPanel}
+              {upcomingMeetingsPanel}
+              {isOwner && recordedMeetingsPanel}
+              {filesPanel}
+              {projectTeamPanel}
             </div>
 
             {selectedProject && (
