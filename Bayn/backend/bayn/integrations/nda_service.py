@@ -87,12 +87,18 @@ class NDAServiceClient:
         party_two_user_id: str | None = None,
         confidentiality_period_months: int | None = None,
         idea_title: str | None = None,
+        idempotency_key: str | None = None,
     ) -> dict:
         """
         Create a new contract. Signature-System emails party one their
         signing link as soon as this call succeeds.
 
         POST /api/v1/contracts
+
+        `idempotency_key` (sent as an `Idempotency-Key` header, the standard
+        place for it) lets a retried call after a network failure get back
+        the same contract instead of creating a duplicate on Signature-System's
+        side.
 
         Returns:
             The created contract as a dict (see API.md for the full shape),
@@ -118,10 +124,14 @@ class NDAServiceClient:
             "idea_title": idea_title,
         }
 
+        headers = self._headers()
+        if idempotency_key is not None:
+            headers["Idempotency-Key"] = idempotency_key
+
         async with httpx.AsyncClient(timeout=self._timeout) as client:
             response = await client.post(
                 f"{self._base_url}/api/v1/contracts",
-                headers=self._headers(),
+                headers=headers,
                 json=body,
             )
 
