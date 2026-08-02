@@ -37,6 +37,7 @@ class Contract(Base):
         UUID(as_uuid=True),
         ForeignKey("meeting_requests.id", ondelete="CASCADE"),
         nullable=True,
+        unique=True, #Unique, not just indexed: two concurrent "accept" clicks on the same
         index=True,
     )
     # Null until both parties sign and the meeting is created from the request.

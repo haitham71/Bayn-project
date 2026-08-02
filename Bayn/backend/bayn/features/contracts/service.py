@@ -14,6 +14,7 @@ import logging
 import uuid
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from bayn.common.exceptions import NotFoundError, ValidationError
@@ -67,7 +68,7 @@ async def create_nda_for_request(
     their project's confidential information being protected.
     """
     existing = await get_contract_for_request(db, request.id)
-    if existing is not None:
+    if existing is not None and existing.status != ContractStatus.creation_failed:
         return existing
 
     requester = await db.get(User, request.requester_id)
@@ -77,24 +78,39 @@ async def create_nda_for_request(
 
     idea_title = await get_project_title(db, request.project_id)
 
-    contract = Contract(
-        meeting_request_id=request.id,
-        project_id=request.project_id,
-        
-        confidentiality_period_months=DEFAULT_CONFIDENTIALITY_MONTHS,
-        party_one_user_id=owner.id,
-        party_one_name=_full_name(owner),
-        party_one_national_id=_require_national_id(owner, locale, is_owner=True),
-        party_two_user_id=requester.id,
-        party_two_name=_full_name(requester),
-        party_two_national_id=_require_national_id(requester, locale, is_owner=False),
-        status=ContractStatus.pending_creation,
-    )
+    if existing is not None:
 
-    # Committed (not just flushed) before the remote call: `get_db` rolls back
-    db.add(contract)
-    await db.commit()
-    await db.refresh(contract)
+        contract = existing
+    else:
+        contract = Contract(
+            meeting_request_id=request.id,
+            project_id=request.project_id,
+            confidentiality_period_months=DEFAULT_CONFIDENTIALITY_MONTHS,
+            party_one_user_id=owner.id,
+            party_one_name=_full_name(owner),
+            party_one_national_id=_require_national_id(owner, locale, is_owner=True),
+            party_two_user_id=requester.id,
+            party_two_name=_full_name(requester),
+            party_two_national_id=_require_national_id(requester, locale, is_owner=False),
+            status=ContractStatus.pending_creation,
+        )
+
+        # The contract row is created first so its id can be used as the idempotency
+        db.add(contract)
+        try:
+            await db.commit()
+        except IntegrityError:
+            # Two concurrent "accept" calls for the same request both passed
+            # the check above before either committed — the unique
+            # constraint on meeting_request_id is what actually catches
+            # this. The other one won the race; use its contract instead of
+            # calling Signature-System a second time.
+            await db.rollback()
+            existing = await get_contract_for_request(db, request.id)
+            if existing is not None:
+                return existing
+            raise
+        await db.refresh(contract)
 
     try:
         remote = await nda_service_client.create_contract(
