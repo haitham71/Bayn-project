@@ -190,9 +190,6 @@ export default function CreateIdeaPage({ onNavigate }) {
               >
                 {publishing ? t('createIdea.publishing') : t('createIdea.publish')}
               </Button>
-              <Button variant="secondary" size="sm" className="ci__draft">
-                {t('createIdea.saveDraft')}
-              </Button>
             </div>
           </aside>
         </main>
