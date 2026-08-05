@@ -56,9 +56,9 @@ export default function LandingFooter() {
             <span>{i18n.language === 'ar' ? 'English' : 'العربية'}</span>
           </button>
           <div className="socials">
-            <a href="#top" aria-label="X"><svg width="16" height="16" viewBox="0 0 24 24" fill="#ebe5dc"><path d="M18.9 2H22l-7 8 8.3 11h-6.5l-5-6.6L6 21H2.9l7.5-8.6L2 2h6.6l4.6 6.1L18.9 2zm-1.1 17h1.8L7.3 3.9H5.4L17.8 19z" /></svg></a>
+            <a href="https://x.com/Beyn_sa" target="_blank" rel="noreferrer" aria-label="X"><svg width="16" height="16" viewBox="0 0 24 24" fill="#ebe5dc"><path d="M18.9 2H22l-7 8 8.3 11h-6.5l-5-6.6L6 21H2.9l7.5-8.6L2 2h6.6l4.6 6.1L18.9 2zm-1.1 17h1.8L7.3 3.9H5.4L17.8 19z" /></svg></a>
             <a href="#top" aria-label="LinkedIn"><svg width="16" height="16" viewBox="0 0 24 24" fill="#ebe5dc"><path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM3 9h4v12H3zM10 9h3.8v1.7h.1c.5-.9 1.8-1.9 3.7-1.9 4 0 4.7 2.6 4.7 6V21h-4v-5.3c0-1.3 0-2.9-1.8-2.9s-2 1.4-2 2.8V21h-4z" /></svg></a>
-            <a href="#top" aria-label="Instagram"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ebe5dc" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r="1" fill="#ebe5dc" stroke="none" /></svg></a>
+            <a href="https://www.instagram.com/beyn_sa/" target="_blank" rel="noreferrer" aria-label="Instagram"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ebe5dc" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r="1" fill="#ebe5dc" stroke="none" /></svg></a>
           </div>
         </div>
       </div>

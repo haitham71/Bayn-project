@@ -1,9 +1,8 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;550;600;700&family=Tajawal:wght@400;500;700&display=swap');
- 
 :root {
   /* ── Font ─────────────────────────────────── */
-  --font-sans:    'Inter', system-ui, sans-serif;
-  --font-arabic:  'Tajawal', system-ui, sans-serif;
+  /* Faces are declared in globals.css — self-hosted, nothing fetched remotely. */
+  --font-sans:    'Thmanyah Sans', system-ui, sans-serif;
+  --font-arabic:  'Thmanyah Sans', system-ui, sans-serif;
  
   /* ── Typography ─────────── */
   --type-button-size:   20px;
