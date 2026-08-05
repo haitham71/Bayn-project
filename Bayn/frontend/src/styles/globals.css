@@ -1,33 +1,43 @@
 @import './variables.css';
 
+/* Thmanyah Sans carries both Arabic and Latin, so it's the only family the app
+   loads — no separate Latin/Arabic pairing needed. */
 @font-face {
-  font-family: 'Inter';
-  src: url('../assets/fonts/Inter/Inter-Variable.ttf') format('truetype');
-  font-weight: 100 900;
+  font-family: 'Thmanyah Sans';
+  src: url('../assets/fonts/Thmanyah/thmanyahsans/woff2/thmanyahsans-Light.woff2') format('woff2');
+  font-weight: 300;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Tajawal';
-  src: url('../assets/fonts/Tajawal/Tajawal-Regular.ttf') format('truetype');
+  font-family: 'Thmanyah Sans';
+  src: url('../assets/fonts/Thmanyah/thmanyahsans/woff2/thmanyahsans-Regular.woff2') format('woff2');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Tajawal';
-  src: url('../assets/fonts/Tajawal/Tajawal-Medium.ttf') format('truetype');
+  font-family: 'Thmanyah Sans';
+  src: url('../assets/fonts/Thmanyah/thmanyahsans/woff2/thmanyahsans-Medium.woff2') format('woff2');
   font-weight: 500;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: 'Tajawal';
-  src: url('../assets/fonts/Tajawal/Tajawal-Bold.ttf') format('truetype');
-  font-weight: 700;
+  font-family: 'Thmanyah Sans';
+  src: url('../assets/fonts/Thmanyah/thmanyahsans/woff2/thmanyahsans-Bold.woff2') format('woff2');
+  font-weight: 600 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Thmanyah Sans';
+  src: url('../assets/fonts/Thmanyah/thmanyahsans/woff2/thmanyahsans-Black.woff2') format('woff2');
+  font-weight: 800 900;
   font-style: normal;
   font-display: swap;
 }
@@ -56,7 +66,7 @@ body {
 
 /* Native form controls don't inherit font-family by default (they fall back to
    the browser font). Pull the app font in so buttons/inputs/textareas match the
-   rest of the page — Inter, or Tajawal in RTL. */
+   rest of the page. */
 button,
 input,
 select,

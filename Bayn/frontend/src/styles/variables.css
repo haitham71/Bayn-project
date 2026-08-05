@@ -134,8 +134,8 @@
   --sidebar-hover-button: var(--color-primary-600);
 
   /* Fonts */
-  --font-sans: 'Inter', system-ui, sans-serif;
-  --font-ar: 'Tajawal', system-ui, sans-serif;
+  --font-sans: 'Thmanyah Sans', system-ui, sans-serif;
+  --font-ar: 'Thmanyah Sans', system-ui, sans-serif;
 
   /* Typography (line-height left auto) */
   --type-h1-size: 64px;

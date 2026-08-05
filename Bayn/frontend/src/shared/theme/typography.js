@@ -2,8 +2,8 @@
 // Line-height is left auto, so it's not tokenized here.
 
 export const fontFamily = {
-  sans: "'Inter', system-ui, sans-serif",
-  arabic: "'Tajawal', system-ui, sans-serif",
+  sans: "'Thmanyah Sans', system-ui, sans-serif",
+  arabic: "'Thmanyah Sans', system-ui, sans-serif",
 };
 
 export const typography = {
