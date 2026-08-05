@@ -63,6 +63,7 @@ jobs:
           DAILY_API_KEY: ${{ secrets.DAILY_API_KEY }}
           DAILY_API_URL: ${{ secrets.DAILY_API_URL }}
           DAILY_DOMAIN: ${{ secrets.DAILY_DOMAIN }}
+          DAILY_WEBHOOK_SECRET: ${{ secrets.DAILY_WEBHOOK_SECRET }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
           EMAIL_FROM_NAME: ${{ secrets.EMAIL_FROM_NAME }}

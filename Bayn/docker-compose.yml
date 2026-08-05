@@ -58,6 +58,9 @@ services:
       DAILY_API_KEY: ${DAILY_API_KEY}
       DAILY_API_URL: ${DAILY_API_URL}
       DAILY_DOMAIN: ${DAILY_DOMAIN}
+      # Without this the recording-ready webhook fails its signature check and
+      # every recording is dropped silently — see integrations/daily.py.
+      DAILY_WEBHOOK_SECRET: ${DAILY_WEBHOOK_SECRET}
       SMTP_HOST: ${SMTP_HOST}
       SMTP_PORT: ${SMTP_PORT}
       SMTP_USERNAME: ${SMTP_USERNAME}
